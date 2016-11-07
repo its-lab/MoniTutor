@@ -1,0 +1,53 @@
+{{extend 'layout.html'}}
+<div class="pull-right">
+    <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#scenarioInfo">
+        Additional information
+    </button>
+    <!-- Modal -->
+    <div class="modal fade" id="scenarioInfo" tabindex="-1" role="dialog" aria-labelledby="Scenario information">
+      <div class="modal-dialog" role="document">
+        <div class="modal-content">
+          <div class="modal-header">
+            <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+            <h4 class="modal-title" id="myModalLabel">{{=scenarioinfo["display_name"]}}</h4>
+          </div>
+          <div class="modal-body">
+            {{=scenarioinfo["description"]}}
+          </div>
+            {{if len(scenarioinfo["goal"]):}}
+            <div class="modal-body">
+                <p>Overall goal:</p>
+            {{=scenarioinfo["goal"]}}
+            </div>
+            {{pass}}
+          {{if "data" in scenarioinfo:}}
+            <div class="modal-body">
+                <p>Downloads:</p>
+                {{for data in scenarioinfo["data"]:}}
+                    <a href="{{=URL("default", "download", args=data.monitutor_data.data)}}">{{=data.monitutor_data.display_name}}</a><br>
+                {{pass}}
+            </div>
+          {{pass}}
+
+          <div class="modal-footer">
+            <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+</div>
+<div class="container">
+
+
+
+
+<ol class="breadcrumb" id="0">
+  <li><a href="{{=URL('default','index')}}">Home</a></li>
+
+  <li><a href="{{=URL('scenarios','view_available_scenarios')}}">Scenarios</a></li>
+  <li class="active">Scenario - {{=scenarioinfo["display_name"]}}</li>
+</ol>
+    <noscript><b>JavaScript is turned off. Please enable JavaScript to view full site.</b></noscript>
+    {{=LOAD('scenarios','view_milestones.load',ajax=True, args=args)}}
+
+    </div>

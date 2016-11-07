@@ -1,0 +1,167 @@
+{{extend 'layout.html'}}
+<script>
+    $(document).ready(function() {
+        $("#unused_systems").on("click",{}, onClickShow);
+        $(".delete-system").on("click", {}, onClickDeleteSystem);
+        $("#broken_files").on("click",{}, onClickShow);
+        $(".delete-data").on("click", {}, onClickDeleteData);
+
+        function onClickDeleteSystem(event){
+            var system = this.id;
+            col = "#" + system +"-col";
+            $.get("{{=URL("manage_components", "delete_system")}}",
+                {
+                    systemId: system
+                    },
+                    function (data, status) {
+                        if (status == "success") {
+                            $(col).remove();
+                        }
+                    });
+        }
+
+        function onClickDeleteData(){
+            var dataId = this.id;
+            col = "#" + dataId +"-col-file";
+            $.get("{{=URL("manage_components", "delete_data")}}",
+                {
+                    dataId: dataId
+                    },
+                    function (data, status) {
+                        if (status == "success") {
+                            $(col).remove();
+                        }
+                    });
+        }
+
+        function onClickShow( event ){
+            var elment = "#"+String(this.id) + "-hide";
+            $(elment).toggle("medium", function(){});
+        }
+        {{if unused_systems:}}
+        $(".unused_systems").removeClass("glyphicon-leaf");
+        $(".unused_systems").addClass("glyphicon-flash");
+        $(".unused_systems").css("color", "red");
+        {{pass}}
+        {{if broken_files:}}
+        $(".broken_files").removeClass("glyphicon-leaf");
+        $(".broken_files").addClass("glyphicon-fire");
+        $(".broken_files").css("color", "red");
+        {{pass}}
+    } );
+</script>
+<div data-spy="affix" style="margin-left: 30px;">
+        <p><h4><a href="#data" >Data</a> <br></h4></p>
+        <p><h4><a href="#systems">Systems</a> <br></h4></p>
+        <p><h4><a href="#interpreters">Interpreters</a> <br></h4></p>
+        <p><h4><a href="#programs">Programs</a> <br></h4></p>
+        </div>
+<div class="container">
+    <ol class="breadcrumb">
+        <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
+        <li class="active">Component overview</li>
+    </ol>
+    <div class="jumbotron">
+        <h2>Component overview</h2>
+        <br>
+        <div class="row">
+            <div class="col-sm-6">
+                <p><i class="glyphicon glyphicon-grain" style="color: green;"></i> Defined systems: {{=len(tutordb(tutordb.monitutor_systems).select())}}</p>
+                <p><i class="glyphicon glyphicon-paperclip"></i> Defined files: {{=len(tutordb(tutordb.monitutor_data).select())}}</p>
+                <p><i class="glyphicon glyphicon-console"></i> Defined programs: {{=len(tutordb(tutordb.monitutor_programs).select())}}</p>
+                <p><i class="glyphicon glyphicon-console"></i> Defined interpreters: {{=len(tutordb(tutordb.monitutor_interpreters).select())}}</p>
+            </div>
+            <div class="col-sm-6">
+                <div id="unused_systems">
+                    <p><i class="glyphicon glyphicon-leaf unused_systems" style="color: green;"></i> Unused systems: {{=len(unused_systems)}}</p>
+                </div>
+                <div id="broken_files">
+                    <p><i class="glyphicon glyphicon-leaf broken_files" style="color: green;"></i> Broken files: {{=len(broken_files)}}</p>
+                </div>
+                <p><i class="glyphicon glyphicon-flash"></i> Unused programs: {{=len(unused_programs)}}</p>
+            </div>
+        </div>
+    </div>
+    {{if len(unused_systems):}}
+        <div id="unused_systems-hide" class="jumbotron" hidden="true">
+            <h2>Unused systems</h2><br>
+            <div class="row">
+                {{for unused_system in unused_systems:}}
+                    <div id="{{=unused_system.monitutor_systems.system_id}}-col" class="col-sm-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                {{=unused_system.monitutor_systems.display_name}}
+                                <i id="{{=unused_system.monitutor_systems.system_id}}" class="glyphicon glyphicon-trash delete-data" style="float: right;"></i>
+                            </div>
+                            <div class="panel-body">
+                                {{=unused_system.monitutor_systems.display_name}}
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item">Name: {{=unused_system.monitutor_systems.name}}</li>
+                                <li class="list-group-item">Hostname: {{=unused_system.monitutor_systems.hostname}}</li>
+                                <li class="list-group-item">IPv4: {{=unused_system.monitutor_systems.ip4_address}}</li>
+                                <li class="list-group-item">IPv6: {{=unused_system.monitutor_systems.ip6_address}}</li>
+                            </ul>
+                        </div>
+                    </div>
+                {{pass}}
+            </div>
+        </div>
+    {{pass}}
+    {{if len(broken_files):}}
+        <div id="broken_files-hide" class="jumbotron" hidden="true">
+            <h2>Broken files</h2><br>
+            <div class="row">
+                {{for broken_file in broken_files.iteritems():}}
+                    <div id="{{=broken_file[1].data_id}}-col-file" class="col-sm-6">
+                        <div class="panel panel-default">
+                            <div class="panel-heading">
+                                {{=broken_file[1].display_name}}
+                                <i id="{{=broken_file[1].data_id}}" class="glyphicon glyphicon-trash delete-data" style="float: right;"></i>
+                            </div>
+                            <div class="panel-body">
+                                {{=broken_file[1].description}}
+                            </div>
+                            <ul class="list-group">
+                                <li class="list-group-item">Name: {{=broken_file[1].name}}</li>
+
+                            </ul>
+                        </div>
+                    </div>
+                {{pass}}
+            </div>
+        </div>
+    {{pass}}
+</div>
+<div class="container">
+    <div id="data" style="padding-top: 50px">
+        <h2>Data</h2>
+        <hr>
+        {{=LOAD('manage_components','view_data.load',ajax=True)}}
+
+        <a href="{{=URL("manage_components", "add_data")}}" class="btn btn-default">Add File</a>
+    </div>
+    <div id="systems" style="padding-top: 50px">
+        <h2>Systems</h2>
+        <hr>
+        {{=LOAD('manage_components','view_systems.load',ajax=True)}}
+        <p><h3>Add new system:</h3></p>
+        <hr>
+        {{=LOAD('manage_components','add_system.load', ajax=True)}}
+    </div>
+    <div id="interpreters" style="padding-top: 50px">
+        <h2>Interpreters</h2>
+        <hr>
+        {{=LOAD('manage_components','view_interp.load', ajax=True)}}
+        {{=LOAD('manage_components','add_interp.load', ajax=True)}}
+    </div>
+    <div id="programs" style="padding-top: 50px">
+        <h2>Programs</h2>
+        <hr>
+        {{=LOAD('manage_components','view_programs.load', ajax=True)}}
+        <p><h3>Add new program:</h3></p>
+        <hr>
+        {{=LOAD('manage_components','add_program.load', ajax=True)}}
+    </div>
+</div>
+

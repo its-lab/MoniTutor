@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+
+<div class="container">
+<ol class="breadcrumb">
+  <li><a href="{{=URL('default','index')}}">Home</a></li>
+    <li class="active">Scenarios</li>
+</ol>
+
+
+        {{=LOAD('scenarios','view_available_scenarios.load',ajax=True)}}
+
+
+
+
+
+
+</div>

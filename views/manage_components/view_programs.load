@@ -1,0 +1,20 @@
+<table class="table table-striped">
+    <tr>
+        <td>ID</td>
+        <td>Name</td>
+        <td>Dispay Name</td>
+    </tr>
+    {{for program in programs:}}
+
+            <tr>
+                <td>{{=program.id}}</td>
+                <td>{{=program.name}}</td>
+                <td>
+                    <a href="view_program/{{=program.id}}">
+                        {{=program.display_name}}
+                    </a>
+                </td>
+            </tr>
+
+    {{pass}}
+</table>

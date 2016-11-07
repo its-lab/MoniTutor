@@ -1,0 +1,19 @@
+{{extend 'layout.html'}}
+<script src="https://cdn.rawgit.com/google/code-prettify/master/loader/run_prettify.js"></script>
+
+<div class="container">
+    <ol class="breadcrumb">
+        <li><a href="{{=URL('default','index')}}">Home</a></li>
+        <li><a href="{{=URL('manage_components','view_components')}}">Component overview</a></li>
+        <li>Program {{=program.display_name}}</li>
+    </ol>
+
+    <p><a href="#edit_code"><h3>Edit Code</h3></a></p>
+    <pre id="code" class="prettyprint linenums" style="padding: 10px;">
+        {{=program.code}}
+    </pre>
+    <div id="edit_code">
+        {{=form}}
+    </div>
+
+</div>

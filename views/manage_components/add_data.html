@@ -1,0 +1,12 @@
+{{extend 'layout.html'}}
+<div class="container">
+<ol class="breadcrumb">
+<li><a href="{{=URL('default','index')}}">Home</a></li>
+<li><a href="{{=URL('manage_components','view_components')}}">Component overview</a></li>
+<li class="active">Add Data</li>
+</ol>
+{{=LOAD('manage_components','view_data.load',ajax=True)}}
+
+{{=add_data_form}}
+
+    </div>

@@ -1,0 +1,296 @@
+<style xmlns="http://www.w3.org/1999/html">
+    tr.hover-whitesmoke:hover {background-color: whitesmoke;}
+</style>
+
+{{extend 'layout.html'}}
+<script>
+ $(document).ready(function() {
+     $(".glyphicon.glyphicon-edit").on("click", {}, onClickShow);
+     $("#orphan-milestones").on("click",{}, onClickShow);
+     $("#orphan-checks").on("click",{}, onClickShow);
+     $(".btn").on("click", {}, onClickShow);
+     $(".glyphicon.glyphicon-off").on("click", {}, onClickInit);
+     $(".glyphicon.glyphicon-repeat").on("click", {}, onClickInit);
+     $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
+     $(".delete-check").on("click", {}, onClickDeleteCheck);
+     $(".delete-scenario").on("click", {}, onClickDeleteScenario);
+     $(".export-scenario").on("click", {}, onClickExport);
+     $(".erase-scenario").on("click", {}, onClickErase);
+
+     function onClickErase(event){
+         var confirm = window.confirm("Are you sure you want to flush all userdata for this Scenario?");
+         if (!confirm) {
+             return;
+         }
+        var scenarioId = String(this.id).slice(0,-9);
+        $(this).off("click");
+        $.get("{{=URL("manage_scenarios", "erase_scenario")}}",
+                {
+                    scenarioId: scenarioId
+                },
+             function (data, status) {
+                 if (status == "success") {
+                     var file = JSON.parse(data);
+                     $(this).on("click", {}, onClickErase);
+                    }
+                });
+     }
+
+     function onClickExport( event ) {
+        var scenarioId = String(this.id).slice(0,-7);
+        $(this).off("click");
+        $.get("{{=URL("manage_scenarios", "export_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                     if (status == "success") {
+                         var file = JSON.parse(data);
+                         $(this).on("click", {}, onClickExport);
+                        }
+                    });
+     }
+
+     function onClickDeleteScenario( event ) {
+         var confirm = window.confirm("Are you sure you want to delete the Scenario?");
+         var scenarioId = String(this.id).slice(0,-7);
+         if (!confirm) {
+             return;
+         }
+         $.get("{{=URL("manage_scenarios", "delete_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                     if (status == "success") {
+                            $("#"+ String(scenarioId) + "-tr").remove();
+                        }
+                    });
+     }
+
+     function onClickShow( event ){
+         var elment = "#"+String(this.id) + "-hide";
+         $(elment).toggle("medium", function(){});
+     }
+
+     function onClickInit( event ){
+         var scenarioId = String(this.id);
+         $(this).off("click", function(){});
+         scenarioId = scenarioId.slice(0,-5); // slices "-init" off.
+         var progressdiv = document.createElement("div");
+         $(progressdiv).addClass("progress");
+         $(progressdiv).css("margin-top", "10px");
+         $(progressdiv).css("margin-bottom", "10px");
+         var progressbar = document.createElement("div");
+         $(progressdiv).append(progressbar);
+         $(progressbar).addClass("progress-bar").addClass("progress-bar-striped").addClass("active");
+         $(progressbar).role = "progressbar";
+         $(progressbar).css("width", "3%");
+         $("#top").append(progressdiv);
+
+         $.get("{{=URL("manage_scenarios", "init_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                        var info = JSON.parse(data);
+                        var progress = String(info.progress) + "%";
+                        var taskId = info.taskId;
+                        window.setTimeout(function () {
+                            updateProgress(taskId, scenarioId, progressbar, progress)
+                        }, 300);
+                    });
+     }
+
+     function updateProgress(taskId, scenarioId, progressbar, progress){
+         $(progressbar).css("width", progress);
+         if(progress == "100%"){
+             location.reload();
+         }
+         window.setTimeout(function() {
+             $.get("{{=URL("manage_scenarios", "update_task_status")}}",
+                     {
+                         taskId: taskId
+                     },
+                     function (data, status) {
+                         var info = JSON.parse(data);
+                         progress = String(info.progress) + "%";
+                         updateProgress(taskId, scenarioId, progressbar, progress);
+                     });
+         }, 300);
+     }
+
+     function onClickDeleteMilestone(event){
+         var milestone = this.id;
+         col = "#" + milestone +"-col";
+         $.get("{{=URL("manage_scenarios", "delete_milestone")}}",
+                    {
+                        milestoneId: milestone
+                    },
+                 function (data, status) {
+                     if (status == "success") {
+                            $(col).remove();
+                        }
+                    });
+
+     }
+
+     function onClickDeleteCheck(event){
+         var check = this.id;
+         col = "#" + check + "-col";
+         $.get("{{=URL("manage_scenarios", "delete_check")}}",
+                    {
+                        checkId: check
+                    },
+                 function (data, status) {
+                     if (status == "success") {
+                            $(col).remove();
+                        }
+                    });
+
+     }
+ });
+</script>
+<div id="top" class="container">
+    <ol class="breadcrumb">
+      <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
+      <li class="active">Scenario overview</li>
+    </ol>
+    <div class="jumbotron" style="text-align: left">
+        <h2>Scenario overview</h2>
+        <br>
+        <div class="row">
+            <div class="col-sm-6">
+                <p><i class="glyphicon glyphicon-scale"></i> Defined scenarios: {{=len(scenarios)}}</p>
+                <p><i class="glyphicon glyphicon-user"></i> Registered users: {{=len(tutordb(tutordb.auth_user).select())}}</p>
+                <div id="orphan-checks">
+                    <p>
+                        <i class="glyphicon
+                            {{if orphan_check_count:}}
+                                glyphicon-fire" style="color: red"
+                            {{else:}}
+                                glyphicon-leaf" style="color: green"
+                            {{pass}}
+                            >
+                        </i> Orphan checks:  {{=orphan_check_count}}</p>
+                </div>
+            </div>
+            <div class="col-sm-6">
+                <p><i class="glyphicon glyphicon-scale"></i> Initiated scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.initiated == True).select())}}</p>
+                <p><i class="glyphicon glyphicon-scale"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
+                <div id="orphan-milestones">
+                    <p><i class="glyphicon
+                    {{if orphan_milestone_count:}}
+                        glyphicon-fire" style="color: red"
+                    {{else:}}
+                        glyphicon-leaf" style="color: green"
+                    {{pass}}
+                ></i> Orphan Milestones: {{=orphan_milestone_count}}</p></div>
+            </div>
+        </div>
+    </div>
+    {{if orphan_milestone_count:}}
+    <div id="orphan-milestones-hide" class="jumbotron" hidden="True">
+        <h2>Orphan milestones</h2><br>
+        <div class="row">
+            {{for orphan_milestone in orphan_milestones:}}
+                <div id="{{=orphan_milestone.monitutor_milestones.milestone_id}}-col" class="col-sm-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{=orphan_milestone.monitutor_milestones.display_name}}
+                            <i id="{{=orphan_milestone.monitutor_milestones.milestone_id}}" class="glyphicon glyphicon-trash delete-milestone" style="float: right;"></i>
+                        </div>
+                        <div class="panel-body">
+                            {{=orphan_milestone.monitutor_milestones.description}}
+                                <hr>
+                            <h5><b>Checks:</b></h5>
+                        </div>
+                        <ul class="list-group">
+                            {{for check in tutordb((tutordb.monitutor_check_milestone.milestone_id ==
+                                                   orphan_milestone.monitutor_milestones.milestone_id) &
+                                                   (tutordb.monitutor_check_milestone.check_id ==
+                                                   tutordb.monitutor_checks.check_id)).select():}}
+                            <li class="list-group-item">{{=check.monitutor_checks.display_name}}</li>
+                            {{pass}}
+                        </ul>
+                    </div>
+                </div>
+
+            {{pass}}
+        </div>
+    </div>
+    {{pass}}
+    {{if orphan_check_count:}}
+    <div id="orphan-checks-hide" class="jumbotron" hidden="False">
+        <h2>Orphan checks</h2><br>
+        <div class="row">
+            {{for orphan_check in orphan_checks:}}
+                <div id="{{=orphan_check.monitutor_checks.check_id}}-col" class="col-sm-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                            {{=orphan_check.monitutor_checks.display_name}}
+                            <i id="{{=orphan_check.monitutor_checks.check_id}}" class="glyphicon glyphicon-trash delete-check" style="float: right;"></i>
+                        </div>
+                        <div class="panel-body">
+                            {{=orphan_check.monitutor_checks.name}}
+                                <hr>
+                            <h5><b>Parameters:</b></h5>
+                            {{=orphan_check.monitutor_checks.params}}
+                        </div>
+                    </div>
+                </div>
+            {{pass}}
+        </div>
+    </div>
+    {{pass}}
+
+</div>
+    <table class="table">
+        {{counter=1}}
+        {{for scenario in scenarios:}}
+            <tr class="hover-whitesmoke" id="{{=scenario.scenario_id}}-tr">
+            <td class="col-sm-2">
+                <a href="{{=URL('manage_scenarios', 'view_scenario', args=scenario.scenario_id)}}">
+                {{=scenario.display_name}}
+                </a>
+            </td>
+            <td class="col-sm-8">
+                {{=scenario.description}}
+                <div id="{{=scenario.scenario_id}}-hide" hidden="False">
+                    <br>
+                    {{=LOAD('manage_scenarios','edit_scenario.load',ajax=True, args=scenario.scenario_id)}}
+                </div>
+            </td>
+            <td class="col-sm-2" id="{{=scenario.scenario_id}}-tr">
+                <div class="pull-right">
+                    <i id="{{=scenario.scenario_id}}" class="glyphicon glyphicon-edit" style="margin-left: 10px"></i>
+                    {{if scenario.initiated is False:}}
+                        <i id="{{=scenario.scenario_id}}-init" class="glyphicon glyphicon-off" style="margin-left: 10px"></i>
+                    {{else:}}
+                        <i id="{{=scenario.scenario_id}}-init" class="glyphicon glyphicon-repeat" style="margin-left: 10px"></i>
+                            {{if scenario.hidden is True:}}
+                                <a href="{{=URL('manage_scenarios','show_scenario', args=scenario.scenario_id)}}">
+                                <i class="glyphicon glyphicon-eye-open" style="margin-left: 10px"></i></a>
+                            {{else:}}
+                                <a href="{{=URL('manage_scenarios','hide_scenario', args=scenario.scenario_id)}}">
+                                <i class="glyphicon glyphicon-eye-close" style="margin-left: 10px"></i></a>
+                            {{pass}}
+                    {{pass}}
+                    <i id="{{=scenario.scenario_id}}-sc-exp" class="glyphicon glyphicon-floppy-save export-scenario" style="margin-left: 10px;"></i>
+                    <i id="{{=scenario.scenario_id}}-sc-erase" class="glyphicon glyphicon-erase erase-scenario" style="margin-left: 10px;"></i>
+                    <i id="{{=scenario.scenario_id}}-sc-del" class="glyphicon glyphicon-trash delete-scenario" style="margin-left: 10px; color: red"></i>
+                </div>
+            </td>
+            </tr>
+        {{pass}}
+</table>
+<br>
+
+<h3><div id="new" class="btn btn-default"><i class="glyphicon glyphicon-plus""></i> <b>Add Scenario</b></div> </h3>
+    <div id="new-hide" hidden="True" style="margin-top:10px">
+    {{=form}}
+</div>
+        <br><br><br>
+        <br><br><br>
+
+

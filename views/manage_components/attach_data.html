@@ -1,0 +1,20 @@
+{{extend 'layout.html'}}
+<div class="container">
+
+
+<ol class="breadcrumb">
+<li><a href="{{=URL('default','index')}}">Home</a></li>
+<li><a href="{{=URL('manage_scenarios','view_scenarios')}}">Scenario dashboard</a></li>
+<li><a href="{{=URL('manage_scenarios','view_scenario', args=scenario[0].scenario_id)}}">Scenario view</a></li>
+
+<li class="active">Attach Data</li>
+</ol>
+    <b>Attached data for Scenario "{{=scenario[0].display_name}}:"<br><br></b>
+
+{{=form}}
+<br>
+<a href="{{=URL("manage_components", "add_data")}}" class="btn btn-default">Add File</a>
+
+</div>
+
+

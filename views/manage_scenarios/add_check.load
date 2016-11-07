@@ -1,0 +1,23 @@
+{{=form}}
+<br>
+<button type="button" class="btn btn-default" id="new_program">
+        <i class='glyphicon glyphicon-plus'>
+
+        </i>
+        <b>Add new program</b>
+    </button>
+
+    <br><br>
+
+    <!-- Script to toggle the new program Form! -->
+    <script type="text/javascript">
+     $( "#new_program" ).click(function() {$( "#add_program" ).toggle( "medium", function() {
+        // Animation complete.
+      });
+    });
+    </script>
+
+
+     <div id="add_program" hidden="True">
+    {{=LOAD('default','add_program.load',ajax=True)}}
+    </div>

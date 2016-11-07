@@ -1,0 +1,9 @@
+errors/
+sessions/
+uploads/
+databases/
+databases/*
+*.table
+*.log
+export/
+*.bak

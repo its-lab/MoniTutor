@@ -1,0 +1,269 @@
+<script>
+    $(document).ready(function() {
+        $(".check").on("click", {} , onClickupdateCheck);
+        $(".host").on("click", {}, onClickUpdateHost);
+        $(".milestone").click(function () {
+            $(".list-group."+this.id).find(".check").trigger("click");
+            });
+        window.setInterval(function () {
+            $(".glyphicon.glyphicon-repeat").trigger("click");
+        }, 30000);
+
+        function onClickupdateCheck( event ){
+            var checkMilestoneId = this.id;
+            var checkRow = ".row." + checkMilestoneId;
+            var progress = document.createElement("div");
+            var progressbar = document.createElement("div");
+
+            $(progressbar).css("background-color", "lightblue");
+            $(progressbar).css("height", "2px");
+            $(progressbar).css("width", "1%");
+            $(progressbar).css("margin-top", "0px");
+            $(progress).css("margin-bottom", "3px");
+            $(progress).css("margin-left", "3px");
+            $(progress).append(progressbar);
+            $(checkRow).prepend(progress);
+            $(this).off("click");
+            $(this).addClass("glyphicon-spin");
+
+            $.get("{{=URL("scenarios", "queue_task")}}",
+                    {
+                        checkMilestoneId: checkMilestoneId,
+                        scenarioid: "{{=scenarioinfo["scenario_id"]}}",
+                        username: "{{=hosts[0].icinga_customvariables.varvalue}}"
+                    },
+                    function (data, status) {
+                        var taskId = JSON.parse(data);
+                        update_check(taskId, checkRow, checkMilestoneId, progressbar);
+                        }
+                );
+            }
+
+        function onClickUpdateHost( event ){
+            var row = this.id;
+            var refresh = this;
+
+            $(refresh).off("click");
+            $(refresh).addClass("glyphicon-spin");
+            $.get("{{=URL("scenarios", "update_host")}}",
+                    {
+                        hostId: this.id
+                    },
+                    function (data, status) {
+                        if(status == "success") {
+                            var hostStatus = JSON.parse(data);
+                            displayHost(hostStatus, row, refresh);
+                            }
+                        }
+                );
+        }
+
+        function displayHost( hostStatus, row, refresh){
+            var rowLi = $("."+row+".list-group-item");
+            debugger;
+            rowLi.find(".col-sm-6").text(hostStatus.output);
+            rowLi.removeClass();
+            rowLi.find("i").removeClass();
+            if (hostStatus.state == "0") {
+                rowLi.addClass(""+row+" list-group-item list-group-item-success");
+                rowLi.find("i").addClass("glyphicon glyphicon-ok-sign");
+                rowLi.fadeTo('fast', 0.5).fadeTo('fast', 1.0);
+            }
+            else {
+                rowLi.addClass(""+row+" list-group-item list-group-item-danger");
+                rowLi.find("i").addClass("glyphicon glyphicon-fire");
+            }
+            $(refresh).removeClass("glyphicon-spin");
+            $(refresh).on("click", {} , onClickUpdateHost);
+
+        }
+
+        function update_check(taskId, row, checkMilestoneId, progressbar) {
+            $.get("{{=URL("scenarios", "update_task")}}",
+                {
+                    taskId: taskId.newTask
+                },
+                function (data, status) {
+                    if (status == "success") {
+                        var checkInfo = JSON.parse(data);
+                        if (checkInfo.status == "DONE" || checkInfo.status == "Error" ) {
+                            $(progressbar).css("width", "90%");
+                            $(progressbar).css("background-color", "lightgreen");
+                            setTimeout( function (){
+                                    $.get("{{=URL("scenarios", "update_task")}}",
+                                {
+                                    taskId: taskId.newTask
+                                },
+                                function (data, status) {
+                                    var checkInfo = JSON.parse(data);
+                                    display_results(row, checkInfo.output, checkInfo.currentState, checkMilestoneId, progressbar);
+                                    });}, 3000)
+
+                        }
+                        else if (checkInfo.status == "ASSIGNED") {
+                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            $(progressbar).css("width", "60%");
+                        }
+                        else if (checkInfo.status == "QUEUED") {
+                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            $(progressbar).css("width", "40%");
+                        }
+                        else if (checkInfo.status == "NEW") {
+                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            $(progressbar).css("width", "20%");
+                        }
+                        else {
+                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                        }
+                    }
+                });
+            }
+
+        function display_results(row2, output, current_state, checkMilestoneId, progressbar){
+
+            $(progressbar).css("width", "90%");
+            var rowLi = $("."+checkMilestoneId+".list-group-item");
+            var rowI = ".row."+checkMilestoneId;
+            rowLi.removeClass();
+            $(rowI).find("i").removeClass();
+            rowLi.find(".col-sm-6").text(output);
+            if (current_state == "0") {
+                rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-success");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-ok-sign");
+                rowLi.fadeTo('fast', 0.5).fadeTo('fast', 1.0);
+            }
+            else if (current_state == "2") {
+                rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-danger");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-fire");
+            }
+            else if (current_state == "1") {
+                rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-warning");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-flash");
+            }
+            else {
+                rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-info");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-question-sign");
+            }
+            $("#"+checkMilestoneId).removeClass("glyphicon-spin").on("click", {} , onClickupdateCheck);
+            $(progressbar).toggle();
+            $(progressbar).parent().remove();
+        }
+
+    $(function () {
+        $('[data-toggle="popover"]').popover()
+    })
+
+    });
+
+
+
+
+</script>
+
+<div class="list-group-item">
+    <h5>Progress:</h5>
+    <div class="progress">
+      <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{=user_s[0].scenario_user.progress}}" aria-valuemin="0" aria-valuemax="100" style="width: {{=user_s[0].scenario_user.progress}}%">
+        <span class="sr-only">{{=user_s[0].scenario_user.progress}}% Complete</span>
+      </div>
+    </div>
+</div>
+
+
+<div class="panel panel-default">
+          <div class="panel-heading">Active Hosts for user: {{=hosts[0].icinga_customvariables.varvalue}}</div>
+            <ul class="list-group">
+                {{for host in hosts:}}
+                      {{if host.icinga_hoststatus.current_state == 0:}}
+                          <li class="H{{=host.icinga_hoststatus.id}} list-group-item list-group-item-success">
+                          <div class="row">
+                          <div class="col-sm-1"><i id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-ok-sign"></i></div>
+                      {{else:}}
+                          <li class="H{{=host.icinga_hoststatus.id}} list-group-item list-group-item-danger">
+                          <div class="row">
+                          <div class="col-sm-1"><i  id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-fire"></i></div>
+                          {{pass}}
+
+                          <div class="col-sm-4">
+                              {{=host.icinga_hosts.display_name}}
+                          </div>
+                          <div class="col-sm-6">
+                              {{=host.icinga_hoststatus.output}}
+                          </div>
+                          <div class="col-sm-1">
+                              <a id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-refresh host"></a>
+                          </div>
+                        </div>
+                      </i>
+                      {{pass}}
+                </ul>
+              </div>
+
+                        <br>
+{{for milestone in scenarioinfo["milestones"]:}}
+
+        {{if milestone.monitutor_milestone_scenario.hidden == False or auth.has_membership("admin"):}}
+        <div class="panel panel-default">
+          <div class="panel-heading">
+            <a><i id="{{=milestone.monitutor_milestones.milestone_id}}" class='glyphicon glyphicon-refresh milestone' style="float: right;margin-right: 10px; margin-top: 3px;"></i></a>
+            {{=milestone.monitutor_milestones.display_name}}
+          </div>
+          <div class="panel-body">
+            <p>{{=XML(milestone.monitutor_milestones.description)}}</p>
+
+            </div>
+              <ul class="list-group {{=milestone.monitutor_milestones.milestone_id}}">
+                  {{checks = scenarioinfo["checks"][milestone.monitutor_milestones.milestone_id]}}
+                  {{for check in checks:}}
+                            {{icinga_servicename = str(username) + "_" + str(check.monitutor_checks.name)}}
+                            {{icinga_servicestatus = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.object_id) & (db.icinga_objects.name1 == (username + "_" + check.monitutor_systems.name) ) & (db.icinga_objects.name2 == icinga_servicename)).select() }}
+                            {{if len(icinga_servicestatus):}}
+                                {{if icinga_servicestatus[0].icinga_servicestatus.current_state == 0:}}
+                                    <li class="{{=check.monitutor_check_milestone.check_milestone_id}} list-group-item list-group-item-success">
+                                {{elif icinga_servicestatus[0].icinga_servicestatus.current_state == 1:}}
+                                    <li class="{{=check.monitutor_check_milestone.check_milestone_id}} list-group-item list-group-item-warning">
+                                {{elif icinga_servicestatus[0].icinga_servicestatus.current_state == 2:}}
+                                    <li class="{{=check.monitutor_check_milestone.check_milestone_id}} list-group-item list-group-item-danger">
+                                {{else:}}
+                                    <li class="{{=check.monitutor_check_milestone.check_milestone_id}} list-group-item list-group-item-info">
+                                {{pass}}
+                                <div class="row {{=check.monitutor_check_milestone.check_milestone_id}}">
+                                     <div class="col-sm-1">
+                                         {{if icinga_servicestatus[0].icinga_servicestatus.current_state==0:}}
+                                              <i class="glyphicon glyphicon-ok-sign"></i>
+                                         {{elif icinga_servicestatus[0].icinga_servicestatus.current_state==2:}}
+                                              <i class="glyphicon glyphicon-fire"></i>
+                                         {{elif icinga_servicestatus[0].icinga_servicestatus.current_state==1:}}
+                                               <i class="glyphicon glyphicon-flash"></i>
+                                         {{else:}}
+                                               <i class="glyphicon glyphicon-question-sign"></i>
+                                         {{pass}}
+                                     </div>
+                                     <div class="col-sm-3">
+                                         {{=check.monitutor_checks.display_name}}
+                                     </div>
+                                     <div class="col-sm-6 {{=check.monitutor_check_milestone.check_milestone_id}}">
+                                         {{=icinga_servicestatus[0].icinga_servicestatus.output}}
+                                     </div>
+                                     <div class="col-sm-2" style="text-align: right;">
+                                         <a id="{{=check.monitutor_check_milestone.check_milestone_id}}" class='glyphicon glyphicon-refresh check' style="float: right;margin-right: 10px;" ></a>
+                                             {{if check.monitutor_checks.hint is not None:}}
+                                                <a class='glyphicon glyphicon-info-sign' style="float: right; margin-right: 15px;"
+                                                   data-toggle="popover" data-container="body" data-trigger="click"
+                                                   title="Hint" data-content="{{=check.monitutor_checks.hint}}">
+                                                </a>
+                                            {{pass}}
+                                     </div>
+                                </div>
+                            </li>
+                            {{pass}}
+                    {{pass}}
+              </ul>
+
+
+
+            </div>
+
+        <br>
+        {{pass}}
+    {{pass}}

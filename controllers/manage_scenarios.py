@@ -1,0 +1,704 @@
+import json
+
+@auth.requires_membership('admin')
+def view_scenarios():
+    """Displays all Scenarios and global scenario information"""
+
+    orphan_milestones = tutordb((tutordb.monitutor_milestone_scenario.milestone_id == None)).select(
+        tutordb.monitutor_milestone_scenario.ALL,
+        tutordb.monitutor_milestones.ALL,
+        left=[tutordb.monitutor_milestone_scenario.on(tutordb.monitutor_milestone_scenario.milestone_id ==
+                                                      tutordb.monitutor_milestones.milestone_id)]
+
+        )
+    orphan_milestone_count = len(orphan_milestones)
+
+    orphan_checks = tutordb(tutordb.monitutor_check_milestone.check_id == None).select(
+        tutordb.monitutor_check_milestone.ALL, tutordb.monitutor_checks.ALL,
+        left=tutordb.monitutor_check_milestone.on(tutordb.monitutor_check_milestone.check_id ==
+                                             tutordb.monitutor_checks.check_id)
+        )
+    orphan_check_count = len(orphan_checks)
+
+    scenarios = tutordb(tutordb.monitutor_scenarios).select()
+    form = SQLFORM(tutordb.monitutor_scenarios)
+    if form.process().accepted:
+        session.flash = 'Record inserted.'
+        redirect(URL('default','index'))
+    elif form.errors:
+        session.flash = 'There was am error.'
+    return dict(scenarios=scenarios,
+                form=form,
+                orphan_milestones=orphan_milestones,
+                orphan_milestone_count=orphan_milestone_count,
+                orphan_check_count=orphan_check_count,
+                orphan_checks=orphan_checks)
+
+
+@auth.requires_membership('admin')
+def init_scenario():
+    scenario_id = request.vars.scenarioId
+    task_id = initializer.queue_task('init_scenario', group_name="init", pargs=[scenario_id])
+    return json.dumps({"taskId": task_id.id, "progress": 20})
+
+
+@auth.requires_membership('admin')
+def update_task_status():
+    """Queries tutordb for task status. When finished, it returns the status of the corresponding service"""
+    task_id = request.vars.taskId
+    task_info = initializer.task_status(int(task_id), output=True)
+    if task_info is not None:
+        status = task_info.scheduler_task.status
+        error = None
+    else:
+        status = "UNKNOWN TaskID: " + task_id
+        error  = "Couldn't find task"
+    if status == "QUEUED":
+        progress = 40
+    elif status == "ASSIGNED":
+        progress = 60
+    elif status == "RUNNING":
+        progress = 80
+    elif status == "COMPLETED":
+        progress = 100
+    else:
+        progress = 0
+        error = "STATUS: " + status
+
+    return json.dumps({"progress": progress, "error": error})
+
+
+@auth.requires_membership('admin')
+def edit_scenario():
+    """Displays a form to edit a given scenario"""
+    scenario_id = request.args(0, cast=int)
+    scenario = tutordb.monitutor_scenarios[scenario_id]
+    form = FORM(
+        DIV(
+          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT( _name="name", _class="form-control", _value=scenario.name, requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
+        DIV(
+          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT( _name="display_name", _class="form-control", _value=scenario.display_name, requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
+        B("Description:"),BR(),
+        DIV(
+          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
+          TEXTAREA(scenario.description, _name="description",  _class="form-control"), _class="input-group"),BR(),
+        B("Goal:"),BR(),
+        DIV(
+          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
+          TEXTAREA(scenario.goal, _name="goal",  _class="form-control"), _class="input-group"),BR(),
+        INPUT( _type='submit'),BR(),BR(),
+        _id="form1"
+    )
+
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+        tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).validate_and_update(
+                                    description=form.vars.description,
+                                    goal=form.vars.goal,
+                                    name=form.vars.name,
+                                    display_name=form.vars.display_name,
+                                    initiated=False,
+                                    hidden=True)
+        redirect(URL(args=scenario_id))
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def hide_scenario():
+    """Sets the value of a given Scenarios hidden field to True"""
+    scenario_id = request.args(0, cast=int)
+    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=True)
+    redirect(URL('manage_scenarios', 'view_scenarios'))
+    return dict(scenarioid=scenario_id)
+
+
+@auth.requires_membership('admin')
+def show_scenario():
+    """Sets the value of a given Scenarios hidden field to False"""
+    scenario_id = request.args(0, cast=int)
+    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=False)
+    redirect(URL('manage_scenarios', 'view_scenarios'))
+    return dict(scenarioid=scenario_id)
+
+
+@auth.requires_membership('admin')
+def view_scenario():
+    """Displays an overview over the scenario, its attached data and the associated milestones."""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        redirect(URL(''))
+        scenario_id = None
+    scenario_data_query = (tutordb.monitutor_scenarios.scenario_id == scenario_id)
+    scenario = tutordb(scenario_data_query).select(tutordb.monitutor_scenarios.ALL,
+                                                   tutordb.monitutor_scenario_data.ALL,
+                                                   left=tutordb.monitutor_scenario_data.on(
+            tutordb.monitutor_scenarios.scenario_id == tutordb.monitutor_scenario_data.scenario_id))
+
+    data = tutordb((tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id) &
+                   (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select()
+
+    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
+                          tutordb.monitutor_milestone_scenario.milestone_id) &
+                         (tutordb.monitutor_milestone_scenario.scenario_id ==
+                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+
+    return dict(scenario=scenario, data=data, milestones=milestones)
+
+
+@auth.requires_membership('admin')
+def view_milestone():
+    """Overview over a given milestone, displaying associated checks and milestone information."""
+    if len(request.args) > 1:
+        milestone_id = request.args(0, cast=int)
+        scenario_id = request.args(1, cast=int)
+    else:
+        redirect(URL(''))
+        milestone_id = None
+        scenario_id = None
+    scenario = tutordb.monitutor_scenarios[scenario_id]
+    milestone = tutordb.monitutor_milestones[milestone_id]
+    check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
+                              (tutordb.monitutor_check_milestone.check_id == tutordb.monitutor_checks.check_id) &
+                              (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id) &
+                              (tutordb.monitutor_programs.interpreter_id ==
+                               tutordb.monitutor_interpreters.interpreter_id)).select(
+        orderby=tutordb.monitutor_check_milestone.sequence_nr)
+    return dict(milestone=milestone,
+                checks=check_milestone,
+                scenarioid=scenario_id,
+                milestoneid=milestone_id,
+                scenario=scenario)
+
+
+@auth.requires_membership('admin')
+def add_check():
+    """Adds a check to a given milestone"""
+    if len(request.args):
+        milestone_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default', 'index'))
+        milestone_id = None
+    programs = tutordb(tutordb.monitutor_programs).select()
+    options = OPTION(" ")
+    for row in programs:
+        options += OPTION(XML(row.display_name),
+                          _value=row.program_id)
+    form = FORM(
+        DIV(
+          SPAN(XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT(
+              _name="name",
+              _class="form-control",
+              requires=[IS_NOT_EMPTY(), IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]
+              ), _class="input-group"), BR(),
+        DIV(
+          SPAN(XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT(_name="display_name",  _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"), BR(),
+        DIV(
+          SPAN(XML('<b>Parameters</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT(_name="params",  _class="form-control"), _class="input-group"), BR(),
+        XML("<b>Program</b>"),
+        DIV(
+            SELECT((options), _name="program", _class="form-control", requires=IS_NOT_EMPTY()),
+            _class="input-group"), BR(),
+        INPUT(_type='submit'),
+        _id="form"
+        )
+    if form.accepts(request, session):
+        response.flash = "form accepted"
+        if form.vars.params is None:
+            newid = tutordb.monitutor_checks.insert(name=form.vars.name,
+                                            display_name=form.vars.display_name,
+                                            program_id=form.vars.program,
+                                            params=None,
+                                            hint="")
+        else:
+            newid = tutordb.monitutor_checks.insert(name=form.vars.name,
+                                            display_name=form.vars.display_name,
+                                            program_id=form.vars.program,
+                                            params=form.vars.params,
+                                            hint="")
+        tutordb.monitutor_check_milestone.insert(check_id=newid,
+                                                 milestone_id=milestone_id,
+                                                 flag_invis=0,
+                                                 sequence_nr=0)
+
+    return dict(programs=programs, form=form)
+
+
+@auth.requires_membership('admin')
+def add_existing_check():
+    """Allows associating an existing check to a new milestone."""
+    if len(request.args):
+        milestone_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        milestone_id = None
+    checks = tutordb(tutordb.monitutor_checks).select(orderby=tutordb.monitutor_checks.display_name)
+    input_list = DIV()
+    for check in checks:
+        input_field = DIV(
+                        DIV(
+                            SPAN(
+                                INPUT(_type='radio', _name="add", _value=check.check_id)
+                                , _class="input-group-addon"
+                            ),
+                            DIV(
+                                str(check.display_name[:33]), _class="form-control"
+                            ),
+                            _class="input-group"
+                        ),
+                        _class="col-lg-4", _style="margin-bottom: 5px"
+        )
+        input_list += input_field
+    form = FORM(
+        FIELDSET(
+            input_list
+            ), BR(),
+            INPUT(_type='submit'),
+        _action="#"
+        )
+
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+        tutordb.monitutor_check_milestone.insert(check_id=form.vars.add,
+                                                 milestone_id=milestone_id,
+                                                 flag_invis=False,
+                                                 sequence_nr=0)
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def edit_milestone_form():
+    """Displays a form to edit a given milestone"""
+    if len(request.args):
+        milestone_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        milestone_id = None
+    current_milestone = tutordb.monitutor_milestones[milestone_id]
+    form = FORM(
+        DIV(
+            SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
+            INPUT(_name="name",
+                  _class="form-control",
+                  requires=IS_NOT_EMPTY(),
+                  _value=current_milestone.name),
+            _class="input-group"), BR(),
+        DIV(
+            SPAN(XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
+            INPUT(_name="display_name",
+                  _class="form-control",
+                  requires=IS_NOT_EMPTY(),
+                  _value=current_milestone.display_name),
+            _class="input-group"), BR(),
+        XML('<b>Description:</b>'), BR(),
+        DIV(
+            SPAN( XML(''),
+            _class="input-group-addon", _id="basic-addon"),
+            TEXTAREA(current_milestone.description,
+                     _name="description",
+                     _class="form-control"
+                     ),
+            _class="input-group"), BR(),
+        INPUT(_type='submit'),
+        _id="form"
+    )
+    if form.accepts(request, session):
+        response.flash = "form accepted"
+        tutordb(tutordb.monitutor_milestones.milestone_id == milestone_id).validate_and_update(name=form.vars.name,
+                                            display_name=form.vars.display_name,
+                                            description=form.vars.description)
+
+    return dict(addscenario_form=form)
+
+
+@auth.requires_membership('admin')
+def remove_check():
+    """Deletes the reference between the check and the milestone"""
+    milestone_id = request.args(0, cast=int)
+    check_milestone_id = request.args(1, cast=int)
+    scenario_id = request.args(2, cast=int)
+    del tutordb.monitutor_check_milestone[check_milestone_id]
+
+    if scenario_id:
+        redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
+
+
+@auth.requires_membership('admin')
+def hide_check():
+    """Hides a check so it is only visible to administrators"""
+    milestone_id = request.args(0, cast=int)
+    check_milestone_id = request.args(1, cast=int)
+    invis = request.args(2, cast=int)
+    scenario_id = request.args(3, cast=int)
+    tutordb.monitutor_check_milestone[check_milestone_id] = dict(flag_invis=invis)
+
+    if scenario_id:
+        redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
+
+
+@auth.requires_membership('admin')
+def lower_check():
+    """Lowers the check prio to change the order of checks within a milestone"""
+    milestone_id = request.args(0, cast=int)
+    check_milestone_id = request.args(1, cast=int)
+    lower = request.args(2, cast=int)
+    scenario_id = request.args(3, cast=int)
+
+    row = tutordb.monitutor_check_milestone[check_milestone_id]
+    sequence = row.sequence_nr
+    if lower == 1:
+        tutordb.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence-1)
+    else:
+        tutordb.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence+1)
+
+    if scenario_id:
+        redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
+
+
+@auth.requires_membership('admin')
+def remove_milestone():
+    """Removes the reference between a given scenario and a milestone"""
+    milestone_scenario_id = request.args(0, cast=int)
+    scenario_id = request.args(1, cast=int)
+    del tutordb.monitutor_milestone_scenario[milestone_scenario_id]
+    if scenario_id:
+        redirect(URL('manage_scenarios', 'view_scenario.html', args=[scenario_id]))
+
+
+@auth.requires_membership('admin')
+def hide_milestone():
+    """Hides a milestone so it can only be seen by an administrator"""
+    milestone_scenario_id = request.args(0, cast=int)
+    invis = request.args(1, cast=int)
+    scenario_id = request.args(2, cast=int)
+    tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(hidden=invis)
+    if scenario_id:
+        redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
+
+
+@auth.requires_membership('admin')
+def lower_milestone():
+    """Lowers the milestone milestone prio to change order"""
+    milestone_scenario_id = request.args(0, cast=int)
+    lower = request.args(1, cast=int)
+    scenario_id = request.args(2, cast=int)
+
+    row = tutordb.monitutor_milestone_scenario[milestone_scenario_id]
+    sequence = row.sequence_nr
+    if lower == 1:
+        tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence-1)
+    else:
+        tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence+1)
+    if scenario_id:
+        redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
+
+
+@auth.requires_membership('admin')
+def delete_milestone():
+    milestone_id = request.vars.milestoneId
+    milestonerefs = tutordb(tutordb.monitutor_check_milestone.milestone_id == milestone_id)
+    milestone = tutordb(tutordb.monitutor_milestones.milestone_id == milestone_id)
+    milestonerefs.delete()
+    milestone.delete()
+    return json.dumps({milestone_id: True})
+
+
+@auth.requires_membership('admin')
+def delete_check():
+    check_id = request.vars.checkId
+    check = tutordb(tutordb.monitutor_checks.check_id == check_id)
+    targets = tutordb(tutordb.monitutor_targets.check_id == check_id)
+    targets.delete()
+    check.delete()
+    return json.dumps({check_id: True})
+
+
+@auth.requires_membership('admin')
+def add_milestone():
+    """Displays form to add milestone to a given scenario"""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        scenario_id = None
+        redirect(URL('default','index'))
+
+    scenario_milestone = tutordb((tutordb.monitutor_milestone_scenario.milestone_id ==
+                                  tutordb.monitutor_milestones.milestone_id) &
+                                 (tutordb.monitutor_milestone_scenario.scenario_id == scenario_id)).select()
+
+    options = OPTION("No dependency", _value=None, _selected="selected")
+    for row in scenario_milestone:
+        options += OPTION(XML(row.monitutor_milestones.display_name),
+                          _value=row.monitutor_milestone_scenario.milestone_scenario_id)
+    form = FORM(
+        DIV(
+          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT( _name="name", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
+        DIV(
+          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT( _name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
+        XML('<b>Description:</b>'),BR(),
+        DIV(
+          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
+          TEXTAREA(_name="description", _form='form',  _class="form-control"), _class="input-group"),BR(),
+        INPUT(_type='submit'),
+        _id="form"
+    )
+
+    if form.accepts(request, session):
+        response.flash = "form accepted"
+        newid = tutordb.monitutor_milestones.insert(name=form.vars.name,
+                                            display_name=form.vars.display_name,
+                                            description=form.vars.description)
+        if scenario_id is not None:
+            if form.vars.dependency is None:
+                tutordb.monitutor_milestone_scenario.insert(milestone_id=long(newid),
+                                                        scenario_id=long(scenario_id),
+                                                        sequence_nr=int(0))
+            else:
+                tutordb.monitutor_milestone_scenario.insert(milestone_id=long(newid),
+                                                        scenario_id=long(scenario_id),
+                                                        sequence_nr=int(0),
+                                                        dependency=form.vars.dependency)
+    return dict(addscenario_form=form)
+
+
+@auth.requires_membership('admin')
+def add_milestone_ref():
+    """Adds an existing Milestone to the scenario by adding a reference"""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        scenario_id = None
+    milestones = tutordb(tutordb.monitutor_milestones).select()
+    input_list = DIV()
+    for milestone in milestones:
+        input_field = DIV(
+                DIV(
+                    SPAN(
+                            INPUT(_type='radio', _name="add", _value=milestone.milestone_id)
+                    , _class="input-group-addon"),
+                    DIV(
+                        str(milestone.display_name[:33])
+                        , _class="form-control")
+                , _class="input-group")
+            , _class="col-lg-4", _style="margin-bottom: 5px")
+        input_list += input_field
+    form = FORM(
+        FIELDSET(
+            input_list
+        ), BR(),
+        INPUT(_type='submit'),
+        _action="#"
+    )
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+        tutordb.monitutor_milestone_scenario.insert(milestone_id=form.vars.add,
+                                    scenario_id=scenario_id,
+                                    hidden=False,
+                                    sequence_nr=0)
+    return dict(form=form)
+
+
+@auth.requires_membership('admin')
+def edit_check():
+    """Displays forms to show and alter all information of a given check"""
+    if len(request.args):
+        check_id = request.args(0, cast=int)
+        if len(request.args) > 2:
+            scenario_id = request.args(1, cast=int)
+            milestone_id = request.args(2, cast=int)
+        else:
+            scenario_id = None
+            milestone_id = None
+    else:
+        redirect(URL('default','index'))
+        check_id = None
+        scenario_id = None
+        milestone_id = None
+
+    programs = tutordb(tutordb.monitutor_programs).select()
+    options = OPTION(" ")
+    defaults = tutordb.monitutor_checks[check_id]
+    for row in programs:
+        if row.program_id == defaults.program_id:
+            options += OPTION(XML(row.display_name),
+                                  _value=row.program_id,
+                                  _selected="selected")
+        else:
+            options += OPTION(XML(row.display_name),
+                          _value=row.program_id)
+    form = FORM(
+        DIV(
+          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          DIV( defaults.name, _class="form-control"), _class="input-group" ),BR(),
+        DIV(
+          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT( _value=defaults.display_name,_name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),
+            _class="input-group"), BR(),
+        DIV(
+          SPAN( XML('<b>Parameters</b>'), _class="input-group-addon", _id="basic-addon"),
+          INPUT(_value=defaults.params, _name="params", _form='form',  _class="form-control"), _class="input-group"), BR(),
+        XML("<b>Program</b>"),
+        DIV(
+            SELECT((options), _name="program", _form="form", _class="form-control", requires=IS_NOT_EMPTY()),
+            _class="input-group"),BR(),
+        XML("<b>Hint</b>"),
+        DIV(
+            SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
+            TEXTAREA(defaults.hint, _name="hint", _form='form',  _class="form-control"), _class="input-group"),BR(),
+        INPUT( _type='submit', scenario_id=scenario_id),
+
+        _id="form"
+    )
+
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+        if form.vars.hint == None or form.vars.hint == "":
+            tutordb(tutordb.monitutor_checks.check_id == check_id).validate_and_update(
+                                    display_name=form.vars.display_name,
+                                    params=form.vars.params,
+                                    program_id=form.vars.program,
+                                    hint="")
+        else:
+            tutordb(tutordb.monitutor_checks.check_id == check_id).validate_and_update(
+                                    display_name=form.vars.display_name,
+                                    params=form.vars.params,
+                                    program_id=form.vars.program,
+                                    hint=form.vars.hint)
+        if scenario_id is not None and milestone_id is not None:
+            redirect(URL('manage_scenarios','edit_check', args=[check_id, scenario_id, milestone_id]))
+        else:
+            redirect(URL('manage_scenarios','edit_check', args=[check_id]))
+
+    return dict(form=form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
+
+
+@auth.requires_membership('admin')
+def add_target():
+    """Displays information and a form to alter a checks target references"""
+    if len(request.args):
+        check_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        check_id = None
+    targets = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
+                      (tutordb.monitutor_targets.check_id == check_id) &
+                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)).select()
+    check = tutordb(tutordb.monitutor_checks.check_id == check_id).select()
+    type_options = OPTION(" ")
+    types = tutordb(tutordb.monitutor_types).select()
+    for type in types:
+        type_options += OPTION(XML(type.display_name),
+                          _value=type.type_id)
+    sys_option = OPTION(" ")
+    syss = tutordb(tutordb.monitutor_systems).select()
+    for sys in syss:
+        sys_option += OPTION(XML(sys.display_name),
+                          _value=sys.system_id)
+    new_target = FORM(
+        DIV(
+            XML('<b>System:</b>'),
+            SELECT((sys_option), _name="system", _form="newtarget", _class="form-control", requires=IS_NOT_EMPTY()), _class="input_group"), BR(),
+        DIV(
+            XML('<b>Type:</b>'),
+            SELECT((type_options), _name="type", _form="newtarget", _class="form-control", requires=IS_NOT_EMPTY()), _class="input_group"), BR(),
+        INPUT(_type='submit'),
+        _id="newtarget"
+    )
+    if new_target.accepts(request, session):
+        validate_db = tutordb((tutordb.monitutor_targets.check_id == check_id) &
+                              (tutordb.monitutor_targets.system_id == new_target.vars.system) &
+                              (tutordb.monitutor_targets.type_id == new_target.vars.type)
+                              ).select()
+        if len(validate_db):
+            response.flash = "duplicate entry!"
+        else:
+            tutordb.monitutor_targets.insert(
+                                    check_id=check_id,
+                                    system_id=new_target.vars.system,
+                                    type_id=new_target.vars.type,
+                                    )
+            response.flash = "Entry inserted!"
+            redirect(URL(args=check_id))
+    return dict(targets=targets, check=check, newtarget=new_target)
+
+
+@auth.requires_membership('admin')
+def view_target():
+    """Displays all information of a target"""
+    if len(request.args):
+        check_id = request.args(0, cast=int)
+    else:
+        check_id = None
+    targets = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
+                      (tutordb.monitutor_targets.check_id == check_id) &
+                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)).select()
+    return dict(targets=targets)
+
+
+@auth.requires_membership("admin")
+def delete_target():
+    """Removes a system from a check by deleting the target"""
+    target_id = request.vars.targetId
+    tutordb(tutordb.monitutor_targets.target_id == target_id).delete()
+    return json.dumps(dict(target_id=target_id))
+
+
+@auth.requires_membership("admin")
+def delete_scenario():
+    """Deletes a given Scenario and all its references"""
+    scenario_id = request.vars.scenarioId
+    tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).delete()
+    tutordb(tutordb.monitutor_scenario_data.scenario_id == scenario_id).delete()
+    tutordb(tutordb.scenario_user.scenario_id == scenario_id).delete()
+    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).delete()
+    return json.dumps(dict(scenario_id=scenario_id))
+
+@auth.requires_membership("admin")
+def export_scenario():
+    """Exports a given scenario"""
+    scenario_id = request.vars.scenarioId
+    export_all = tutordb((tutordb.monitutor_scenarios.scenario_id == scenario_id) &
+                         (tutordb.monitutor_milestone_scenario.scenario_id ==
+                          tutordb.monitutor_scenarios.scenario_id) &
+                         (tutordb.monitutor_milestone_scenario.milestone_id ==
+                          tutordb.monitutor_milestones.milestone_id) &
+                         (tutordb.monitutor_check_milestone.milestone_id ==
+                          tutordb.monitutor_milestones.milestone_id) &
+                         (tutordb.monitutor_check_milestone.check_id ==
+                          tutordb.monitutor_checks.check_id) &
+                         (tutordb.monitutor_checks.program_id ==
+                          tutordb.monitutor_programs.program_id) &
+                         (tutordb.monitutor_programs.interpreter_id ==
+                          tutordb.monitutor_interpreters.interpreter_id) &
+                         (tutordb.monitutor_checks.check_id ==
+                          tutordb.monitutor_targets.check_id) &
+                         (tutordb.monitutor_targets.system_id ==
+                          tutordb.monitutor_systems.system_id) &
+                         (tutordb.monitutor_targets.type_id ==
+                          tutordb.monitutor_types.type_id)).select()
+    if len(export_all):
+        path = './applications/MoniTutor/export/' + export_all[0].monitutor_scenarios.name + '.csv'
+        export_all.export_to_csv_file(open(path , 'wb'))
+    return json.dumps({"path": export_all[0].monitutor_scenarios.name + '.csv'})
+
+@auth.requires_membership("admin")
+def erase_scenario():
+    scenario_id = request.vars.scenarioId
+    for user in tutordb(tutordb.auth_user).select():
+        initializer.queue_task('drop_user_scenario', group_name="init", pargs=[user.username, scenario_id])
+        tutordb.scenario_user.update_or_insert((tutordb.scenario_user.scenario_id == scenario_id) &
+                                           (tutordb.scenario_user.user_id == user.id),
+                                            scenario_id=scenario_id,
+                                            user_id=user.id,
+                                            status="")
+    return json.dumps(dict(scenario_id=scenario_id))

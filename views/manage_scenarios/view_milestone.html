@@ -1,0 +1,174 @@
+{{extend 'layout.html'}}
+<script>
+    $(document).ready(function() {
+        $( "#edit" ).click(function() {
+            $( "#edit_milestone" ).toggle( "medium", function() {
+            });
+        });
+        $( "#new_check" ).click(function() {
+            $( "#add_check" ).toggle( "medium", function() {
+            });
+        });
+        $( "#existing_check" ).click(function() {
+            $( "#add_existing_check" ).toggle( "medium", function() {
+            });
+        });
+        $(".glyphicon.glyphicon-info-sign").on("click", {}, onClickToggle);
+        function onClickToggle(event){
+            var element = "#" + this.id + "-hidden";
+            $(element).toggle("medium", function(){});
+        }
+
+    });
+</script>
+
+<div class="container">
+
+    <ol class="breadcrumb">
+        <li><a href="{{=URL('default','index')}}">Home</a></li>
+        <li><a href="{{=URL('manage_scenarios','view_scenarios')}}">Scenario overview</a></li>
+        <li><a href="{{=URL('manage_scenarios','view_scenario', args=scenarioid)}}">Scenario {{=scenario.display_name}}</a></li>
+        <li>Milestone {{=milestone.display_name}}</li>
+    </ol>
+
+    <div class="jumbotron">
+        <h2>Milestone - {{=milestone.display_name}}</h2>
+        <hr>
+        <h4>Description:</h4>
+        {{=milestone.description}}
+        <br>
+        <i id="edit" class="glyphicon glyphicon-pencil" style="float: right; "></i>
+    </div>
+
+    <div hidden="True" id="edit_milestone" style="margin: 10px" >
+        {{=LOAD('manage_scenarios','edit_milestone_form.load', ajax=True, args=milestoneid)}}
+    </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <div class="row">
+                <div class="col-md-12">
+                    <h3 class="panel-title">
+                        Associated checks
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="list-group-item">
+            <i id="new_check" class="glyphicon glyphicon-plus" style="float: right;"></i>
+            <h3 class="panel-title">
+                Add new check to Milestone
+            </h3>
+        </div>
+        <div class="list-group-item">
+            <i id="existing_check" class="glyphicon glyphicon-plus" style="float: right;"></i>
+            <h3 class="panel-title">
+                Add existing check to Milestone
+            </h3>
+        </div>
+        <div hidden="True" id="add_check" style="margin: 10px" >
+            {{=LOAD('manage_scenarios','add_check.load', ajax=True, args=milestoneid)}}
+        </div>
+        <div hidden="True" id="add_existing_check" style="margin: 10px" >
+            {{=LOAD('manage_scenarios','add_existing_check.load', ajax=True, args=milestoneid)}}
+        </div>
+
+        {{for check in checks:}}
+            <div class="list-group-item">
+                <a href="{{=URL('manage_scenarios','remove_check',
+                         args=[milestone.milestone_id,
+                               check.monitutor_check_milestone.check_milestone_id,
+                               scenarioid])}}">
+                    <i class="glyphicon glyphicon-minus" style="float: right;"></i>
+                </a>
+                {{if check.monitutor_check_milestone.flag_invis == 1:}}
+                    <a href="{{=URL('manage_scenarios','hide_check',
+                               args=[milestone.milestone_id,
+                                     check.monitutor_check_milestone.check_milestone_id,
+                                     "0",
+                                     scenarioid])}}">
+                        <i class="glyphicon glyphicon-eye-close" style="float: right; margin-right: 10px;"></i>
+                    </a>
+                {{else:}}
+                    <a href="{{=URL('manage_scenarios','hide_check',
+                               args=[milestone.milestone_id,
+                                     check.monitutor_check_milestone.check_milestone_id,
+                                     "1",
+                                     scenarioid])}}">
+                        <i class="glyphicon glyphicon-eye-open" style="float: right; margin-right: 10px;"></i>
+                    </a>
+                {{pass}}
+                {{if check.monitutor_check_milestone.sequence_nr == 0:}}
+                    <a href="{{=URL('manage_scenarios','lower_check',
+                               args=[milestone.milestone_id,
+                                     check.monitutor_check_milestone.check_milestone_id,
+                                     "0",
+                                     scenarioid])}}">
+                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                    </a>
+                {{else:}}
+                    <a href="{{=URL('manage_scenarios','lower_check',
+                               args=[milestone.milestone_id,
+                                     check.monitutor_check_milestone.check_milestone_id,
+                                     "1",
+                                     scenarioid])}}">
+                        <i class="glyphicon glyphicon-arrow-up" style="float: right; margin-right: 10px;"></i>
+                    </a>
+                    <a href="{{=URL('manage_scenarios','lower_check',
+                               args=[milestone.milestone_id,
+                                     check.monitutor_check_milestone.check_milestone_id,
+                                     "0",
+                                     scenarioid])}}">
+                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                    </a>
+                {{pass}}
+                <a href="{{=URL('manage_scenarios','edit_check',
+                           args=[check.monitutor_checks.check_id, scenarioid, milestoneid])}}">
+                    {{=check.monitutor_checks.display_name}}
+                    {{if check.monitutor_checks.params is not "":}}
+                        - {{=check.monitutor_checks.params}}
+
+                    {{pass}}
+                </a>
+                <i id="{{=check.monitutor_check_milestone.check_milestone_id}}-info"
+                   class='glyphicon glyphicon-info-sign'
+                   style="float: right; margin-right: 10px" ></i>
+            </div>
+            <div id="{{=check.monitutor_check_milestone.check_milestone_id}}-info-hidden"
+                 class="list-group-item list-group-item-warning"
+                 id="{{=check.monitutor_checks.check_id}}-show" style="display: none;">
+                <p>
+                    <b>Program:</b><br>
+                    {{=check.monitutor_programs.display_name}}
+                </p>
+                <p>
+                    <b>Executed check:</b><br>
+                    {{=check.monitutor_interpreters.path}} {{=check.monitutor_programs.name}} {{=check.monitutor_checks.params}}
+                </p>
+                <table class="table table-striped">
+                    <tr>
+                        <td>Type</td>
+                        <td>Hostname</td>
+                        <td>Ipv4</td>
+                        <td>Ipv6</td>
+                    </tr>
+                    {{for system in tutordb((tutordb.monitutor_targets.check_id == check.monitutor_checks.check_id) &
+                                            (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
+                                            (tutordb.monitutor_targets.type_id ==
+                                             tutordb.monitutor_types.type_id)).select(orderby=tutordb.monitutor_types.type_id):}}
+                    <tr>
+                        <td>{{=system.monitutor_types.display_name}}</td>
+                        <td>{{=system.monitutor_systems.hostname}}</td>
+                        <td>{{=system.monitutor_systems.ip4_address}}</td>
+                        <td>{{=system.monitutor_systems.ip6_address}}</td>
+                    </tr>
+                    {{pass}}
+                </table>
+                <p>
+                    <b>Hint:</b>
+                    {{=check.monitutor_checks.hint}}
+                </p>
+            </div>
+        {{pass}}
+    </div>
+</div>

@@ -1,0 +1,26 @@
+{{extend 'layout.html'}}
+<div class="container">
+    <div class="jumbotron" style="text-align: center">
+        <h1>Welcome, {{=session.auth.user.first_name}}!</h1>
+        <br>
+        <p class="lead">
+            To get started, klick on <b>Available scenarios</b>, select a scenario and hit Start.
+        </p>
+    </div>
+    <div class="col-md-2"></div>
+    <div class="col-md-8">
+        <div class="btn-group btn-group-justified" role="group" aria-label="Navigation">
+            <div class="btn-group" role="group">
+                <a class="btn btn-success" href="{{=URL('scenarios','view_available_scenarios')}}">
+                    Available scenarios
+                </a>
+            </div>
+            <div class="btn-group" role="group">
+                <a class="btn btn-default" href="{{=URL('overview','view_scenarios')}}">
+                    Student overview
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
