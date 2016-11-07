@@ -50,7 +50,7 @@ scenarios.
     * To interact with the platform, a webbrowser is required
     * One-directional connection from the client to the server is required
 
-![monitutor_arch_cropped](https://cloud.githubusercontent.com/assets/13717492/20059452/a263e55e-a4f6-11e6-8a32-6b90bfbd30d8.png)
+![monitutor_arch](https://cloud.githubusercontent.com/assets/13717492/20060036/870647cc-a4f9-11e6-8015-d327b90a4ce5.png)
 
 ## Getting started
 The prefered Linux distribution for this project is Debian. All packets are
