@@ -29,6 +29,14 @@ Bugs and feature requests can be submitted via [github issues](https://github.co
 * Interactive front-end for students
 
 ### Screenshots
+![monitutor1](https://cloud.githubusercontent.com/assets/13717492/20059691/cef75b9a-a4f7-11e6-845f-e1a9635fe739.jpg)
+Student view. Lists all milestones and the corrosponding checks and their
+results.
+
+![monitutor2](https://cloud.githubusercontent.com/assets/13717492/20059704/da3e70f6-a4f7-11e6-9ef6-72b8c23dae25.jpg)
+Admin scenario overview. In the admin area the administrator can add and modify
+scenarios.
+
 
 ### Infrastructure and requirements
 
@@ -41,6 +49,8 @@ Bugs and feature requests can be submitted via [github issues](https://github.co
     * Platform independent as long as python 2.7.6+ is supported
     * To interact with the platform, a webbrowser is required
     * One-directional connection from the client to the server is required
+
+![monitutor_arch_cropped](https://cloud.githubusercontent.com/assets/13717492/20059452/a263e55e-a4f6-11e6-8a32-6b90bfbd30d8.png)
 
 ## Getting started
 The prefered Linux distribution for this project is Debian. All packets are
@@ -229,7 +239,7 @@ user with access to the icinga conf.d directory.
 In order to transport and execute programs Monitutor holds in its database,
 we need to set up a bi-directional tunnel between the MoniTutor server and the
 students clients. A tunneling application that does exactly this can be found
-in a spereate repository. [MoniTutor-Tunnel](http://github.com)
+in a spereate repository. [MoniTutor-Tunnel](http://github.com/its-lab/MoniTutor-Tunnel)
 
 Just clone the repository and configure the yaml-file to match your database
 setup. To enable the server and client to communicate encrypted, generate a rsa
