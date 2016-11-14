@@ -702,3 +702,84 @@ def erase_scenario():
                                             user_id=user.id,
                                             status="")
     return json.dumps(dict(scenario_id=scenario_id))
+
+@auth.requires_membership("admin")
+def get_scenario():
+    """Returns a json dict that exports a given scenario"""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        scenario_id = 0
+        redirect(URL("default","index"))
+    scenario_table = tutordb.monitutor_scenarios[scenario_id]
+    scenario = {}
+    scenario["name"] = scenario_table.name
+    scenario["display_name"] = scenario_table.display_name
+    scenario["description"] = scenario_table.description
+    scenario["goal"] = scenario_table.goal
+    scenario["hidden"] = True
+    scenario["initiated"] = False
+    milestone_refs = []
+    milestone_ref_table = tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).select()
+    for milestone_ref_row in milestone_ref_table:
+        milestone_ref = dict()
+        milestone_ref["hidden"] = milestone_ref_row.hidden
+        milestone_ref["sequence_nr"] = milestone_ref_row.sequence_nr
+        milestone_ref["dependency"] = milestone_ref_row.dependency
+        milestone_row = tutordb.monitutor_milestones[milestone_ref_row.milestone_id]
+        milestone = dict()
+        milestone["name"] = milestone_row.name
+        milestone["display_name"] = milestone_row.display_name
+        milestone["description"] = milestone_row.display_name
+        check_refs = []
+        check_ref_table = tutordb(tutordb.monitutor_check_milestone.milestone_id == milestone_ref_row.milestone_id).select()
+        for check_ref_row in check_ref_table:
+            check_ref = dict()
+            check_ref["flag_invis"] = check_ref_row.flag_invis
+            check_ref["sequence_nr"] = check_ref_row.sequence_nr
+            check_row = tutordb.monitutor_checks[check_ref_row.check_id]
+            check = dict()
+            check["name"] = check_row.name
+            check["display_name"] = check_row.display_name
+            check["params"] = check_row.params
+            check["hint"] = check_row.hint
+            targets = []
+            target_table = tutordb(tutordb.monitutor_targets.check_id == check_row.check_id).select()
+            for target_row in target_table:
+                target = dict()
+                type_row = tutordb.monitutor_types[target_row.type_id]
+                target["type"] = {"name": type_row.name, "display_name": type_row.display_name}
+                system = dict()
+                system_row = tutordb.monitutor_systems[target_row.system_id]
+                system["name"] = system_row.name
+                system["display_name"] = system_row.display_name
+                system["hostname"] = system_row.hostname
+                system["description"] = system_row.description
+                customvars = []
+                customvar_table = tutordb(tutordb.monitutor_customvar_system.system_id == system_row.system_id).select()
+                for customvar_row in customvar_table:
+                    customvar = {"name": customvar_row.name, "display_name": customvar_row.display_name, 
+                                 "value": customvar_row.value}
+                    customvars.append(customvar)
+                system["customvars"] = customvars
+                target["system"] = system
+                targets.append(target)
+            check["targets"] = targets
+            program_row = tutordb.monitutor_programs[check_row.program_id]
+            program = dict()
+            program["name"] = program_row.name
+            program["display_name"] = program_row.display_name
+            program["code"] = program_row.code
+            interpreter_row = tutordb.monitutor_interpreters[program_row.interpreter_id]
+            program["interpreter"] = {"name": interpreter_row.name, "display_name": interpreter_row.display_name,
+                                      "path": interpreter_row.path}
+            check["program"] = program
+            check_ref["check"] = check
+            check_refs.append(check_ref)
+        milestone["check_refs"] = check_refs
+        milestone_ref["milestone"] = milestone
+        milestone_refs.append(milestone_ref)
+    scenario["milestone_refs"] = milestone_refs
+    return json.dumps(scenario)
+
+
