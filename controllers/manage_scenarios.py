@@ -664,34 +664,6 @@ def delete_scenario():
     return json.dumps(dict(scenario_id=scenario_id))
 
 @auth.requires_membership("admin")
-def export_scenario():
-    """Exports a given scenario"""
-    scenario_id = request.vars.scenarioId
-    export_all = tutordb((tutordb.monitutor_scenarios.scenario_id == scenario_id) &
-                         (tutordb.monitutor_milestone_scenario.scenario_id ==
-                          tutordb.monitutor_scenarios.scenario_id) &
-                         (tutordb.monitutor_milestone_scenario.milestone_id ==
-                          tutordb.monitutor_milestones.milestone_id) &
-                         (tutordb.monitutor_check_milestone.milestone_id ==
-                          tutordb.monitutor_milestones.milestone_id) &
-                         (tutordb.monitutor_check_milestone.check_id ==
-                          tutordb.monitutor_checks.check_id) &
-                         (tutordb.monitutor_checks.program_id ==
-                          tutordb.monitutor_programs.program_id) &
-                         (tutordb.monitutor_programs.interpreter_id ==
-                          tutordb.monitutor_interpreters.interpreter_id) &
-                         (tutordb.monitutor_checks.check_id ==
-                          tutordb.monitutor_targets.check_id) &
-                         (tutordb.monitutor_targets.system_id ==
-                          tutordb.monitutor_systems.system_id) &
-                         (tutordb.monitutor_targets.type_id ==
-                          tutordb.monitutor_types.type_id)).select()
-    if len(export_all):
-        path = './applications/MoniTutor/export/' + export_all[0].monitutor_scenarios.name + '.csv'
-        export_all.export_to_csv_file(open(path , 'wb'))
-    return json.dumps({"path": export_all[0].monitutor_scenarios.name + '.csv'})
-
-@auth.requires_membership("admin")
 def erase_scenario():
     scenario_id = request.vars.scenarioId
     for user in tutordb(tutordb.auth_user).select():
@@ -703,7 +675,7 @@ def erase_scenario():
                                             status="")
     return json.dumps(dict(scenario_id=scenario_id))
 
-"""@auth.requires_membership("admin")"""
+@auth.requires_membership("admin")
 def get_scenario():
     """Returns a json dict that exports a given scenario"""
     if len(request.args):
@@ -786,5 +758,6 @@ def get_scenario():
         milestone_refs.append(milestone_ref)
     scenario["milestone_refs"] = milestone_refs
     return json.dumps(scenario)
+
 
 

@@ -14,7 +14,6 @@
      $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
      $(".delete-check").on("click", {}, onClickDeleteCheck);
      $(".delete-scenario").on("click", {}, onClickDeleteScenario);
-     $(".export-scenario").on("click", {}, onClickExport);
      $(".erase-scenario").on("click", {}, onClickErase);
 
      function onClickErase(event){
@@ -36,20 +35,6 @@
                 });
      }
 
-     function onClickExport( event ) {
-        var scenarioId = String(this.id).slice(0,-7);
-        $(this).off("click");
-        $.get("{{=URL("manage_scenarios", "export_scenario")}}",
-                    {
-                        scenarioId: scenarioId
-                    },
-                 function (data, status) {
-                     if (status == "success") {
-                         var file = JSON.parse(data);
-                         $(this).on("click", {}, onClickExport);
-                        }
-                    });
-     }
 
      function onClickDeleteScenario( event ) {
          var confirm = window.confirm("Are you sure you want to delete the Scenario?");
@@ -276,7 +261,10 @@
                                 <i class="glyphicon glyphicon-eye-close" style="margin-left: 10px"></i></a>
                             {{pass}}
                     {{pass}}
-                    <i id="{{=scenario.scenario_id}}-sc-exp" class="glyphicon glyphicon-floppy-save export-scenario" style="margin-left: 10px;"></i>
+                    <a href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}"
+                        download="{{=scenario.name}}.json">
+                        <i class="glyphicon glyphicon-floppy-save export-scenario" style="margin-left: 10px;"></i>
+                    </a>
                     <i id="{{=scenario.scenario_id}}-sc-erase" class="glyphicon glyphicon-erase erase-scenario" style="margin-left: 10px;"></i>
                     <i id="{{=scenario.scenario_id}}-sc-del" class="glyphicon glyphicon-trash delete-scenario" style="margin-left: 10px; color: red"></i>
                 </div>
