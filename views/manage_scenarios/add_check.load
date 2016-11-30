@@ -19,5 +19,5 @@
 
 
      <div id="add_program" hidden="True">
-    {{=LOAD('default','add_program.load',ajax=True)}}
+    {{=LOAD('manage_components','add_program.load',ajax=True)}}
     </div>
