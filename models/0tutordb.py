@@ -1,4 +1,5 @@
 from gluon.contrib.appconfig import AppConfig
+import uuid
 app_conf = AppConfig(reload=True)
 DATABASE_NAME = app_conf.take("monitutor_env.database_name")
 DATABASE_USER = app_conf.take("monitutor_env.database_user")
@@ -14,12 +15,14 @@ auth.define_tables(username=True)
 
 tutordb.define_table('monitutor_scenarios',
     Field('scenario_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True),
     Field('description', type='text', required=True),
     Field('goal', type='text'),
     Field('hidden', type='boolean', default=True),
     Field('initiated', type='boolean', default=True))
+
 
 tutordb.define_table('monitutor_data',
     Field('data_id', type='id'),
@@ -35,6 +38,7 @@ tutordb.define_table('monitutor_scenario_data',
 
 tutordb.define_table('monitutor_milestones',
     Field('milestone_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True),
     Field('description', type='string'))
@@ -55,6 +59,7 @@ tutordb.define_table('monitutor_interpreters',
 
 tutordb.define_table('monitutor_programs',
     Field('program_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True),
     Field('code', type='text', required=True, requires=IS_LENGTH(655360)),
@@ -62,6 +67,7 @@ tutordb.define_table('monitutor_programs',
 
 tutordb.define_table('monitutor_checks',
     Field('check_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', required=True, requires=[IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]),
     Field('display_name', type='string', required=True),
     Field('params', type='string'),
@@ -77,6 +83,7 @@ tutordb.define_table('monitutor_check_milestone',
 
 tutordb.define_table('monitutor_systems',
     Field('system_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('hostname', type='string', required=True),
     Field('ip4_address', type='blob'),
     Field('ip6_address', type='blob'),
@@ -117,6 +124,7 @@ tutordb.define_table('monitutor_check_tasks',
 
 tutordb.define_table('monitutor_customvars',
     Field('customvar_id', type="id", required=True),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type="string", required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type="string", required=True),
     Field('value', type="string"))

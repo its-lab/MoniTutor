@@ -703,7 +703,7 @@ def erase_scenario():
                                             status="")
     return json.dumps(dict(scenario_id=scenario_id))
 
-@auth.requires_membership("admin")
+"""@auth.requires_membership("admin")"""
 def get_scenario():
     """Returns a json dict that exports a given scenario"""
     if len(request.args):
@@ -714,6 +714,7 @@ def get_scenario():
     scenario_table = tutordb.monitutor_scenarios[scenario_id]
     scenario = {}
     scenario["name"] = scenario_table.name
+    scenario["uuid"] = scenario_table.uuid
     scenario["display_name"] = scenario_table.display_name
     scenario["description"] = scenario_table.description
     scenario["goal"] = scenario_table.goal
@@ -729,6 +730,7 @@ def get_scenario():
         milestone_row = tutordb.monitutor_milestones[milestone_ref_row.milestone_id]
         milestone = dict()
         milestone["name"] = milestone_row.name
+        milestone["uuid"] = milestone_row.uuid
         milestone["display_name"] = milestone_row.display_name
         milestone["description"] = milestone_row.display_name
         check_refs = []
@@ -740,6 +742,7 @@ def get_scenario():
             check_row = tutordb.monitutor_checks[check_ref_row.check_id]
             check = dict()
             check["name"] = check_row.name
+            check["uuid"] = check_row.uuid
             check["display_name"] = check_row.display_name
             check["params"] = check_row.params
             check["hint"] = check_row.hint
@@ -752,13 +755,14 @@ def get_scenario():
                 system = dict()
                 system_row = tutordb.monitutor_systems[target_row.system_id]
                 system["name"] = system_row.name
+                system["uuid"] = system_row.uuid
                 system["display_name"] = system_row.display_name
                 system["hostname"] = system_row.hostname
                 system["description"] = system_row.description
                 customvars = []
                 customvar_table = tutordb(tutordb.monitutor_customvar_system.system_id == system_row.system_id).select()
                 for customvar_row in customvar_table:
-                    customvar = {"name": customvar_row.name, "display_name": customvar_row.display_name, 
+                    customvar = {"name": customvar_row.name, "uuid": customvar_row.uuid, "display_name": customvar_row.display_name, 
                                  "value": customvar_row.value}
                     customvars.append(customvar)
                 system["customvars"] = customvars
@@ -768,6 +772,7 @@ def get_scenario():
             program_row = tutordb.monitutor_programs[check_row.program_id]
             program = dict()
             program["name"] = program_row.name
+            program["uuid"] = program_row.uuid
             program["display_name"] = program_row.display_name
             program["code"] = program_row.code
             interpreter_row = tutordb.monitutor_interpreters[program_row.interpreter_id]
