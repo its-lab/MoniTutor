@@ -861,8 +861,10 @@ def upload_scenario():
                                                                       hostname = system["hostname"],
                                                                       description = system["description"],
                                                                       uuid = system["uuid"])
-                    type_id = tutordb.monitutor_types.update_or_insert(name=type_var["name"],
-                                                               display_name=type_var["display_name"])
+                    tutordb.monitutor_types.update_or_insert(name=type_var["name"],
+                                                             display_name=type_var["display_name"])
+                    type_id = tutordb(tutordb.monitutor_types.name ==
+                            type_var["name"]).select().first().type_id
                     if len(tutordb((tutordb.monitutor_targets.type_id == type_id) &
                                    (tutordb.monitutor_targets.check_id == check_id) &
                                    (tutordb.monitutor_targets.system_id == system_id)).select()) < 1:
@@ -884,11 +886,18 @@ def upload_scenario():
                                                                       value = customvar["value"],
                                                                       system_id = system_id,
                                                                       uuid = customvar["uuid"])
+                    if len(tutordb((tutordb.monitutor_targets.system_id == system_id)&
+                           (tutordb.monitutor_targets.check_id == check_id)&
+                           (tutordb.monitutor_targets.type_id ==
+                               type_id)).select())<1:
+                        tutordb.monitutor_targets.insert(system_id = system_id,
+                                                         check_id = check_id,
+                                                         type_id = type_id)
                 if len(tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
                                (tutordb.monitutor_check_milestone.check_id == check_id)).select()) < 1:
                     tutordb.monitutor_check_milestone.insert(check_id = check_id,
                                                              milestone_id = milestone_id,
                                                              flag_invis = check_ref["flag_invis"],
                                                              sequence_nr = check_ref["sequence_nr"])
-            redirect(URL('manage_scenarios',"view_scenarios"))
+        redirect(URL('manage_scenarios',"view_scenarios"))
     return dict(form2=form2)
