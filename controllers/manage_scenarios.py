@@ -884,11 +884,11 @@ def upload_scenario():
                                                                       value = customvar["value"],
                                                                       system_id = system_id,
                                                                       uuid = customvar["uuid"])
-                        if len(tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
-                                       (tutordb.monitutor_check_milestone.check_id == check_id)).select()) < 1:
-                            tutordb.monitutor_check_milestone.insert(check_id = check_id,
-                                                                     milestone_id = milestone_id,
-                                                                     flag_invis = check_ref["flag_invis"],
-                                                                     sequence_nr = check_ref["sequence_nr"])
+                if len(tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
+                               (tutordb.monitutor_check_milestone.check_id == check_id)).select()) < 1:
+                    tutordb.monitutor_check_milestone.insert(check_id = check_id,
+                                                             milestone_id = milestone_id,
+                                                             flag_invis = check_ref["flag_invis"],
+                                                             sequence_nr = check_ref["sequence_nr"])
             redirect(URL('manage_scenarios',"view_scenarios"))
     return dict(form2=form2)
