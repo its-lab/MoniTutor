@@ -10,8 +10,11 @@ from gluon.tools import Auth
 
 auth = Auth(tutordb)
 
-auth.define_tables(username=True)
+auth.settings.extra_fields['auth_user']= [
+        Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16])
+        ]
 
+auth.define_tables(username=True)
 
 tutordb.define_table('monitutor_scenarios',
     Field('scenario_id', type='id'),
@@ -22,7 +25,6 @@ tutordb.define_table('monitutor_scenarios',
     Field('goal', type='text'),
     Field('hidden', type='boolean', default=True),
     Field('initiated', type='boolean', default=True))
-
 
 tutordb.define_table('monitutor_data',
     Field('data_id', type='id'),
