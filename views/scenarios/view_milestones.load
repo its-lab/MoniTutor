@@ -247,7 +247,7 @@
                                      </div>
                                      <div class="col-sm-2" style="text-align: right;">
                                          <a id="{{=check.monitutor_check_milestone.check_milestone_id}}" class='glyphicon glyphicon-refresh check' style="float: right;margin-right: 10px;" ></a>
-                                             {{if check.monitutor_checks.hint is not None:}}
+                                             {{if check.monitutor_checks.hint is not None and check.monitutor_checks.hint is not "":}}
                                                 <a class='glyphicon glyphicon-info-sign' style="float: right; margin-right: 15px;"
                                                    data-toggle="popover" data-container="body" data-trigger="click"
                                                    title="Hint" data-content="{{=check.monitutor_checks.hint}}">
