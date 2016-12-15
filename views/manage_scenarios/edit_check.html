@@ -1,8 +1,6 @@
 {{extend "layout.html"}}
 
 <div class="container">
-
-
     <ol class="breadcrumb">
         <li><a href="{{=URL('default','index')}}">Home</a></li>
         <li><a href="{{=URL('manage_scenarios','view_scenarios')}}">Scenario overview</a></li>
@@ -18,26 +16,7 @@
         </li>
         <li class="active">Edit Check</li>
     </ol>
-<div class="row">
-    <div class="col-sm-6">{{=form}} </div>
-    <div class="col-sm-6">
-        <div class="jumbotron">
-            The <b>Source</b> of your check is the host on which the check is executed.
-            Hence there has to be one Source.
-            One or more desinations can be referenced in the parameters of your check.
-            The destination attributes can be refredenced via <b>$DEST.var</b> where $DEST identifies the type
-            of the host and var the variable name.
-            <br>
-            <br>
-            <p>
-                <a class="btn btn-primary" role="button">Add IPv4 of 1st host</a>
-                <a class="btn btn-primary" role="button">Add IPv6 of 1st host</a>
-            </p>
-
-        </div>
-    </div>
-</div>
-
+            {{=form}}
     <hr>
 {{=LOAD('manage_scenarios','add_target.load',ajax=True, args=checkid)}}
 </div>

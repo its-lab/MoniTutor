@@ -521,59 +521,13 @@ def edit_check():
         scenario_id = None
         milestone_id = None
 
-    programs = tutordb(tutordb.monitutor_programs).select()
-    options = OPTION(" ")
-    defaults = tutordb.monitutor_checks[check_id]
-    for row in programs:
-        if row.program_id == defaults.program_id:
-            options += OPTION(XML(row.display_name),
-                                  _value=row.program_id,
-                                  _selected="selected")
-        else:
-            options += OPTION(XML(row.display_name),
-                          _value=row.program_id)
-    form = FORM(
-        DIV(
-          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          DIV( defaults.name, _class="form-control"), _class="input-group" ),BR(),
-        DIV(
-          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=defaults.display_name,_name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),
-            _class="input-group"), BR(),
-        DIV(
-          SPAN( XML('<b>Parameters</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT(_value=defaults.params, _name="params", _form='form',  _class="form-control"), _class="input-group"), BR(),
-        XML("<b>Program</b>"),
-        DIV(
-            SELECT((options), _name="program", _form="form", _class="form-control", requires=IS_NOT_EMPTY()),
-            _class="input-group"),BR(),
-        XML("<b>Hint</b>"),
-        DIV(
-            SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-            TEXTAREA(defaults.hint, _name="hint", _form='form',  _class="form-control"), _class="input-group"),BR(),
-        INPUT( _type='submit', scenario_id=scenario_id),
-
-        _id="form"
-    )
-
+    form = SQLFORM(tutordb.monitutor_checks,
+                   check_id,
+                   showid=False,
+                   formstyle="divs",
+                   fields=["name", "display_name", "program_id","params", "hint"])
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        if form.vars.hint == None or form.vars.hint == "":
-            tutordb(tutordb.monitutor_checks.check_id == check_id).validate_and_update(
-                                    display_name=form.vars.display_name,
-                                    params=form.vars.params,
-                                    program_id=form.vars.program,
-                                    hint="")
-        else:
-            tutordb(tutordb.monitutor_checks.check_id == check_id).validate_and_update(
-                                    display_name=form.vars.display_name,
-                                    params=form.vars.params,
-                                    program_id=form.vars.program,
-                                    hint=form.vars.hint)
-        if scenario_id is not None and milestone_id is not None:
-            redirect(URL('manage_scenarios','edit_check', args=[check_id, scenario_id, milestone_id]))
-        else:
-            redirect(URL('manage_scenarios','edit_check', args=[check_id]))
 
     return dict(form=form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
