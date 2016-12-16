@@ -1,7 +1,7 @@
 {{=form}}
 <br>
 <button type="button" class="btn btn-default" id="new_program">
-        <i class='glyphicon glyphicon-plus'>
+        <i class='fa fa-plus'>
 
         </i>
         <b>Add new program</b>

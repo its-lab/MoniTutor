@@ -13,7 +13,7 @@
             $( "#add_existing_check" ).toggle( "medium", function() {
             });
         });
-        $(".glyphicon.glyphicon-info-sign").on("click", {}, onClickToggle);
+        $(".fa.fa-info-circle").on("click", {}, onClickToggle);
         function onClickToggle(event){
             var element = "#" + this.id + "-hidden";
             $(element).toggle("medium", function(){});
@@ -37,7 +37,7 @@
         <h4>Description:</h4>
         {{=milestone.description}}
         <br>
-        <i id="edit" class="glyphicon glyphicon-pencil" style="float: right; "></i>
+        <i id="edit" class="fa fa-pencil" style="float: right; "></i>
     </div>
 
     <div hidden="True" id="edit_milestone" style="margin: 10px" >
@@ -55,13 +55,13 @@
             </div>
         </div>
         <div class="list-group-item">
-            <i id="new_check" class="glyphicon glyphicon-plus" style="float: right;"></i>
+            <i id="new_check" class="fa fa-plus" style="float: right;"></i>
             <h3 class="panel-title">
                 Add new check to Milestone
             </h3>
         </div>
         <div class="list-group-item">
-            <i id="existing_check" class="glyphicon glyphicon-plus" style="float: right;"></i>
+            <i id="existing_check" class="fa fa-plus" style="float: right;"></i>
             <h3 class="panel-title">
                 Add existing check to Milestone
             </h3>
@@ -79,7 +79,7 @@
                          args=[milestone.milestone_id,
                                check.monitutor_check_milestone.check_milestone_id,
                                scenarioid])}}">
-                    <i class="glyphicon glyphicon-minus" style="float: right;"></i>
+                    <i class="fa fa-minus" style="float: right;"></i>
                 </a>
                 {{if check.monitutor_check_milestone.flag_invis == 1:}}
                     <a href="{{=URL('manage_scenarios','hide_check',
@@ -87,7 +87,7 @@
                                      check.monitutor_check_milestone.check_milestone_id,
                                      "0",
                                      scenarioid])}}">
-                        <i class="glyphicon glyphicon-eye-close" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{else:}}
                     <a href="{{=URL('manage_scenarios','hide_check',
@@ -95,7 +95,7 @@
                                      check.monitutor_check_milestone.check_milestone_id,
                                      "1",
                                      scenarioid])}}">
-                        <i class="glyphicon glyphicon-eye-open" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{pass}}
                 {{if check.monitutor_check_milestone.sequence_nr == 0:}}
@@ -104,7 +104,7 @@
                                      check.monitutor_check_milestone.check_milestone_id,
                                      "0",
                                      scenarioid])}}">
-                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{else:}}
                     <a href="{{=URL('manage_scenarios','lower_check',
@@ -112,14 +112,14 @@
                                      check.monitutor_check_milestone.check_milestone_id,
                                      "1",
                                      scenarioid])}}">
-                        <i class="glyphicon glyphicon-arrow-up" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-up" style="float: right; margin-right: 10px;"></i>
                     </a>
                     <a href="{{=URL('manage_scenarios','lower_check',
                                args=[milestone.milestone_id,
                                      check.monitutor_check_milestone.check_milestone_id,
                                      "0",
                                      scenarioid])}}">
-                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{pass}}
                 <a href="{{=URL('manage_scenarios','edit_check',
@@ -131,7 +131,7 @@
                     {{pass}}
                 </a>
                 <i id="{{=check.monitutor_check_milestone.check_milestone_id}}-info"
-                   class='glyphicon glyphicon-info-sign'
+                   class='fa fa-info-circle'
                    style="float: right; margin-right: 10px" ></i>
             </div>
             <div id="{{=check.monitutor_check_milestone.check_milestone_id}}-info-hidden"

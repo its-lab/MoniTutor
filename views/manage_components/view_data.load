@@ -4,7 +4,7 @@
                  <div class="panel panel-default">
                      <div class="panel-heading">
                          <a href="{{=URL('default','download', args=row.data)}}" >
-                            <i class='glyphicon glyphicon-save' style="float: right;"></i>
+                            <i class='fa fa-download' style="float: right;"></i>
                          </a>
                          <h3 class="panel-title">
                             {{=row.display_name}}

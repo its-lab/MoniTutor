@@ -27,7 +27,7 @@
                 <td></td>
                 <td>
                     <button type="button" class="btn btn-default" id="new_interp">
-                        <i class='glyphicon glyphicon-plus'></i>
+                        <i class='fa fa-plus'></i>
                         <b>Add new Interpreter</b>
                     </button>
                 </td>

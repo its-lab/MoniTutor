@@ -41,21 +41,21 @@
                 <a href="{{=URL('manage_scenarios','remove_milestone',
                            args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                           scenario[0].monitutor_scenarios.scenario_id])}}">
-                    <i class="glyphicon glyphicon-minus" style="float: right;"></i>
+                    <i class="fa fa-minus" style="float: right;"></i>
                 </a>
                 {{if milestone.monitutor_milestone_scenario.hidden == 1:}}
                     <a href="{{=URL('manage_scenarios','hide_milestone',
                                args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                                      "0",
                                      scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="glyphicon glyphicon-eye-close" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{else:}}
                     <a href="{{=URL('manage_scenarios','hide_milestone',
                                args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                                "1",
                                scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="glyphicon glyphicon-eye-open" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{pass}}
                 {{if milestone.monitutor_milestone_scenario.sequence_nr == 0:}}
@@ -63,23 +63,24 @@
                                args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                                "0",
                                scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{else:}}
                     <a href="{{=URL('manage_scenarios','lower_milestone',
                                args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                                "1",
                                scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="glyphicon glyphicon-arrow-up" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-up" style="float: right; margin-right: 10px;"></i>
                     </a>
                     <a href="{{=URL('manage_scenarios','lower_milestone',
                              args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
                              "0",
                              scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="glyphicon glyphicon-arrow-down" style="float: right; margin-right: 10px;"></i>
+                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
                     </a>
                 {{pass}}
-                <i id="{{=milestone.monitutor_milestones.milestone_id}}-info" class='glyphicon glyphicon-info-sign' style="float: right; margin-right: 10px" ></i>
+                <i id="{{=milestone.monitutor_milestones.milestone_id}}-info"
+                    class='fa fa-info-circle' style="float: right; margin-right: 10px" ></i>
                 <a href="{{=URL('manage_scenarios','view_milestone', args=[milestone.monitutor_milestones.milestone_id,
                            scenario[0].monitutor_scenarios.scenario_id])}}">
                     {{=milestone.monitutor_milestones.display_name}}
@@ -150,13 +151,14 @@
                             <a href="{{=URL('manage_components','attach_data',
                                        args=scenario[0].monitutor_scenarios.scenario_id)}}"
                                style="float: right" >
-                                <i class='glyphicon glyphicon-plus' ></i>
+                                <i class='fa fa-plus' ></i>
                             </a>
                         </h3>
                     </div>
                     {{for row in data:}}
                         <div class="list-group-item">
-                            <i id="{{=row.monitutor_data.data_id}}-info" class='glyphicon glyphicon-info-sign' style="float: right" ></i>
+                            <i id="{{=row.monitutor_data.data_id}}-info"
+                                class='fa fa-info-circle' style="float: right" ></i>
                             {{=row.monitutor_data.display_name}}
                         </div>
                         <!-- Script to toggle the Edit Form! One for each entry-->
@@ -181,7 +183,7 @@
              <div class="panel panel-default">
                  <div class="panel-heading">
                      <a href="{{=URL('default','download', args=row.monitutor_data.data)}}" >
-                        <i class='glyphicon glyphicon-save' style="float: right;"></i>
+                        <i class='fa fa-download' style="float: right;"></i>
                      </a>
                      <h3 class="panel-title">
                         {{=row.monitutor_data.display_name}}

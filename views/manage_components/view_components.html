@@ -39,23 +39,23 @@
             $(elment).toggle("medium", function(){});
         }
         {{if unused_systems:}}
-        $(".unused_systems").removeClass("glyphicon-leaf");
-        $(".unused_systems").addClass("glyphicon-flash");
+        $(".unused_systems").removeClass("fa-leaf");
+        $(".unused_systems").addClass("fa-bolt");
         $(".unused_systems").css("color", "red");
         {{pass}}
         {{if broken_files:}}
-        $(".broken_files").removeClass("glyphicon-leaf");
-        $(".broken_files").addClass("glyphicon-fire");
+        $(".broken_files").removeClass("fa-leaf");
+        $(".broken_files").addClass("fa-fire");
         $(".broken_files").css("color", "red");
         {{pass}}
     } );
 </script>
-<div data-spy="affix" style="margin-left: 30px;">
-        <p><h4><a href="#data" >Data</a> <br></h4></p>
-        <p><h4><a href="#systems">Systems</a> <br></h4></p>
-        <p><h4><a href="#interpreters">Interpreters</a> <br></h4></p>
-        <p><h4><a href="#programs">Programs</a> <br></h4></p>
-        </div>
+<div data-spy="affix" style="margin-left: -30px">
+    <p><h4><a href="#data" >Data</a> <br></h4></p>
+    <p><h4><a href="#systems">Systems</a> <br></h4></p>
+    <p><h4><a href="#interpreters">Interpreters</a> <br></h4></p>
+    <p><h4><a href="#programs">Programs</a> <br></h4></p>
+</div>
 <div class="container">
     <ol class="breadcrumb">
         <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
@@ -66,19 +66,19 @@
         <br>
         <div class="row">
             <div class="col-sm-6">
-                <p><i class="glyphicon glyphicon-grain" style="color: green;"></i> Defined systems: {{=len(tutordb(tutordb.monitutor_systems).select())}}</p>
-                <p><i class="glyphicon glyphicon-paperclip"></i> Defined files: {{=len(tutordb(tutordb.monitutor_data).select())}}</p>
-                <p><i class="glyphicon glyphicon-console"></i> Defined programs: {{=len(tutordb(tutordb.monitutor_programs).select())}}</p>
-                <p><i class="glyphicon glyphicon-console"></i> Defined interpreters: {{=len(tutordb(tutordb.monitutor_interpreters).select())}}</p>
+                <p><i class="fa fa-sitemap"></i> Defined systems: {{=len(tutordb(tutordb.monitutor_systems).select())}}</p>
+                <p><i class="fa fa-paperclip"></i> Defined files: {{=len(tutordb(tutordb.monitutor_data).select())}}</p>
+                <p><i class="fa fa-cogs"></i> Defined programs: {{=len(tutordb(tutordb.monitutor_programs).select())}}</p>
+                <p><i class="fa fa-terminal"></i> Defined interpreters: {{=len(tutordb(tutordb.monitutor_interpreters).select())}}</p>
             </div>
             <div class="col-sm-6">
                 <div id="unused_systems">
-                    <p><i class="glyphicon glyphicon-leaf unused_systems" style="color: green;"></i> Unused systems: {{=len(unused_systems)}}</p>
+                    <p><i class="fa fa-leaf unused_systems" style="color: green;"></i> Unused systems: {{=len(unused_systems)}}</p>
                 </div>
                 <div id="broken_files">
-                    <p><i class="glyphicon glyphicon-leaf broken_files" style="color: green;"></i> Broken files: {{=len(broken_files)}}</p>
+                    <p><i class="fa fa-leaf broken_files" style="color: green;"></i> Broken files: {{=len(broken_files)}}</p>
                 </div>
-                <p><i class="glyphicon glyphicon-flash"></i> Unused programs: {{=len(unused_programs)}}</p>
+                <p><i class="fa fa-cog"></i> Unused programs: {{=len(unused_programs)}}</p>
             </div>
         </div>
     </div>
@@ -91,7 +91,9 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 {{=unused_system.monitutor_systems.display_name}}
-                                <i id="{{=unused_system.monitutor_systems.system_id}}" class="glyphicon glyphicon-trash delete-data" style="float: right;"></i>
+                                <i
+                                    id="{{=unused_system.monitutor_systems.system_id}}"
+                                    class="fa fa-trash delete-data" style="float: right;"></i>
                             </div>
                             <div class="panel-body">
                                 {{=unused_system.monitutor_systems.display_name}}
@@ -117,7 +119,7 @@
                         <div class="panel panel-default">
                             <div class="panel-heading">
                                 {{=broken_file[1].display_name}}
-                                <i id="{{=broken_file[1].data_id}}" class="glyphicon glyphicon-trash delete-data" style="float: right;"></i>
+                                <i id="{{=broken_file[1].data_id}}" class="fa fa-trash delete-data" style="float: right;"></i>
                             </div>
                             <div class="panel-body">
                                 {{=broken_file[1].description}}

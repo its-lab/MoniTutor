@@ -115,7 +115,7 @@
 <div class="col-md-6">
         {{if len(status) and status[0].status == "initiating" :}}
         <div class="panel panel-warning">
-        <div class="panel-heading">{{=scenario.display_name}}  <i class='glyphicon glyphicon-blackboard' style="float: right;" ></i> </div>
+        <div class="panel-heading">{{=scenario.display_name}}</div>
         <div class="panel-body"> {{=scenario.description}} <br><br>
             <b>Scenario is initiating. Please be patient.</b><br><br>
             If the initiation process takes longer then 3 minutes, please contact your supervisor.
@@ -128,21 +128,21 @@
         {{elif len(status) and status[0].status == "initiated": }}
 
         <div class="panel panel-success">
-        <div class="panel-heading">{{=scenario.display_name}}  <i class='glyphicon glyphicon-blackboard' style="float: right;" ></i> </div>
+        <div class="panel-heading">{{=scenario.display_name}}</div>
         <div class="panel-body"> {{=scenario.description}} <br><br>
         <a href="{{=URL('scenarios','view_milestones.html',
                     args=[scenario.scenario_id, session.auth.user.username])}}" class="btn btn-default" role="button">
             Show progress</a>
             </div>
         <div class="panel-body">
-                <i class='glyphicon glyphicon-trash trash' style="float: right; margin-right: 10px; color: red" id ="trash-{{=scenario.scenario_id}}"></i>
+                <i class='fa fa-trash trash' style="float: right; margin-right: 10px; color: red" id ="trash-{{=scenario.scenario_id}}"></i>
 
 
 
 
         {{else:}}
         <div class="panel panel-default">
-        <div class="panel-heading">{{=scenario.display_name}}  <i class='glyphicon glyphicon-blackboard' style="float: right;" ></i> </div>
+        <div class="panel-heading">{{=scenario.display_name}}</div>
         <div class="panel-body"> {{=scenario.description}} <br><br>
         <div class="btn btn-default init" id="{{=scenario.scenario_id}}">
             Start scenario</div>

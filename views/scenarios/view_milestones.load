@@ -3,10 +3,10 @@
         $(".check").on("click", {} , onClickupdateCheck);
         $(".host").on("click", {}, onClickUpdateHost);
         $(".milestone").click(function () {
-            $(".list-group."+this.id).find(".check").trigger("click");
+                $(".list-group."+this.id).find(".check").trigger("click");
             });
         window.setInterval(function () {
-            $(".glyphicon.glyphicon-repeat").trigger("click");
+            $(".fa.fa-repeat").trigger("click");
         }, 30000);
 
         function onClickupdateCheck( event ){
@@ -24,12 +24,13 @@
             $(progress).append(progressbar);
             $(checkRow).prepend(progress);
             $(this).off("click");
-            $(this).addClass("glyphicon-spin");
-
-            $.get("{{=URL("scenarios", "queue_task")}}",
+            $(this).removeClass("fa-repeat");
+            $(this).addClass("fa-spinner");
+            $(this).addClass("fa-pulse");
+            $.get("{{=URL('scenarios', 'queue_task')}}",
                     {
                         checkMilestoneId: checkMilestoneId,
-                        scenarioid: "{{=scenarioinfo["scenario_id"]}}",
+                        scenarioid: "{{=scenarioinfo['scenario_id']}}",
                         username: "{{=hosts[0].icinga_customvariables.varvalue}}"
                     },
                     function (data, status) {
@@ -44,7 +45,7 @@
             var refresh = this;
 
             $(refresh).off("click");
-            $(refresh).addClass("glyphicon-spin");
+            $(refresh).addClass("fa-spin");
             $.get("{{=URL("scenarios", "update_host")}}",
                     {
                         hostId: this.id
@@ -66,14 +67,16 @@
             rowLi.find("i").removeClass();
             if (hostStatus.state == "0") {
                 rowLi.addClass(""+row+" list-group-item list-group-item-success");
-                rowLi.find("i").addClass("glyphicon glyphicon-ok-sign");
+                rowLi.find("i").addClass("fa fa-check-circle");
                 rowLi.fadeTo('fast', 0.5).fadeTo('fast', 1.0);
             }
             else {
                 rowLi.addClass(""+row+" list-group-item list-group-item-danger");
-                rowLi.find("i").addClass("glyphicon glyphicon-fire");
+                rowLi.find("i").addClass("fa fa-times-circle");
             }
-            $(refresh).removeClass("glyphicon-spin");
+            $(refresh).removeClass("fa-spin");
+            $(refresh).removeClass("fa-pulse");
+            $(refresh).addClass("fa-rpeat");
             $(refresh).on("click", {} , onClickUpdateHost);
 
         }
@@ -129,22 +132,22 @@
             rowLi.find(".col-sm-6").text(output);
             if (current_state == "0") {
                 rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-success");
-                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-ok-sign");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " fa fa-check-circle");
                 rowLi.fadeTo('fast', 0.5).fadeTo('fast', 1.0);
             }
             else if (current_state == "2") {
                 rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-danger");
-                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-fire");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " fa fa-times-circle");
             }
             else if (current_state == "1") {
                 rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-warning");
-                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-flash");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " fa fa-exclamation-circle");
             }
             else {
                 rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-info");
-                $(rowI).find("i").addClass(""+ checkMilestoneId + " glyphicon glyphicon-question-sign");
+                $(rowI).find("i").addClass(""+ checkMilestoneId + " fa fa-question-circle");
             }
-            $("#"+checkMilestoneId).removeClass("glyphicon-spin").on("click", {} , onClickupdateCheck);
+            $("#"+checkMilestoneId).removeClass("fa-spin").on("click", {} , onClickupdateCheck);
             $(progressbar).toggle();
             $(progressbar).parent().remove();
         }
@@ -171,17 +174,22 @@
 
 
 <div class="panel panel-default">
+         {{if len(hosts):}}
           <div class="panel-heading">Active Hosts for user: {{=hosts[0].icinga_customvariables.varvalue}}</div>
             <ul class="list-group">
                 {{for host in hosts:}}
                       {{if host.icinga_hoststatus.current_state == 0:}}
                           <li class="H{{=host.icinga_hoststatus.id}} list-group-item list-group-item-success">
                           <div class="row">
-                          <div class="col-sm-1"><i id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-ok-sign"></i></div>
+                          <div class="col-sm-1"><i
+                          id="H{{=host.icinga_hoststatus.id}}" class="fa
+                          fa-check-circle"></i></div>
                       {{else:}}
                           <li class="H{{=host.icinga_hoststatus.id}} list-group-item list-group-item-danger">
                           <div class="row">
-                          <div class="col-sm-1"><i  id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-fire"></i></div>
+                          <div class="col-sm-1"><i
+                          id="H{{=host.icinga_hoststatus.id}}" class="fa
+                          fa-times-circle"></i></div>
                           {{pass}}
 
                           <div class="col-sm-4">
@@ -191,21 +199,24 @@
                               {{=host.icinga_hoststatus.output}}
                           </div>
                           <div class="col-sm-1">
-                              <a id="H{{=host.icinga_hoststatus.id}}" class="glyphicon glyphicon-refresh host"></a>
+                              <a id="H{{=host.icinga_hoststatus.id}}"
+                              class="fa fa-refresh host"></a>
                           </div>
                         </div>
                       </i>
                       {{pass}}
                 </ul>
               </div>
-
-                        <br>
+              <br>
+              {{pass}}
+              </div>
 {{for milestone in scenarioinfo["milestones"]:}}
 
         {{if milestone.monitutor_milestone_scenario.hidden == False or auth.has_membership("admin"):}}
         <div class="panel panel-default">
           <div class="panel-heading">
-            <a><i id="{{=milestone.monitutor_milestones.milestone_id}}" class='glyphicon glyphicon-refresh milestone' style="float: right;margin-right: 10px; margin-top: 3px;"></i></a>
+            <a><i id="{{=milestone.monitutor_milestones.milestone_id}}"
+            class='fa fa-refresh milestone' style="float: right;margin-right: 10px; margin-top: 3px;"></i></a>
             {{=milestone.monitutor_milestones.display_name}}
           </div>
           <div class="panel-body">
@@ -230,13 +241,14 @@
                                 <div class="row {{=check.monitutor_check_milestone.check_milestone_id}}">
                                      <div class="col-sm-1">
                                          {{if icinga_servicestatus[0].icinga_servicestatus.current_state==0:}}
-                                              <i class="glyphicon glyphicon-ok-sign"></i>
+                                              <i class="fa fa-check-circle"></i>
                                          {{elif icinga_servicestatus[0].icinga_servicestatus.current_state==2:}}
-                                              <i class="glyphicon glyphicon-fire"></i>
+                                              <i class="fa fa-times-circle"></i>
                                          {{elif icinga_servicestatus[0].icinga_servicestatus.current_state==1:}}
-                                               <i class="glyphicon glyphicon-flash"></i>
+                                               <i class="fa
+                                               fa-exclamation-circle"></i>
                                          {{else:}}
-                                               <i class="glyphicon glyphicon-question-sign"></i>
+                                               <i class="fa fa-question-circle"></i>
                                          {{pass}}
                                      </div>
                                      <div class="col-sm-3">
@@ -246,9 +258,11 @@
                                          {{=icinga_servicestatus[0].icinga_servicestatus.output}}
                                      </div>
                                      <div class="col-sm-2" style="text-align: right;">
-                                         <a id="{{=check.monitutor_check_milestone.check_milestone_id}}" class='glyphicon glyphicon-refresh check' style="float: right;margin-right: 10px;" ></a>
+                                         <a
+                                         id="{{=check.monitutor_check_milestone.check_milestone_id}}"
+                                         class='fa fa-refresh check' style="float: right;margin-right: 10px;" ></a>
                                              {{if check.monitutor_checks.hint is not None and check.monitutor_checks.hint is not "":}}
-                                                <a class='glyphicon glyphicon-info-sign' style="float: right; margin-right: 15px;"
+                                                <a class='fa fa-info-circle' style="float: right; margin-right: 15px;"
                                                    data-toggle="popover" data-container="body" data-trigger="click"
                                                    title="Hint" data-content="{{=check.monitutor_checks.hint}}">
                                                 </a>
