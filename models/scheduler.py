@@ -22,8 +22,6 @@ def path_init(files, path):
                 ftemp.close()
     return True
 
-# TODO: Closure -> file_init_root(files) with default path /etc/icinga2/conf.d/monitutor/
-
 
 # Basic icinga2 templates.
 def base_templates():
@@ -188,7 +186,7 @@ def restart_icinga():
     return True
 
 
-def api_init_scenario( username, scenarioid):
+def api_init_scenario(username, scenarioid):
     scenario_items = tutordb((tutordb.monitutor_scenarios.scenario_id ==
                               tutordb.monitutor_milestone_scenario.scenario_id) &
                        (tutordb.monitutor_milestone_scenario.milestone_id ==
@@ -198,10 +196,10 @@ def api_init_scenario( username, scenarioid):
                        (tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
                        (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
                        (tutordb.monitutor_scenarios.scenario_id == scenarioid)&
-                       (tutordb.monitutor_targets.type_id == 1)).select()
+                       (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id)&
+                       (tutordb.monitutor_types.name == "source")).select()
     hosts = {}
     services = {}
-
     for item in scenario_items:
         hosts[item.monitutor_systems.name] = item.monitutor_systems.name
         services[item.monitutor_checks.name] = {"servicename":item.monitutor_checks.name,
@@ -315,18 +313,4 @@ init_funcs = {"base_templates": base_templates,
 
 if isinstance(tutordb, DAL):
     initializer = Scheduler(tutordb, group_names=['init',], tasks=dict(init_funcs))
-
-
-    #initializer.queue_task('drop_user_scenario', group_name="init", pargs=["ms5366s", 7])
-    #initializer.queue_task('api_init_scenario', group_name="init", pargs=["ms5366s", 7])
-
-
-    #initializer.queue_task('new_scenario', group_name="init", pargs=[1, 3])
-    #initializer.queue_task('new_system', group_name="init", pargs=[1, 1])
-    #initializer.queue_task('init_systems_all', group_name="init")
-    #initializer.queue_task('init_milestone_all', group_name="init")
-    #initializer.queue_task('init_scenario', group_name="init", pargs=[3])
-    #initializer.queue_task('init_system', group_name="init", pargs=[2])
-    #initializer.queue_task('scenario_service', group_name="init", pargs=[2])
-    #initializer.queue_task('base_templates', group_name="init")
 
