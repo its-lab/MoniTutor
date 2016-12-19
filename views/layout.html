@@ -23,8 +23,8 @@
     <link rel="stylesheet" href="{{=URL('static','css/bootstrap.min.css')}}"/> 
     <link rel="stylesheet" href="{{=URL('static','css/bootstrap-theme.min.css')}}"/>
     <link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}"/>
-    <link rel="stylesheet" href="{{=URL('static','css/monitutor.css')}}"/> 
     <link rel="stylesheet" href="{{=URL('static','css/font-awesome.min.css')}}"/>
+    <link rel="stylesheet" href="{{=URL('static','css/monitutor.css')}}"/>
 
     <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
     <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
@@ -64,11 +64,11 @@
           {{=response.logo or ''}}
         </div>
         <div class="collapse navbar-collapse navbar-ex1-collapse">
-          <ul class="nav navbar-nav navbar-right">
-            {{='auth' in globals() and auth.navbar('Welcome',mode='dropdown') or ''}}
-          </ul>
+          {{if response.loginmenu:}}
+            {{=MENU(response.loginmenu, _class='nav navbar-nav navbar-right', li_class='dropdown' ,ul_class='dropdown-menu')}}
+          {{pass}}
           {{if response.menu:}}
-          {{=MENU(response.menu, _class='nav navbar-nav',li_class='dropdown',ul_class='dropdown-menu')}}
+            {{=MENU(response.menu, _class='nav navbar-nav',li_class='dropdown',ul_class='dropdown-menu')}}
           {{pass}}
         </div>
       </div>

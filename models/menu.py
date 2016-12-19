@@ -28,6 +28,19 @@ response.menu = [
     (T('Home'), False, URL('default', 'index'), [])
 ]
 
+if auth.user:
+    response.loginmenu = [
+        (T('Welcome, '+auth.user.first_name ), False, False , [
+            ((I("",_class="fa fa-user")," ", T('Profile')), False, URL('default', 'user/profile')),
+            ((I("",_class="fa fa-key")," ", T('Change password')), False, URL('default', 'user/change_password')),
+            LI(_class="divider"),
+            ((I("",_class="fa fa-sign-out")," ", T('Logout')), False, URL('default', 'user/logout'))
+        ])
+    ]
+else:
+    response.loginmenu = [((I("",_class="fa fa-sign-in"),"  ",T('Login')), False, URL('default', 'user/login'), [])]
+
+
 DEVELOPMENT_MENU = False
 
 #########################################################################
@@ -144,5 +157,3 @@ if auth.has_membership('admin'):
         (T('Student overview'), False,  URL('overview', 'view_scenarios')),
     ])
     ]
-
-if "auth" in locals(): auth.wikimenu() 
