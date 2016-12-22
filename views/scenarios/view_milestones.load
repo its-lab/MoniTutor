@@ -45,7 +45,8 @@
             var refresh = this;
 
             $(refresh).off("click");
-            $(refresh).addClass("fa-spin");
+            $(refresh).addClass("fa-spinner");
+            $(refresh).addClass("fa-pulse");
             $.get("{{=URL("scenarios", "update_host")}}",
                     {
                         hostId: this.id
@@ -74,9 +75,9 @@
                 rowLi.addClass(""+row+" list-group-item list-group-item-danger");
                 rowLi.find("i").addClass("fa fa-times-circle");
             }
-            $(refresh).removeClass("fa-spin");
+            $(refresh).removeClass("fa-spinner");
             $(refresh).removeClass("fa-pulse");
-            $(refresh).addClass("fa-rpeat");
+            $(refresh).addClass("fa-repeat");
             $(refresh).on("click", {} , onClickUpdateHost);
 
         }
@@ -147,7 +148,8 @@
                 rowLi.addClass(""+ checkMilestoneId + " list-group-item list-group-item-info");
                 $(rowI).find("i").addClass(""+ checkMilestoneId + " fa fa-question-circle");
             }
-            $("#"+checkMilestoneId).removeClass("fa-spin").on("click", {} , onClickupdateCheck);
+            $("#"+checkMilestoneId).removeClass("fa-pulse").on("click", {} , onClickupdateCheck);
+            $("#"+checkMilestoneId).removeClass("fa-spinner").addClass("fa-repeat");
             $(progressbar).toggle();
             $(progressbar).parent().remove();
         }
