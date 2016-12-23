@@ -265,3 +265,80 @@ def view_milestones():
 
     return dict(scenarioinfo=scenario_info, username=username, hosts=hosts, args=request.args, user_s=user_s)
 
+
+@auth.requires_login()
+def edit_system():
+    if auth.has_membership("admin") and len(request.args)>1:
+        user_id = request.args(1, cast=int)
+        system_id = request.args(0, cast=int)
+    elif len(request.args) is 0:
+        redirect(URL('default','index'))
+    else:
+        user_id = auth.user_id
+        system_id = request.args(0, cast=str)
+    system = tutordb((tutordb.monitutor_user_system.user_id == user_id)&
+                     (tutordb.monitutor_user_system.system_id == system_id)).select()
+    if len(system):
+        system = system.first()
+    else:
+        system = tutordb.monitutor_systems[system_id]
+
+    user_system_form = SQLFORM(tutordb.monitutor_user_system, fields=["hostname"])
+    ipv4_field  = LABEL('Ipv4 Address: '), INPUT(_name='ipv4',
+            value=system.ip4_address, requires=IS_IPV4())
+    ipv6_field  = LABEL('Ipv6 Address: '), INPUT(_name='ipv6',
+            value=system.ip6_address, requires=IS_IPV6())
+
+    user_system_form.vars.hostname = system.hostname
+    user_system_form[0].insert(-1, ipv4_field)
+    user_system_form[0].insert(-1, ipv6_field)
+
+    if user_system_form.validate():
+        system = tutordb((tutordb.monitutor_user_system.user_id ==
+            user_id)&
+                (tutordb.monitutor_user_system.system_id ==
+                    system_id)).select()
+        if len(system):
+            system = system.first()
+            system.hostname = user_system_form.vars.hostname
+            system.ip4_address = user_system_form.vars.ipv4
+            system.ip6_address = user_system_form.vars.ipv6
+            system.update_record()
+        else:
+            tutordb.monitutor_user_system.update_or_insert(
+                    system_id = system_id,
+                    user_id = user_id,
+                    hostname = user_system_form.vars.hostname,
+                    ip4_address = user_system_form.vars.ipv4,
+                    ip6_address = user_system_form.vars.ipv6)
+        redirect(URL(args=[system_id,user_id]))
+
+    return dict(user_system_form=user_system_form)
+
+
+@auth.requires_login()
+def edit_systems():
+    if auth.has_membership("admin") and len(request.args)>1:
+        user_id = request.args(1, cast=int)
+        scenario_id = request.args(0, cast=int)
+    elif len(request.args) is 0:
+        redirect(URL('default','index'))
+    else:
+        scenario_id = request.args(0, cast=int)
+
+    scenario_systems = tutordb((tutordb.monitutor_milestone_scenario.scenario_id
+                                == scenario_id)&
+                               (tutordb.monitutor_checks.check_id ==
+                                tutordb.monitutor_check_milestone.check_id)&
+                               (tutordb.monitutor_targets.check_id ==
+                                tutordb.monitutor_checks.check_id)&
+                               (tutordb.monitutor_targets.check_id ==
+                                   tutordb.monitutor_checks.check_id)&
+                               (tutordb.monitutor_systems.system_id ==
+                                   tutordb.monitutor_targets.system_id)).select(
+                                           tutordb.monitutor_systems.display_name,
+                                           tutordb.monitutor_systems.description,
+                                           tutordb.monitutor_systems.system_id,
+                                           distinct=True)
+
+    return dict(scenario_systems = scenario_systems)
