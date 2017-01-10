@@ -103,13 +103,13 @@ def queue_task():
     tutordb_check = checks[0].monitutor_checks.name
     check_name = username + "_" + tutordb_check
 
-
     checkdata = tutordb((tutordb_check == tutordb.monitutor_checks.name) &
                         (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id) &
                         (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id) &
                         (tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
                         (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
-                        (tutordb.monitutor_targets.type_id == 1)).select()
+                        (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+                        (tutordb.monitutor_types.name == "source")).select()
 
     if len(checkdata) is 1:
         parameters = checkdata[0].monitutor_checks.params
@@ -123,31 +123,39 @@ def queue_task():
                 if len(system_type) is 2:
                     attribute = system_type[1].strip(".")
                 system_type = system_type[0].strip("$").lower()
-
-                systems = tutordb((tutordb.monitutor_targets.check_id == checkdata[0].monitutor_checks.check_id) &
+                system = tutordb((tutordb.monitutor_targets.check_id == checkdata[0].monitutor_checks.check_id) &
                                   (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
                                   (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
                                   (tutordb.monitutor_types.name == system_type)
                                   ).select()
-                if len(systems):
+                if len(system):
+                    system = system.first()
+                    # check if the system was customized
+                    user_system = tutordb((system.monitutor_targets.system_id ==
+                                            tutordb.monitutor_user_system.system_id)).select()
+                    if len(user_system):
+                        user_system = user_system.first()
+                        system.monitutor_systems.hostname = user_system.hostname
+                        system.monitutor_systems.ip4_address = user_system.ip4_address
+                        system.monitutor_systems.ip6_address = user_system.ip6_address
                     if attribute is None:
-                        parameter = systems[0].monitutor_systems.hostname
+                        parameter = system.monitutor_systems.hostname
                     if attribute == "ip4_address":
-                        parameter = str(systems[0].monitutor_systems.hostname)
+                        parameter = str(system.monitutor_systems.ip4_address)
                     elif attribute == "ip6_address":
-                        parameter = str(systems[0].monitutor_systems.ip6_address)
+                        parameter = str(system.monitutor_systems.ip6_address)
                     elif attribute == "hostname":
-                        parameter = systems[0].monitutor_systems.hostname
+                        parameter = system.monitutor_systems.hostname
                     else:
                         # in this case the attribute is a custom attribute
                         custom_attributes = tutordb((tutordb.monitutor_customvar_system.name == attribute) &
                                                    (tutordb.monitutor_customvar_system.system_id ==
-                                                    systems[0].monitutor_systems.system_id)).select()
+                                                    system.monitutor_systems.system_id)).select()
                         if len(custom_attributes):
-                            parameter = custom_attributes[0].value
+                            parameter = custom_attributes.value
                         else:
                             # Fallback to hostname in case the attribute was not found
-                            parameter = systems[0].monitutor_systems.hostname
+                            parameter = system.monitutor_systems.hostname
             parameterSnippets.append(parameter)
         parameters = " ".join(parameterSnippets)
 
