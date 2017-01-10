@@ -1,0 +1,22 @@
+{{extend 'layout.html'}}
+<div class="container">
+<div class="row">
+<div class="col-sm-12">
+</div>
+{{for system in scenario_systems:}}
+<div class="col-sm-6">
+<div class="panel panel-default">
+    <div class="panel-heading">
+        {{=system.display_name}}
+    </div>
+    <div class="panel-body">
+        {{=system.description}}
+    </div>
+    <div class="panel-body">
+{{=LOAD('scenarios','edit_system.load',ajax=True, args=system.system_id)}}
+</div>
+</div>
+</div>
+{{pass}}
+</div>
+</div>
