@@ -132,12 +132,14 @@ def queue_task():
                     system = system.first()
                     # check if the system was customized
                     user_system = tutordb((system.monitutor_targets.system_id ==
-                                            tutordb.monitutor_user_system.system_id)).select()
+                                            tutordb.monitutor_user_system.system_id) &
+                                            (username == tutordb.auth_user.username) &
+                                            (tutordb.auth_user.id == tutordb.monitutor_user_system.user_id)).select()
                     if len(user_system):
                         user_system = user_system.first()
-                        system.monitutor_systems.hostname = user_system.hostname
-                        system.monitutor_systems.ip4_address = user_system.ip4_address
-                        system.monitutor_systems.ip6_address = user_system.ip6_address
+                        system.monitutor_systems.hostname = user_system.monitutor_user_system.hostname
+                        system.monitutor_systems.ip4_address = user_system.monitutor_user_system.ip4_address
+                        system.monitutor_systems.ip6_address = user_system.monitutor_user_system.ip6_address
                     if attribute is None:
                         parameter = system.monitutor_systems.hostname
                     if attribute == "ip4_address":
