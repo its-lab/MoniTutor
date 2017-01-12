@@ -28,7 +28,8 @@ tutordb.define_table('monitutor_scenarios',
 
 tutordb.define_table('monitutor_data',
     Field('data_id', type='id'),
-    Field('data', type='upload', required=True),
+    Field('data', type='upload', required=True, uploadfield='data_data'),
+    Field('data_data', type='blob'),
     Field('description', type='text'),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True))
