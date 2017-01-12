@@ -11,7 +11,9 @@ from gluon.tools import Auth
 auth = Auth(tutordb)
 
 auth.settings.extra_fields['auth_user']= [
-        Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16])
+        Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16]),
+        Field('image', type='upload', uploadfield='image_data'),
+        Field('image_data', type='blob',)
         ]
 
 auth.define_tables(username=True)
