@@ -1,3 +1,9 @@
 {{extend 'layout.html'}}
+<ol class="breadcrumb">
+    <li><a href="{{=URL('default','index')}}">Home</a></li>
+    <li><a  href="{{=URL('dashboard','view_dashboard')}}">Admin dashboard</a></li>
+    <li class="active">Admin dashboard</li>
+</ol>
+
 {{=LOAD('dashboard','view_user.load',args=user.id, ajax=True)}}
 
