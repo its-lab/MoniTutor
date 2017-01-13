@@ -3,8 +3,6 @@
     <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
     <li class="active">Admin dashboard</li>
 </ol>
-<!--Javascript to keep selected tab on page-refresh-->
-
 <!-- Navigation tabs -->
 <div role="navigation">
     <ul class="nav nav-pills" role="tablist" id="tab-nav">
@@ -30,6 +28,7 @@
         {{=LOAD('dashboard','view_users.load', ajax=True)}}
     </div>
 </div>
+
 <script>
 $(document).ready(function() {
     if (location.hash) {
@@ -39,10 +38,8 @@ $(document).ready(function() {
         location.hash = this.getAttribute("href");
         });
 });
-
 $(window).on("popstate", function() {
     var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
     $("a[href='" + anchor + "']").tab("show");
 });
-
 </script>

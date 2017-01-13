@@ -1,0 +1,50 @@
+<div class="row">
+    <div class="col-xs-1 col-lg-3">
+            <img src="{{=URL('default', 'download', args=user.image)}}" class="img-responsive img-rounded" alt="No Image" >
+    </div>
+    <div class="col-lg-3">
+    <h4> {{=user.first_name}} {{=user.last_name}} </h4>
+    {{if last_login != "NONE":}}
+        Last Login: {{=last_login.time_stamp}} ago <br>
+        Last Action: {{=last_action.time_stamp}} ago <br>
+        <h5>From IP: {{=last_action.client_ip}}</h5>
+    {{else:}}
+        No Login yet <br>
+    {{pass}}
+    {{if is_admin:}} <p class="text-danger"><b>{{=user.username}} is an admin user!</b></p> {{pass}}
+    </div>
+</div>
+<br>
+    <!-- Navigation tabs -->
+    <div role="navigation">
+        <ul class="nav nav-pills" role="tablist" id="tab-nav">
+            <li role="presentation" class="active">
+                <a href="#history" aria-controls="history" role="tab" data-toggle="tab">
+                    Action Log
+                </a>
+            </li>
+        </ul>
+    </div>
+    <br>
+    <!-- Tab panes -->
+    <div class="tab-content">
+        <div role="tabpanel" class="tab-pane active" id="history">
+            {{=LOAD('dashboard','view_history.load', args=user.id, ajax=True)}}
+        </div>
+    </div>
+    <script>
+    $(document).ready(function() {
+        if (location.hash) {
+            $("a[href='" + location.hash + "']").tab("show");
+            }
+        $(document.body).on("click", "a[data-toggle]", function(event) {
+            location.hash = this.getAttribute("href");
+            });
+    });
+
+    $(window).on("popstate", function() {
+        var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
+        $("a[href='" + anchor + "']").tab("show");
+    });
+
+    </script>
