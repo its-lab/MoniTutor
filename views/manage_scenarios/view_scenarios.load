@@ -1,0 +1,153 @@
+<style xmlns="http://www.w3.org/1999/html">
+    tr.hover-whitesmoke:hover {background-color: whitesmoke;}
+</style>
+<script>
+ $(document).ready(function() {
+     $(".fa.fa-edit").on("click", {}, onClickShow);
+     $(".btn").on("click", {}, onClickShow);
+     $(".fa.fa-power-off").on("click", {}, onClickInit);
+     $(".fa.fa-repeat").on("click", {}, onClickInit);
+     $(".delete-scenario").on("click", {}, onClickDeleteScenario);
+     $(".erase-scenario").on("click", {}, onClickErase);
+
+     function onClickErase(event){
+         var confirm = window.confirm("Are you sure you want to flush all userdata for this Scenario?");
+         if (!confirm) {
+             return;
+         }
+        var scenarioId = String(this.id).slice(0,-9);
+        $(this).off("click");
+        $.get("{{=URL("manage_scenarios", "erase_scenario")}}",
+                {
+                    scenarioId: scenarioId
+                },
+             function (data, status) {
+                 if (status == "success") {
+                     var file = JSON.parse(data);
+                     $(this).on("click", {}, onClickErase);
+                    }
+                });
+     }
+
+
+     function onClickDeleteScenario( event ) {
+         var confirm = window.confirm("Are you sure you want to delete the Scenario?");
+         var scenarioId = String(this.id).slice(0,-7);
+         if (!confirm) {
+             return;
+         }
+         $.get("{{=URL("manage_scenarios", "delete_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                     if (status == "success") {
+                            $("#"+ String(scenarioId) + "-tr").remove();
+                        }
+                    });
+     }
+
+     function onClickShow( event ){
+         var elment = "#"+String(this.id) + "-hide";
+         $(elment).toggle("medium", function(){});
+     }
+
+     function onClickInit( event ){
+         var scenarioId = String(this.id);
+         $(this).off("click", function(){});
+         scenarioId = scenarioId.slice(0,-5); // slices "-init" off.
+         var progressdiv = document.createElement("div");
+         $(progressdiv).addClass("progress");
+         $(progressdiv).css("margin-top", "10px");
+         $(progressdiv).css("margin-bottom", "10px");
+         var progressbar = document.createElement("div");
+         $(progressdiv).append(progressbar);
+         $(progressbar).addClass("progress-bar").addClass("progress-bar-striped").addClass("active");
+         $(progressbar).role = "progressbar";
+         $(progressbar).css("width", "3%");
+         $("#top").append(progressdiv);
+
+         $.get("{{=URL("manage_scenarios", "init_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                        var info = JSON.parse(data);
+                        var progress = String(info.progress) + "%";
+                        var taskId = info.taskId;
+                        window.setTimeout(function () {
+                            updateProgress(taskId, scenarioId, progressbar, progress)
+                        }, 300);
+                    });
+     }
+
+     function updateProgress(taskId, scenarioId, progressbar, progress){
+         $(progressbar).css("width", progress);
+         if(progress == "100%"){
+             location.reload();
+         }
+         window.setTimeout(function() {
+             $.get("{{=URL("manage_scenarios", "update_task_status")}}",
+                     {
+                         taskId: taskId
+                     },
+                     function (data, status) {
+                         var info = JSON.parse(data);
+                         progress = String(info.progress) + "%";
+                         updateProgress(taskId, scenarioId, progressbar, progress);
+                     });
+         }, 300);
+     }
+ });
+</script>
+    <table class="table">
+        {{counter=1}}
+        {{for scenario in scenarios:}}
+            <tr class="hover-whitesmoke" id="{{=scenario.scenario_id}}-tr">
+            <td class="col-sm-2">
+                <a href="{{=URL('manage_scenarios', 'view_scenario.html', args=scenario.scenario_id)}}">
+                {{=scenario.display_name}}
+                </a>
+            </td>
+            <td class="col-sm-8">
+                {{=scenario.description}}
+                <div id="{{=scenario.scenario_id}}-hide" hidden="False">
+                    <br>
+                    {{=LOAD('manage_scenarios','edit_scenario.load',ajax=True, args=scenario.scenario_id)}}
+                </div>
+            </td>
+            <td class="col-sm-2" id="{{=scenario.scenario_id}}-tr">
+                <div class="pull-right">
+                    <i id="{{=scenario.scenario_id}}" class="fa fa-edit" style="margin-left: 10px"></i>
+                    {{if scenario.initiated is False:}}
+                        <i id="{{=scenario.scenario_id}}-init" class="fa
+                            fa-power-off" style="margin-left: 10px"></i>
+                    {{else:}}
+                        <i id="{{=scenario.scenario_id}}-init" class="fa fa-repeat" style="margin-left: 10px"></i>
+                            {{if scenario.hidden is True:}}
+                                <a href="{{=URL('manage_scenarios','show_scenario', args=scenario.scenario_id)}}">
+                                <i class="fa fa-eye" style="margin-left: 10px"></i></a>
+                            {{else:}}
+                                <a href="{{=URL('manage_scenarios','hide_scenario', args=scenario.scenario_id)}}">
+                                <i class="fa fa-eye-slash" style="margin-left: 10px"></i></a>
+                            {{pass}}
+                    {{pass}}
+                    <a href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}"
+                        download="{{=scenario.name}}.json">
+                        <i class="fa fa-download export-scenario" style="margin-left: 10px;"></i>
+                    </a>
+                    <i id="{{=scenario.scenario_id}}-sc-erase" class="fa
+                        fa-eraser erase-scenario" style="margin-left: 10px;"></i>
+                    <i id="{{=scenario.scenario_id}}-sc-del" class="fa fa-trash delete-scenario" style="margin-left: 10px; color: red"></i>
+                </div>
+            </td>
+            </tr>
+        {{pass}}
+</table>
+<br>
+
+<h3><div id="new" class="btn btn-default"><i class="fa fa-plus"></i> <b>Add Scenario</b></div> </h3>
+    <div id="new-hide" hidden="True" style="margin-top:10px">
+    {{=form}}
+<h3><a href="{{=URL("manage_scenarios","upload_scenario.html")}}" id="import"
+class="btn btn-default"><i class="fa fa-plus"></i> <b>Import Scenario</b></h3></a>

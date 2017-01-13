@@ -58,3 +58,18 @@ def call():
     supports xml, json, xmlrpc, jsonrpc, amfrpc, rss, csv
     """
     return service()
+
+@auth.requires_login()
+def edit_user():
+    if auth.has_membership("admin") and len(request.args):
+        user_id = request.args(0, cast=int)
+    else:
+        user_id = auth.user_id
+
+    edit_user_form = SQLFORM(tutordb.auth_user, user_id, upload=URL('download'))
+    if edit_user_form.process().accepted:
+        response.flash = 'form accepted'
+    elif edit_user_form.errors:
+        response.flash = 'form has errors'
+    return dict(edit_user_form = edit_user_form)
+

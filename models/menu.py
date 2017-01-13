@@ -152,6 +152,7 @@ if DEVELOPMENT_MENU: _()
 if auth.has_membership('admin'):
     response.menu += [
     (T('Admin'), False, '#', [
+        (T('Dashboard'), False, URL('dashboard', 'view_dashboard')),
         (T('Scenarios'), False, URL('manage_scenarios', 'view_scenarios')),
         (T('Components'), False, URL('manage_components', 'view_components')),
         (T('Student overview'), False,  URL('overview', 'view_scenarios')),

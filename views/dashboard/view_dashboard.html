@@ -1,0 +1,30 @@
+{{extend 'layout.html'}}
+<ol class="breadcrumb">
+    <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
+    <li class="active">Admin dashboard</li>
+</ol>
+<!-- Navigation tabs -->
+<div role="navigation">
+    <ul class="nav nav-pills" role="tablist">
+        <li role="presentation" class="active">
+            <a href="#scenarios" aria-controls="scenarios" role="tab" data-toggle="tab">
+                Scenarios
+            </a>
+        </li>
+        <li role="presentation">
+            <a href="#users" aria-controls="users" role="tab" data-toggle="tab">
+                Registered users <span class="badge">{{=usernumber}}</span>
+            </a>
+        </li>
+    </ul>
+</div>
+<br>
+<!-- Tab panes -->
+<div class="tab-content">
+    <div role="tabpanel" class="tab-pane active" id="scenarios">
+            {{=LOAD('manage_scenarios','view_scenarios.load', ajax=True)}}
+    </div>
+    <div role="tabpanel" class="tab-pane" id="users">
+        {{=LOAD('dashboard','view_users.load', ajax=True)}}
+    </div>
+</div>

@@ -1,0 +1,63 @@
+<div class="row">
+{{for user in users:}}
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
+        <div class="row {{if user.id in admin_ids:}}bg-info{{pass}}">
+            <div class="col-xs-5 " >
+                <a href="#edit-user-{{=user.id}}" class="thumbnail" style="margin-top:15px" data-toggle="modal" data-target=".user-modal-{{=user.id}}">
+                    <img src="{{=URL('default', 'download', args=user.image)}}" alt="No Image">
+                </a>
+            </div>
+            <div class="col-xs-7">
+            <h5> {{=user.first_name}} {{=user.last_name}} </h5>
+            {{if last_login[user.id] != "NONE":}}
+                Last Login: {{=last_login[user.id].time_stamp}} ago <br>
+                Last Action: {{=last_action[user.id].time_stamp}} ago <br>
+            {{else:}}
+                No Login yet <br>
+            {{pass}}
+            <a href="#edit-system-{{=user.id}}" data-toggle="modal" data-target=".system-modal-{{=user.id}}"><h5><i class="fa fa-cog"></i> Customize Systems</h5></a>
+            </div>
+        </div>
+    </div>
+<div id="edit-user-{{=user.id}}" class="modal user-modal-{{=user.id}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-dialog" role="document">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title" id="myModalLabel">Edit user {{=user.username}}</h3>
+                </div>
+                <div class="modal-body">
+                    {{if user.id in admin_ids:}}<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation-triangle"></i> Warning: Editing Admin user</div>{{pass}}
+                    {{=LOAD('default','edit_user',args=user.id, ajax=True)}}
+                    <br>
+                    <a target="_blank" href={{=URL('default','edit_user.html', args=user.id)}}><i class="fa fa-external-link"></i> Edit user-image here</a>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div id="edit-system-{{=user.id}}" class="modal system-modal-{{=user.id}}" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-dialog" role="document">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title" id="myModalLabel">Customize system of user {{=user.username}}</h3>
+                </div>
+                <div class="modal-body">
+                    {{if user.id in admin_ids:}}<div class="alert alert-danger" role="alert"><i class="fa fa-exclamation-triangle"></i> Warning: Editing Admin user systems</div>{{pass}}
+                    {{=LOAD('scenarios','edit_systems',args=[0,user.id,0], ajax=True)}}
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{{pass}}
+</div>

@@ -331,12 +331,16 @@ def edit_systems():
     if auth.has_membership("admin") and len(request.args)>1:
         user_id = request.args(1, cast=int)
         scenario_id = request.args(0, cast=int)
+        if len(request.args) >2:
+            scenario_id = -1
     elif len(request.args) is 0:
         redirect(URL('default','index'))
     else:
         scenario_id = request.args(0, cast=int)
+        user_id = auth.user_id
 
-    scenario_systems = tutordb((tutordb.monitutor_milestone_scenario.scenario_id
+    if scenario_id > 0:
+        scenario_systems = tutordb((tutordb.monitutor_milestone_scenario.scenario_id
                                 == scenario_id)&
                                (tutordb.monitutor_checks.check_id ==
                                 tutordb.monitutor_check_milestone.check_id)&
@@ -350,5 +354,12 @@ def edit_systems():
                                            tutordb.monitutor_systems.description,
                                            tutordb.monitutor_systems.system_id,
                                            distinct=True)
-
-    return dict(scenario_systems = scenario_systems)
+    else:
+        scenario_systems = tutordb(
+                               (tutordb.monitutor_systems.system_id ==
+                                   tutordb.monitutor_targets.system_id)).select(
+                                           tutordb.monitutor_systems.display_name,
+                                           tutordb.monitutor_systems.description,
+                                           tutordb.monitutor_systems.system_id,
+                                           distinct=True)
+    return dict(scenario_systems = scenario_systems, user_id = user_id)
