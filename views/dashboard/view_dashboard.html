@@ -3,9 +3,11 @@
     <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
     <li class="active">Admin dashboard</li>
 </ol>
+<!--Javascript to keep selected tab on page-refresh-->
+
 <!-- Navigation tabs -->
 <div role="navigation">
-    <ul class="nav nav-pills" role="tablist">
+    <ul class="nav nav-pills" role="tablist" id="tab-nav">
         <li role="presentation" class="active">
             <a href="#scenarios" aria-controls="scenarios" role="tab" data-toggle="tab">
                 Scenarios
@@ -28,3 +30,19 @@
         {{=LOAD('dashboard','view_users.load', ajax=True)}}
     </div>
 </div>
+<script>
+$(document).ready(function() {
+    if (location.hash) {
+        $("a[href='" + location.hash + "']").tab("show");
+        }
+    $(document.body).on("click", "a[data-toggle]", function(event) {
+        location.hash = this.getAttribute("href");
+        });
+});
+
+$(window).on("popstate", function() {
+    var anchor = location.hash || $("a[data-toggle='tab']").first().attr("href");
+    $("a[href='" + anchor + "']").tab("show");
+});
+
+</script>
