@@ -1,14 +1,15 @@
 <div class="row">
 {{for user in users:}}
-    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3">
-        <div class="row {{if user.id in admin_ids:}}bg-info{{pass}}">
+    <div class="col-xs-12 col-sm-6 col-md-4 col-lg-3 ">
+        <div class="row">
             <div class="col-xs-5 " >
-                <a href="#edit-user-{{=user.id}}" class="thumbnail" style="margin-top:15px" data-toggle="modal" data-target=".user-modal-{{=user.id}}">
+                <a href="#edit-user-{{=user.id}}" class="thumbnail" style="margin-top:15px; max-" data-toggle="modal" data-target=".user-modal-{{=user.id}}">
                     <img src="{{=URL('default', 'download', args=user.image)}}" alt="No Image">
                 </a>
             </div>
             <div class="col-xs-7">
             <h5><a href="{{=URL('dashboard','view_user.html', args=user.id)}}">{{=user.first_name}} {{=user.last_name}} <i class="fa fa-info-circle"></i> </a></h5>
+            {{if user.id in admin_ids:}}<h5><i class="fa fa-star"></i> Admin</h5>{{pass}}
             {{if last_login[user.id] != "NONE":}}
                 Last Login: {{=last_login[user.id].time_stamp}} ago <br>
                 Last Action: {{=last_action[user.id].time_stamp}} ago <br>
