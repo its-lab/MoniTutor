@@ -37,3 +37,18 @@ def view_progress():
                             ).select(orderby=tutordb.scenario_user.progress)
     return dict(user_scenairo=user_scenairo, scenario_id=scenario_id)
 
+
+@auth.requires_membership("admin")
+def reveal_progress():
+    """Display the name and progress for each student working on a given scenario on a reveal.js slide"""
+    if len(request.args) is 0:
+        redirect(URL('default','index'))
+    scenario_id = request.args(0, cast=int)
+    if auth.has_membership("admin"):
+        update_progress(scenario_id)
+    user_scenairo = tutordb((tutordb.scenario_user.scenario_id == scenario_id) &
+                            (tutordb.scenario_user.user_id == tutordb.auth_user.id) &
+                            (tutordb.scenario_user.status == "initiated")
+                            ).select(orderby=tutordb.scenario_user.progress)
+    return dict(user_scenario=user_scenairo, scenario_id=scenario_id)
+

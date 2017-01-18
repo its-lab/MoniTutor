@@ -1,0 +1,46 @@
+{{extend 'reveal_layout.html'}}
+<section>
+    <h1>Student progress</h1>
+</section>
+
+{{for user in user_scenario:}}
+<section data-state="{{=user.auth_user.id}}">
+        <div class="row">
+            <div class="col-lg-4">
+                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image">
+            </div>
+            <div class="col-lg-1"></div>
+            <div class="col-md-7" style="text-align: left">
+                <p>{{=user.auth_user.first_name}} {{=user.auth_user.last_name}}</p>
+            </div>
+        </div>
+        <p>Last actions</p>
+        <hr>
+            <div id="actionRow" class="stretch row" style="text-align: left">
+                <div class="col-sm-1">
+                    <small>
+                    <i class="fa fa-exclamation"></i>
+                    </small>
+                </div>
+                <div class="col-sm-2">
+                    <small>
+                        5 min ago
+                    </small>
+                </div>
+                <div class="col-sm-9">
+                    <small>
+                        Website 1 ist erreichbar
+                    </small>
+                </div>
+            </div>
+</section>
+{{pass}}
+<script>
+    $(document).ready(function() {
+        Reveal.addEventListener( 'slidechanged', function(event) {
+            // Get userid of current slide
+            var user_id = event.currentSlide.dataset.state;
+            debugger;
+            } );
+    });
+</script>

@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<!--[if (gt IE 9)|!(IE)]><!--> <html class="no-js" lang="{{=T.accepted_language or 'en'}}"> <!--<![endif]-->
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>{{=response.title or request.application}}</title>
+    <!-- http://dev.w3.org/html5/markup/meta.name.html -->
+    <link rel="stylesheet" href="{{=URL('static','css/bootstrap.min.css')}}"/> 
+    <link rel="stylesheet" href="{{=URL('static','css/bootstrap-theme.min.css')}}"/>
+    <link rel="stylesheet" href="{{=URL('static','css/web2py-bootstrap3.css')}}"/>
+    <link rel="stylesheet" href="{{=URL('static','css/font-awesome.min.css')}}"/>
+    <link rel="stylesheet" href="{{=URL('static','css/reveal.css')}}">
+    
+    <link rel="stylesheet" href="{{=URL('static','css/reveal-theme/black.css')}}">
+
+    <link rel="shortcut icon" href="{{=URL('static','images/favicon.ico')}}" type="image/x-icon">
+    <link rel="apple-touch-icon" href="{{=URL('static','images/favicon.png')}}">
+    <script src="{{=URL('static','js/modernizr-2.8.3.min.js')}}"></script>
+    {{include 'web2py_ajax.html'}} <!-- this includes jquery.js, calendar.js/.css and web2py.js -->
+  </head>
+  <body>
+    <!-- Begin page content -->
+        <div class="reveal">
+            <div class="slides">
+                {{block center}}
+                {{include}}
+                {{end}}
+            </div>
+        </div>
+    <!-- The javascript =============================== -->
+    <script src="{{=URL('static','js/bootstrap.min.js')}}"></script>
+    <script src="{{=URL('static','js/web2py-bootstrap3.js')}}"></script>
+    <script src="{{=URL('static','js/reveal.js')}}"></script>
+    <script>
+        Reveal.initialize({
+            history: true,
+            controls: false,
+            progress: false,
+            center: true,
+            loop: true,
+            
+            //width: "100%",
+            //height: "100%",
+            //margin: 0,
+            //minScale: 1,
+            //maxScale: 1,
+
+            dependencies: [
+                ]
+        });
+    </script>
+    {{block page_js}}{{end page_js}}
+  </body>
+</html>
