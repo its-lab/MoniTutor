@@ -73,12 +73,13 @@ db.define_table('icinga_customvariables',
 
 db.define_table('icinga_statehistory',
     Field('statehistory_id',type='id'),
-    Field('state_time'),
+    Field('state_time', 'datetime'),
     Field('object_id', 'reference icinga_objects'),
     Field('state'),
     Field('state_type'),
     Field('last_state'),
     Field('output'),
-    Field('long_output') )
+    Field('long_output'),
+    Field('state_change'))
 
                 

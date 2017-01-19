@@ -5,15 +5,16 @@
 
 {{for user in user_scenario:}}
 <section data-state="{{=user.auth_user.id}}">
-        <div class="row">
+        <div class="row" >
             <div class="col-lg-4">
-                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image">
+                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image" style="max-height: 30vh">
             </div>
-            <div class="col-lg-1"></div>
+            <!--<div class="col-lg-1"></div>>-->
             <div class="col-md-7" style="text-align: left">
                 <p>{{=user.auth_user.first_name}} {{=user.auth_user.last_name}}</p>
             </div>
         </div>
+        <br>
         <p>Last actions</p>
         <hr>
             <div id="actionRow" class="stretch row" style="text-align: left">
@@ -35,6 +36,7 @@
             </div>
 </section>
 {{pass}}
+<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 <script>
     $(document).ready(function() {
         Reveal.addEventListener( 'slidechanged', function(event) {
