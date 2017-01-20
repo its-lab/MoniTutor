@@ -7,15 +7,13 @@
 <section data-state="{{=user.auth_user.id}}">
         <div class="row" >
             <div class="col-lg-4">
-                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image" style="max-height: 30vh">
+                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image" style="max-height: 20vh">
             </div>
-            <!--<div class="col-lg-1"></div>>-->
             <div class="col-md-7" style="text-align: left">
                 <p>{{=user.auth_user.first_name}} {{=user.auth_user.last_name}}</p>
             </div>
         </div>
         <br>
-        <p>Last actions</p>
         <hr>
         <div id="actionRow-{{=user.auth_user.id}}" class="stretch" style="text-align: left">
         </div>
@@ -31,7 +29,7 @@
                         userId: userId,
                         scenarioId: "{{=scenario_id}}",
                         amount: "{{=amount}}",
-                        onlySuccessful: {{=only_successful}}
+                        onlySuccessful: "{{=only_successful}}"
                     },
                     function (data, status) {
                         var events = JSON.parse(data);
@@ -47,8 +45,8 @@
                             var iconArrow = document.createElement("i");
                             $(rowDiv).addClass("row").css("font-size","xx-large");
                             $(iconDiv).addClass("col-sm-2");
-                            $(timeDiv).addClass("col-sm-2");
-                            $(timeDiv).addClass("col-sm-8");
+                            $(timeDiv).addClass("col-sm-3");
+                            $(timeDiv).addClass("col-sm-7");
                             $(iconLastState).addClass("fa");
                             $(iconState).addClass("fa");
                             var lastState = event.checkState.lastState; 

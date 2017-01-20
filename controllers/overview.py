@@ -85,7 +85,7 @@ def get_user_events():
         check_name = username +"_"+ check.monitutor_checks.name
         checks_by_name[check_name] = check
     
-    if only_successful is 0:
+    if only_successful == "0":
         service_hist = db((db.icinga_statehistory.object_id ==   db.icinga_objects.object_id) &
                       (db.icinga_objects.is_active == 1) &
                       (db.icinga_statehistory.state == 0) &
