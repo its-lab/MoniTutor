@@ -33,7 +33,7 @@
     <script src="{{=URL('static','js/reveal.js')}}"></script>
     <script>
         Reveal.initialize({
-            history: true,
+            history: false,
             controls: false,
             progress: false,
             center: true,
@@ -44,6 +44,9 @@
             //margin: 0,
             //minScale: 1,
             //maxScale: 1,
+            {{if reveal_autoscroll is not None:}}
+            autoSlide: {{=reveal_autoscroll*1000}},
+            {{pass}}
 
             dependencies: [
                 ]

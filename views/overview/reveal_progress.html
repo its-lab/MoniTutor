@@ -17,32 +17,89 @@
         <br>
         <p>Last actions</p>
         <hr>
-            <div id="actionRow" class="stretch row" style="text-align: left">
-                <div class="col-sm-1">
-                    <small>
-                    <i class="fa fa-exclamation"></i>
-                    </small>
-                </div>
-                <div class="col-sm-2">
-                    <small>
-                        5 min ago
-                    </small>
-                </div>
-                <div class="col-sm-9">
-                    <small>
-                        Website 1 ist erreichbar
-                    </small>
-                </div>
-            </div>
+        <div id="actionRow-{{=user.auth_user.id}}" class="stretch" style="text-align: left">
+        </div>
 </section>
 {{pass}}
-<script src="https://cdn.socket.io/socket.io-1.4.5.js"></script>
 <script>
     $(document).ready(function() {
         Reveal.addEventListener( 'slidechanged', function(event) {
             // Get userid of current slide
-            var user_id = event.currentSlide.dataset.state;
-            debugger;
+            var userId = event.currentSlide.dataset.state;
+            $.get("{{=URL('overview', 'get_user_events')}}",
+                    {
+                        userId: userId,
+                        scenarioId: "{{=scenario_id}}",
+                        amount: "{{=amount}}",
+                        onlySuccessful: {{=only_successful}}
+                    },
+                    function (data, status) {
+                        var events = JSON.parse(data);
+                        $("#actionRow-" + userId).empty();
+                        for(var i in events){
+                            var event = events[i];
+                            var rowDiv = document.createElement("div");
+                            var iconDiv = document.createElement("div");
+                            var timeDiv = document.createElement("div");
+                            var outputDiv = document.createElement("div");
+                            var iconLastState = document.createElement("i");
+                            var iconState = document.createElement("i");
+                            var iconArrow = document.createElement("i");
+                            $(rowDiv).addClass("row").css("font-size","xx-large");
+                            $(iconDiv).addClass("col-sm-2");
+                            $(timeDiv).addClass("col-sm-2");
+                            $(timeDiv).addClass("col-sm-8");
+                            $(iconLastState).addClass("fa");
+                            $(iconState).addClass("fa");
+                            var lastState = event.checkState.lastState; 
+                            var state = event.checkState.state; 
+                            switch (lastState){
+                                case 0:
+                                    $(iconLastState).addClass("fa-check-circle");
+                                    break;
+                                case 1:
+                                case 2:
+                                    $(iconLastState).addClass("fa-times-circle-o");
+                                    break;
+                                default:
+                                    $(iconLastState).addClass("fa-question-circle");
+                            }
+                            switch (state){
+                                case 0:
+                                    $(iconState).addClass("fa-check-circle");
+                                    break;
+                                case 1:
+                                case 2:
+                                    $(iconState).addClass("fa-times-circle-o");
+                                    break;
+                                default:
+                                    $(iconState).addClass("fa-question-circle");
+                            }
+                            $(iconArrow).addClass("fa").addClass("fa-long-arrow-right");
+
+                            $(iconDiv).append(iconLastState).append(iconArrow).append(" ").append(iconState);
+                            var timedelta = event.checkState.time;
+                            timedelta = Math.floor(timedelta/60)
+                            if(timedelta == 0){
+                                $(timeDiv).append("just now");
+                            }
+                            else if(timedelta <= 59){
+                                $(timeDiv).append( Math.floor(timedelta) + " min ago");
+                            }
+                            else if(timedelta/60 <= 24){
+                                $(timeDiv).append( Math.floor(timedelta/60) + " h ago");
+                            }
+                            else{
+                                $(timeDiv).append( Math.floor(timedelta/(60*24)) + " days ago");
+                            }
+                            $(outputDiv).append(event.checkInfo.displayName);
+                            $(rowDiv).append(iconDiv);
+                            $(rowDiv).append(timeDiv);
+                            $(rowDiv).append(outputDiv);
+                            $("#actionRow-" + userId).append(rowDiv);
+                        }
+                        }
+                );
             } );
     });
 </script>
