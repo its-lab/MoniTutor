@@ -1,0 +1,136 @@
+{{extend 'reveal_layout.html'}}
+<section>
+    <p>Student progress - Uncheck to hide<p>
+    <div class="stretch row">
+    {{ for user in user_scenario:}}
+        <div class="col-md-2">
+            <div class="row">
+                <div class="col-md-6">
+                    <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="{{=user.auth_user.username}}" style="max-height: 10vh">
+                </div>
+                <div class="col-md-6">
+                    <input type="checkbox" checked=true name="hide" value="{{=user.auth_user.id}}">
+                </div>
+            </div>
+        </div>
+    {{ pass }}
+    </div>
+</section>
+
+{{for user in user_scenario:}}
+<section data-state="{{=user.auth_user.id}}">
+        <div class="row" >
+            <div class="col-lg-4">
+                <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="No Image" style="max-height: 20vh">
+            </div>
+            <div class="col-md-7" style="text-align: left">
+                <p>{{=user.auth_user.first_name}} {{=user.auth_user.last_name}}</p>
+            </div>
+        </div>
+        <br>
+        <hr>
+        <div id="actionRow-{{=user.auth_user.id}}" class="stretch" style="text-align: left">
+        </div>
+</section>
+{{pass}}
+<script>
+    $(document).ready(function() {
+        var hiddenSlides = {};
+        $("input:checkbox").click(function(){
+            var totalSlides = Reveal.getTotalSlides();
+            for( var i = 1; i < totalSlides; i++ ){
+                var slide = Reveal.getSlide(i,0);
+                if(slide.dataset.state != this.value){
+                    continue;
+                }
+                else{
+                    slide.dataset.hidden = (!this.checked);
+                }
+            }
+            
+        });
+        Reveal.addEventListener( 'slidechanged', function(event) {
+            // Get userid of current slide
+            var userId = event.currentSlide.dataset.state;
+            var thisSlide = Reveal.getCurrentSlide();
+            if( Reveal.isAutoSliding() && 
+                (Reveal.isFirstSlide() || Reveal.getCurrentSlide().dataset.hidden == "true")){
+                Reveal.next();
+            }
+            $.get("{{=URL('overview', 'get_user_events')}}",
+                    {
+                        userId: userId,
+                        scenarioId: "{{=scenario_id}}",
+                        amount: "{{=amount}}",
+                        onlySuccessful: "{{=only_successful}}"
+                    },
+                    function (data, status) {
+                        var events = JSON.parse(data);
+                        $("#actionRow-" + userId).empty();
+                        for(var i in events){
+                            var event = events[i];
+                            var rowDiv = document.createElement("div");
+                            var iconDiv = document.createElement("div");
+                            var timeDiv = document.createElement("div");
+                            var outputDiv = document.createElement("div");
+                            var iconLastState = document.createElement("i");
+                            var iconState = document.createElement("i");
+                            var iconArrow = document.createElement("i");
+                            $(rowDiv).addClass("row").css("font-size","xx-large");
+                            $(iconDiv).addClass("col-sm-2");
+                            $(timeDiv).addClass("col-sm-3");
+                            $(timeDiv).addClass("col-sm-7");
+                            $(iconLastState).addClass("fa");
+                            $(iconState).addClass("fa");
+                            var lastState = event.checkState.lastState; 
+                            var state = event.checkState.state; 
+                            switch (lastState){
+                                case 0:
+                                    $(iconLastState).addClass("fa-check-circle");
+                                    break;
+                                case 1:
+                                case 2:
+                                    $(iconLastState).addClass("fa-times-circle-o");
+                                    break;
+                                default:
+                                    $(iconLastState).addClass("fa-question-circle");
+                            }
+                            switch (state){
+                                case 0:
+                                    $(iconState).addClass("fa-check-circle");
+                                    break;
+                                case 1:
+                                case 2:
+                                    $(iconState).addClass("fa-times-circle-o");
+                                    break;
+                                default:
+                                    $(iconState).addClass("fa-question-circle");
+                            }
+                            $(iconArrow).addClass("fa").addClass("fa-long-arrow-right");
+
+                            $(iconDiv).append(iconLastState).append(iconArrow).append(" ").append(iconState);
+                            var timedelta = event.checkState.time;
+                            timedelta = Math.floor(timedelta/60)
+                            if(timedelta == 0){
+                                $(timeDiv).append("just now");
+                            }
+                            else if(timedelta <= 59){
+                                $(timeDiv).append( Math.floor(timedelta) + " min ago");
+                            }
+                            else if(timedelta/60 <= 24){
+                                $(timeDiv).append( Math.floor(timedelta/60) + " h ago");
+                            }
+                            else{
+                                $(timeDiv).append( Math.floor(timedelta/(60*24)) + " days ago");
+                            }
+                            $(outputDiv).append(event.checkInfo.displayName);
+                            $(rowDiv).append(iconDiv);
+                            $(rowDiv).append(timeDiv);
+                            $(rowDiv).append(outputDiv);
+                            $("#actionRow-" + userId).append(rowDiv);
+                        }
+                        }
+                );
+            } );
+    });
+</script>
