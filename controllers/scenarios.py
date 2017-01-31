@@ -279,8 +279,8 @@ def view_milestones():
 @auth.requires_login()
 def edit_system():
     if auth.has_membership("admin") and len(request.args)>1:
-        user_id = request.args(1, cast=int)
         system_id = request.args(0, cast=int)
+        user_id = request.args(1, cast=int)
     elif len(request.args) is 0:
         redirect(URL('default','index'))
     else:
@@ -329,10 +329,8 @@ def edit_system():
 @auth.requires_login()
 def edit_systems():
     if auth.has_membership("admin") and len(request.args)>1:
-        user_id = request.args(1, cast=int)
         scenario_id = request.args(0, cast=int)
-        if len(request.args) >2:
-            scenario_id = -1
+        user_id = request.args(1, cast=int)
     elif len(request.args) is 0:
         redirect(URL('default','index'))
     else:

@@ -23,6 +23,10 @@
                     Action Log
                 </a>
             </li>
+            <li role="presentation">
+                <a href="#scenarios" aria-controls="scenarios" role="tab" data-toggle="tab">
+                    Scenarios
+                </a>
         </ul>
     </div>
     <br>
@@ -30,6 +34,9 @@
     <div class="tab-content">
         <div role="tabpanel" class="tab-pane active" id="history">
             {{=LOAD('dashboard','view_history.load', args=user.id, ajax=True)}}
+        </div>
+        <div role="tabpanel" class="tab-pane" id="scenarios">
+            {{=LOAD('scenarios','view_available_scenarios.load', args=user.id, ajax=True)}}
         </div>
     </div>
     <script>

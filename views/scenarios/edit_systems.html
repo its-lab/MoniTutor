@@ -13,7 +13,7 @@
         {{=system.description}}
     </div>
     <div class="panel-body">
-{{=LOAD('scenarios','edit_system.load',ajax=True, args=system.system_id)}}
+{{=LOAD('scenarios','edit_system.load',ajax=True, args=[system.system_id, user_id])}}
 </div>
 </div>
 </div>
