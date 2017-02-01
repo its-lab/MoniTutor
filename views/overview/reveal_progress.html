@@ -1,19 +1,48 @@
 {{extend 'reveal_layout.html'}}
 <section>
-    <p>Student progress - Uncheck to hide<p>
     <div class="stretch row">
     {{ for user in user_scenario:}}
         <div class="col-md-2">
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-8">
                     <img src="{{=URL('default', 'download', args=user.auth_user.image)}}" class="img-responsive img-rounded" alt="{{=user.auth_user.username}}" style="max-height: 10vh">
                 </div>
-                <div class="col-md-6">
-                    <input type="checkbox" checked=true name="hide" value="{{=user.auth_user.id}}">
+                <div class="col-md-4">
+                    <input class="checkUserSlide" type="checkbox" checked=true name="hide" value="{{=user.auth_user.id}}">
                 </div>
             </div>
         </div>
     {{ pass }}
+    </div>
+    <div class="row">
+        <div class="col-md-2">
+			<div class="input-group">
+				<span class="input-group-addon">
+	  				<input id="check_success" type="checkbox" checked="true" class="form-control" describedby="positive">
+				</span>
+               <span class="input-group-addon" id="positive"><i class="fa fa-check-circle"></i><i class="fa fa-long-arrow-right"></i><i class="fa fa-times-circle"></i></span>
+			</div>
+        </div>
+		<div class="col-md-1"></div>
+        <div class="col-md-3">
+			<div class="input-group">
+	  			<span class="input-group-addon" id="histcountNumber">{{=amount}}</span>
+				<span class="input-group-addon">
+	  				<input id="histcount" type="range" min="0" max="7" value="{{=amount}}" step="1" class="form-control" aria-describedby="history-count-range"/>
+				</span>
+                <span class="input-group-addon" id="history-count-range"><i class="fa fa-history"></i></span>
+			</div>
+        </div>
+		<div class="col-md-1"></div>
+        <div class="col-md-5">
+			<div class="input-group">
+	  			<span class="input-group-addon" id="time">15</span>
+				<span class="input-group-addon">
+	  				<input id="autoslide-time" type="range" min="5" max="120" value="15" step="1" class="form-control" aria-describedby="time-range"/>
+				</span>
+                <span class="input-group-addon" id="time-range"><i class="fa fa-clock-o"></i></span>
+			</div>
+        </div>
     </div>
 </section>
 
@@ -36,7 +65,27 @@
 <script>
     $(document).ready(function() {
         var hiddenSlides = {};
-        $("input:checkbox").click(function(){
+        var historyCount = {{=amount}};
+        var onlySuccessful = false;
+
+        $("#histcount").change(function(){
+            $("#histcountNumber").html(this.value);
+            historyCount = this.value;
+        });
+        $("#autoslide-time").change(function(){
+            debugger;
+            Reveal.configure({ autoSlide: this.value*1000});
+            $("#time").html(this.value);
+        });
+        $("#check_success").click(function(){
+            if(onlySuccessful){
+                onlySuccessful = false;
+            }
+            else{
+                onlySuccessful = true;
+            }
+        });
+        $(".checkUserSlide").click(function(){
             var totalSlides = Reveal.getTotalSlides();
             for( var i = 1; i < totalSlides; i++ ){
                 var slide = Reveal.getSlide(i,0);
@@ -61,8 +110,8 @@
                     {
                         userId: userId,
                         scenarioId: "{{=scenario_id}}",
-                        amount: "{{=amount}}",
-                        onlySuccessful: "{{=only_successful}}"
+                        amount: historyCount,
+                        onlySuccessful: onlySuccessful
                     },
                     function (data, status) {
                         var events = JSON.parse(data);

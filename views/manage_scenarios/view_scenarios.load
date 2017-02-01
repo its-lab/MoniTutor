@@ -119,6 +119,8 @@
             <td class="col-sm-2" id="{{=scenario.scenario_id}}-tr">
                 <div class="pull-right">
                     <i id="{{=scenario.scenario_id}}" class="fa fa-edit" style="margin-left: 10px"></i>
+                    <a href="{{=URL("overview","reveal_progress.html", args=[scenario.scenario_id, 5])}}">
+                    <i class="fa fa-desktop" style="margin-left: 10px"></i></a>
                     {{if scenario.initiated is False:}}
                         <i id="{{=scenario.scenario_id}}-init" class="fa
                             fa-power-off" style="margin-left: 10px"></i>

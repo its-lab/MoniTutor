@@ -76,7 +76,9 @@ def get_user_events():
                          (tutordb.monitutor_milestones.milestone_id ==
                           tutordb.monitutor_check_milestone.milestone_id) &
                          (tutordb.monitutor_checks.check_id ==
-                          tutordb.monitutor_check_milestone.check_id)).select()
+                          tutordb.monitutor_check_milestone.check_id)&
+                         (tutordb.monitutor_milestone_scenario.hidden == False)&
+                         (tutordb.monitutor_check_milestone.flag_invis== False)).select()
     
     user_row = tutordb.auth_user[user_id]
     username = user_row.username
@@ -85,21 +87,22 @@ def get_user_events():
         check_name = username +"_"+ check.monitutor_checks.name
         checks_by_name[check_name] = check
     
-    if only_successful == "0":
+    if only_successful == "true":
         service_hist = db((db.icinga_statehistory.object_id ==   db.icinga_objects.object_id) &
                       (db.icinga_objects.is_active == 1) &
                       (db.icinga_statehistory.state == 0) &
                       (db.icinga_statehistory.state != db.icinga_statehistory.last_state) &
                       (db.icinga_objects.name2.startswith(str(username)))).select(orderby=~db.icinga_statehistory.state_time,
-                              limitby=(0,amount))
+                              limitby=(0,20))
     else:
         service_hist = db((db.icinga_statehistory.object_id ==   db.icinga_objects.object_id) &
                       (db.icinga_objects.is_active == 1) &
                       (db.icinga_statehistory.state != db.icinga_statehistory.last_state) &
                       (db.icinga_objects.name2.startswith(str(username)))).select(orderby=~db.icinga_statehistory.state_time,
-                              limitby=(0,amount))
+                              limitby=(0,20))
 
     check_events = []
+    i = 0
     for event in service_hist:
         if event.icinga_objects.name2 in checks_by_name:
             check_info = checks_by_name[event.icinga_objects.name2]
@@ -117,5 +120,8 @@ def get_user_events():
                     "output": event.icinga_statehistory.output
                 }
             })
+            i = i+1
+            if i >= amount:
+                break
 
     return json.dumps(check_events)
