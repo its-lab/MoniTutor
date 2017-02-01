@@ -5,9 +5,6 @@
         $(".milestone").click(function () {
                 $(".list-group."+this.id).find(".check").trigger("click");
             });
-        window.setInterval(function () {
-            $(".fa.fa-repeat").trigger("click");
-        }, 30000);
 
         function onClickupdateCheck( event ){
             var checkMilestoneId = this.id;
