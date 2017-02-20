@@ -2,7 +2,7 @@
 
 ## Description
 
-MoniTutor is a framework that provides students a spohisticated interactive
+MoniTutor is a framework that provides students a sophisticated interactive
 eLearing platform for IT-Infrastructure related topics. It is based on the
 infrastructure monitoring system Icinga2 and developed in Python.
 
@@ -13,10 +13,10 @@ tolerant systems & IT-Infrastructure).
 ## News, help, contact
 
 Notable commit and announcements are posted on Twitter
-[@MoniTutor](https://twitter.com/MoniTutor).
+[@MoniTutor](https://twitter.com/MoniTutor) and in our [mailing list](https://list.noc.fh-aachen.de/mailman/listinfo/monitutor).
+.
 
-If you are interested in contributing, please write a message to [Mark Sw](https://github.com/ms42Q).
-A mailinglist will soon be set up. 
+If you are interested in contributing, please subscribe to our [mailing list](https://list.noc.fh-aachen.de/mailman/listinfo/monitutor).
 
 Bugs and feature requests can be submitted via [github issues](https://github.com/its-lab/MoniTutor/issues). 
 
@@ -25,8 +25,9 @@ Bugs and feature requests can be submitted via [github issues](https://github.co
 * Supports arbritrary scenarios on all platforms that support python2.7
   (GNU/Linux, BSD, Windows)
 * Configuration via Webfrontend
-* NAT/Firewall-penetration for Virtual or remote clients
-* Interactive front-end for students
+* NAT/Firewall-penetration for virtual machines and remote clients
+* Simple, interactive front-end for students
+* Presentation-mode to display live-status
 
 ### Screenshots
 ![monitutor1](https://cloud.githubusercontent.com/assets/13717492/20059691/cef75b9a-a4f7-11e6-845f-e1a9635fe739.jpg)
