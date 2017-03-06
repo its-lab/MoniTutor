@@ -1,23 +1,90 @@
-{{=form}}
+{{=form.custom.begin}}
+<div class="row">
+    <div class="col-md-5">
+        <div class="input-group">
+          <span class="input-group-addon">Name</span>
+          <input name="name" type="text" class="form-control" placeholder="check - name">
+        </div>
+
+        <br>
+
+        <div class="input-group">
+          <span class="input-group-addon">Display Name</span>
+          <input name="display_name" type="text" class="form-control" placeholder="Display Name">
+        </div>
+
+        <br>
+
+        <div class="input-group">
+          <span class="input-group-addon">Hint</span>
+          <input name="hint" type="text" class="form-control">
+        </div>
+
+        <br>
+        Program: {{=form.custom.widget["program_id"]}}
+        <br>
+        <br>
+        <div class="input-group">
+          <span class="input-group-addon">Parameters</span>
+          <input name="params" type="text" class="form-control">
+        </div>
+        <br>
+        <br>
+        {{=form.custom.submit}}
+    </div>
+    <div class="col-md-1">
+    </div>
+    <div class="col-md-6">
+        <table class="table">
+        <thead>
+            <tr>
+                <td></td>
+                {{for type_row in types:}}
+                <td>
+                    <div id="clear{{=type_row.name}}" class="btn btn-default"><i class="fa fa-eraser"></i> {{=type_row.display_name}}</div>
+                </td>
+                {{pass}}
+            </tr>
+        </thead>
+        <tbody>
+            {{for system in systems:}}
+            <tr>
+                <td>
+                    {{=system.display_name}}
+                </td>
+                {{for type_row in types:}}
+                <td>
+                    <input type="radio" class="input-group-addon {{=type_row.name}}" name="{{=type_row.name}}" value="{{=system.system_id}}">
+                </td>
+                {{pass}}
+            </tr>
+            {{pass}}
+            <script>
+                {{for type_row in types:}}
+                $("#clear{{=type_row.name}}").click(function(){$("[name='{{=type_row.name}}']").prop('checked', false)});
+                {{pass}}
+            </script>
+        </tbody>
+    </table>
+    </div>
+</div>
+{{=form.custom.end}}
+<hr>
 <br>
 <button type="button" class="btn btn-default" id="new_program">
-        <i class='fa fa-plus'>
-
-        </i>
-        <b>Add new program</b>
-    </button>
-
-    <br><br>
-
-    <!-- Script to toggle the new program Form! -->
-    <script type="text/javascript">
-     $( "#new_program" ).click(function() {$( "#add_program" ).toggle( "medium", function() {
+    <i class='fa fa-plus'></i>
+    <b>Add new program</b>
+</button>
+<br><br>
+<!-- Script to toggle the new program Form! -->
+<script type="text/javascript">
+    $( "#new_program" ).click(function() {$( "#add_program" ).toggle(
+        "medium", function() {
         // Animation complete.
-      });
+        });
     });
-    </script>
-
-
-     <div id="add_program" hidden="True">
+</script>
+<div id="add_program" hidden="True">
     {{=LOAD('manage_components','add_program.load',ajax=True)}}
-    </div>
+</div>
+ 

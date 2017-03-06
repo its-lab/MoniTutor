@@ -69,37 +69,11 @@ def update_task_status():
 @auth.requires_membership('admin')
 def edit_scenario():
     """Displays a form to edit a given scenario"""
-    scenario_id = request.args(0, cast=int)
-    scenario = tutordb.monitutor_scenarios[scenario_id]
-    form = FORM(
-        DIV(
-          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="name", _class="form-control", _value=scenario.name, requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
-        DIV(
-          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="display_name", _class="form-control", _value=scenario.display_name, requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        B("Description:"),BR(),
-        DIV(
-          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-          TEXTAREA(scenario.description, _name="description",  _class="form-control"), _class="input-group"),BR(),
-        B("Goal:"),BR(),
-        DIV(
-          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-          TEXTAREA(scenario.goal, _name="goal",  _class="form-control"), _class="input-group"),BR(),
-        INPUT( _type='submit'),BR(),BR(),
-        _id="form1"
-    )
-
+    scenario_id = request.args(0) or redirect(URL('index'))
+    form=SQLFORM(tutordb.monitutor_scenarios, tutordb.monitutor_scenarios(scenario_id))
     if form.accepts(request, session):
-        response.flash = 'form accepted'
-        tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).validate_and_update(
-                                    description=form.vars.description,
-                                    goal=form.vars.goal,
-                                    name=form.vars.name,
-                                    display_name=form.vars.display_name,
-                                    initiated=False,
-                                    hidden=True)
-        redirect(URL(args=scenario_id))
+        form.process()
+        return dict(form=SQLFORM(tutordb.monitutor_scenarios, tutordb.monitutor_scenarios(scenario_id)))
     return dict(form=form)
 
 
@@ -179,52 +153,42 @@ def add_check():
     else:
         redirect(URL('default', 'index'))
         milestone_id = None
-    programs = tutordb(tutordb.monitutor_programs).select()
-    options = OPTION(" ")
-    for row in programs:
-        options += OPTION(XML(row.display_name),
-                          _value=row.program_id)
-    form = FORM(
-        DIV(
-          SPAN(XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT(
-              _name="name",
-              _class="form-control",
-              requires=[IS_NOT_EMPTY(), IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]
-              ), _class="input-group"), BR(),
-        DIV(
-          SPAN(XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT(_name="display_name",  _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"), BR(),
-        DIV(
-          SPAN(XML('<b>Parameters</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT(_name="params",  _class="form-control"), _class="input-group"), BR(),
-        XML("<b>Program</b>"),
-        DIV(
-            SELECT((options), _name="program", _class="form-control", requires=IS_NOT_EMPTY()),
-            _class="input-group"), BR(),
-        INPUT(_type='submit'),
-        _id="form"
-        )
-    if form.accepts(request, session):
-        response.flash = "form accepted"
-        if form.vars.params is None:
-            newid = tutordb.monitutor_checks.insert(name=form.vars.name,
+    form = SQLFORM(tutordb.monitutor_checks)
+    systems = tutordb(tutordb.monitutor_systems).select()
+    for type_row in tutordb(tutordb.monitutor_types).select():
+        field = INPUT(_name=type_row.name, _type='radio')
+        form[0].insert(-1, field)
+
+    if form.validate():
+
+        newid = tutordb.monitutor_checks.insert(name=form.vars.name,
                                             display_name=form.vars.display_name,
-                                            program_id=form.vars.program,
-                                            params=None,
-                                            hint="")
-        else:
-            newid = tutordb.monitutor_checks.insert(name=form.vars.name,
-                                            display_name=form.vars.display_name,
-                                            program_id=form.vars.program,
+                                            program_id=form.vars.program_id,
                                             params=form.vars.params,
-                                            hint="")
+                                            hint=form.vars.hint)
+
         tutordb.monitutor_check_milestone.insert(check_id=newid,
                                                  milestone_id=milestone_id,
                                                  flag_invis=0,
                                                  sequence_nr=0)
-
-    return dict(programs=programs, form=form)
+        ## TODO: dynamic types
+        systemids = []
+        for system in systems:
+            systemids.append(system.system_id)
+        if form.vars.source is not "" and int(form.vars.source) in systemids:
+            type_id = tutordb(tutordb.monitutor_types.name == "source").select().first()
+            type_id = type_id.type_id
+            tutordb.monitutor_targets.insert(check_id = newid,
+                                             system_id = form.vars.source,
+                                             type_id = type_id)
+        if form.vars.dest is not "" and int(form.vars.dest) in systemids:
+            type_id = tutordb(tutordb.monitutor_types.name == "dest").select().first()
+            type_id = type_id.type_id
+            tutordb.monitutor_targets.insert(check_id = newid,
+                                             system_id = form.vars.dest,
+                                             type_id = type_id)
+        response.flash = "Form accepted. Added check "+form.vars.display_name+"."
+    return dict(form=form, systems=systems, types=tutordb(tutordb.monitutor_types).select())
 
 
 @auth.requires_membership('admin')
