@@ -1,12 +1,12 @@
-# MoniTutor: Workshop-monitoring for students
+# MoniTutor: Workshop Monitoring for Students
 
 ## Description
 
-MoniTutor is a framework that provides students a sophisticated interactive
-eLearing platform for IT-Infrastructure related topics. It is based on the
+MoniTutor is a framework that provides students with a sophisticated interactive
+eLearning platform for IT infrastructure related topics. It is based on the
 infrastructure monitoring system Icinga2 and developed in Python.
 
-MoniTutor is currently used at the FH-Aachen - University of applied sciences,
+MoniTutor is currently used at FH Aachen - University of Applied Sciences
 to support students in hands-on lessons in the subject area IT-Systems (fault
 tolerant systems & IT-Infrastructure).
 
@@ -54,12 +54,12 @@ scenarios.
 ![monitutor_arch](https://cloud.githubusercontent.com/assets/13717492/20060036/870647cc-a4f9-11e6-8015-d327b90a4ce5.png)
 
 ## Getting started
-The prefered Linux distribution for this project is Debian. All packets are
+The prefered Linux distribution for this project is Debian. All packages are
 installed from the official Debian repositories. For distributions other than
-Debian, packets may also be available. Please contact your distribution
+Debian, packages may also be available. Please contact your distribution
 packagers. 
 
-### Installing the basis
+### Installing the Base System
 
 #### Icinga2
 MoniTutor depends on Icinga2 and PostgreSQL databases. Hence, the first step is
@@ -76,7 +76,7 @@ with the installation of Web2Py. It is recommended but optional to install icing
 
 #### Web2Py
 The next step is to install web2py. Web2py is a free, open-source web framework for agile development of secure database-driven web applications; it is written in Python and programmable in
-Python. web2py is a full-stack framework, meaning that it contains all the components you need to build fully functional web applications. MoniTutor depends on Web2Py, because it was debeloped as a Web2Py application.
+Python. web2py is a full-stack framework, meaning that it contains all the components you need to build fully functional web applications. MoniTutor depends on Web2Py because it was developed as a Web2Py application.
 
 A sophisticated installation guide for web2py can be found in the web2py
 documentation. [Web2Py install-guide](http://web2py.com/books/default/chapter/29/13/deployment-recipes#Apache-setup)
@@ -96,7 +96,7 @@ host    icinga2        monitutor      127.0.0.1/32          md5
 host    icinga2        monitutor      ::1/128               md5
 ```
 
-After you restarted the psql server, Create a new user and database, both called
+After you restarted the psql server, create a new user and database, both called
 "monitutor". Choose a secure password and remember it.
 
 ```
@@ -181,7 +181,7 @@ verify the content of your appconfig.ini and make sure the monitutor-database
 and the icinga2-database are both reachable.
 Once you have the application up and running, on the front page where it prompts
 you for a login, hit register and register yourself.
-After you successfuly logged in, you need to add your new user to the admin
+After you successfully logged in, you need to add your new user to the admin
 group.
 
 ```
@@ -195,7 +195,7 @@ auth_group.id FROM auth_user, auth_group WHERE auth_user.username =
 AND auth_group.role = 'admin';
 ```
 
-If you now go back to the monitutor frontend, after logged in successfuly, you should see an "Admin" entry in the menu on the top of
+If you now go back to the monitutor frontend, after having logged in successfully, you should see an "Admin" entry in the menu on the top of
 the screen.
 
 ### Backend components
@@ -209,12 +209,12 @@ MoniTutor configures the underlying Icinga system via templates and its RESTful 
 # icinga2 api setup
 ```
 
-After restarting the icinga daemon, the api is ready to receive commands. The
+After restarting the Icinga daemon, the api is ready to receive commands. The
 password of the root user can be found in /etc/icinga2/conf.d/api-users.conf.
 **You need to copy the password** into the
 web2py/applications/monitutor/models/scheduler.py file.
 
-To verify that the API is working properly, execute the following command.
+To verify that the API is working properly, execute the following command:
 
 ```
 curl -k -s -u root:<password> 'https://localhost:5665/v1/objects/hosts' | python
@@ -237,15 +237,15 @@ recommended to not start the script as root but as the "nagios" user or another
 user with access to the icinga conf.d directory.
 
 #### MoniTutor tunnel
-In order to transport and execute programs Monitutor holds in its database,
+In order to transport and execute programs that Monitutor holds in its database,
 we need to set up a bi-directional tunnel between the MoniTutor server and the
 students clients. A tunneling application that does exactly this can be found
-in a spereate repository. [MoniTutor-Tunnel](http://github.com/its-lab/MoniTutor-Tunnel)
+in a separate repository. [MoniTutor-Tunnel](http://github.com/its-lab/MoniTutor-Tunnel)
 
 Just clone the repository and configure the yaml-file to match your database
-setup. To enable the server and client to communicate encrypted, generate a rsa
-key-pair and copy your exisitng keys to /etc/ssl. After that is done, execute the
-script. Note that security features, including the encryption are still in early
+setup. To enable the server and client for encrypted communication , generate a rsa
+key-pair and copy your existing keys to /etc/ssl. After that is done, execute the
+script. Note that security features, including the encryption, are still in early
 development. In the current release, **the client does not verify the
 certificate**.
 
@@ -275,8 +275,8 @@ To use the MoniTunnel application you also need to run the client.
 ```
 
 Now, You can begin to define scenarios.
-Note, that once you are finished, you need to provide your students access to
-the client.py file to connect to the server.
+Note, that once you are finished, you need to provide your students with access to
+the client.py file in order to connect to the server.
 
 #### Setting up the Monitutor Client
 
@@ -285,7 +285,7 @@ workshop-client and the MoniTutor server, the client needs to execute the
 client.py script that comes with the server script of the monitutor tunnel
 module. 
 
-After the server.py was succesfully started on the server, the clientscript
+After the server.py was successfully started on the server, the client script
 needs to be started with the correct IpAddress:Port pair.
 
 ```
@@ -313,16 +313,16 @@ does not support IPv6 yet.
 python client.py -a 10.0.0.1 -p 8080 -u ./username.txt -n testclient
 ```
 
-Two further things must be configured properly in order for the clientscript to work.
+Two further things must be configured properly in order for the client script to work.
 
- A "username-file" must be available that holds the MoniTutot-username of the
+ A "username-file" must be available that holds the MoniTutor-username of the
    student.
    ```
    echo "testuser" >> username.txt
    ```
 
-The hostname of the system (/etc/hostname) has to the saame hostname as
-defined in the corosponding monitutor system. Note that the hostname of a
+The hostname of the system (/etc/hostname) has to be the same hostname as
+defined in the corresponding monitutor system. Note that the hostname of a
 system can be "faked" by using the "-n" parameter of the client script.
 
 The MoniTutor server uses the hostname and the username to identify
@@ -339,7 +339,7 @@ screen.
 
 Through the admin menu, you can access 3 areas.
 
-In the first area, you can define your scenarios.
+In the first area, you define your scenarios.
 The components area gives you a brief overview over all the components that can
 be assigned to a scenario.
 The last area provides the administrator with an overview over student
@@ -349,14 +349,14 @@ activities.
 Before creating milestones, the administrator should define the hosts that are dealt with in the scenario. 
 In MoniTutor those hosts are represented as Systems. A System can be anything that can be accessed via TCP/IP.
 To create and change your system setup, go to the admin menu at the top and navigate to the component overview.
-On the left side you can klick on "systems" which should bring you to the system forms.
+On the left side you can click on "systems" which should bring you to the systems forms.
 A System always needs a hostname and IPv4 and IPv6 addresses. If none is
 available, enter 127.0.0.1/::1
 Note that the system configuration can be altered anytime. However it is
 sometimes necessary to reinitiate a scenario after doing so.
 
 ### Milestones
-A Milestone can be seen as a group of tasks that a student has to finish berfore
+A Milestone can be seen as a group of tasks that a student has to finish before
 he or she is able to continue with further tasks.
 The first milestone of a scenario might be the setup of the server and client
 operating systems that are used. Client and server possibly need to be able to
@@ -376,14 +376,14 @@ student has to satisfy. In MoniTutor those entities are defined as "checks".
 ### Checks
 
 A check can be seen as an instruction on how to test the functionality of a
-certain thing. A "check", might be the execution of a "ping" on one system
-towards another system to test if the systems are conected properly. A check can
+certain thing. A "check" might be the execution of a "ping" on one system
+towards another system to test if the systems are connected properly. A check can
 later be triggered by a student to assess their work themselves and to enable
 them to find their mistakes easily.
 
-Each Milestone that the administor defines, holds one or more checks.
+Each Milestone that the administor defines holds one or more checks.
 
-To help the student to satisfy each check within a milestone, the display-name
+To help the student satisfy each check within a milestone, the display-name
 of each check should be precise and clear to not confuse the student. "Client-A
 can reach Client-B" is better than "ping a b".
 
@@ -393,10 +393,10 @@ a "source" to the check. The source system is the system on which the check is
 executed. The "How?" is not as easy to answer because it highly depends on your
 environment. To execute the check on the Source system, we need to provide
 Monitutor the source-code of a program it can execute on the host. In the end, a
-Check discribes which routine (program) with which parameters is executed on
+Check describes which routine (program) with which parameters is executed on
 which systems.
 
-Defining a check is a 5 step process:
+Defining a check is a 5-step process:
 
 * Assign a display name that does not confuse your students
 * Select which system the check is executed on (Source System)
@@ -410,10 +410,10 @@ Defining a check is a 5 step process:
 
 ### Programs
 
-A Program can be a small scripts written in an arbitrary programming languauge.
-However, the interpreter to execute the program needs to be installed on the
+A Program can be a small script written in an arbitrary programming languauge.
+However, the interpreter that executes the program needs to be installed on the
 systems and the interpreter path needs to be specified. The purpose of a program
-is to programatically evaluate weather or not a certain state is present on the
+is to programatically evaluate whether or not a certain state is present on the
 host it is executed on. It is important to note that programs which acceppt
 parameters are useful as they can be reused for different checks to test
 different states. A simple example would be a bash script that checks the
@@ -448,12 +448,12 @@ if [ $? -ne 0 ] ; then
 ```
 
 The script returns a PASSED with returncode 0 if a given packet, passed to the
-program as the first argument is installed and returns an error code of 2
+program as the first argument, is installed and returns an error code of 2
 including a short message if it is not installed.
 
 As these programs are only used in a non-critical environment, it is fine that
 they are "quick and dirty". The general guideline when writing programs for
-MoniTutor is to keep it as simple as possible.
+MoniTutor is to keep them as simple as possible.
 
 #### MoniTutor program guideline
 
@@ -477,7 +477,7 @@ The worker will create Icinga2-templates representing all your hosts and checks.
 You can find all created templates on your MoniTutor server in the conf.d
 directory of Icinga2 (/etc/icinga2/conf.d/monitutor/).
 
-After the scenario is initiated (A progress bar indicates weather or not the
+After the scenario is initiated (a progress bar indicates whether or not the
 process finishes) you can toggle the scenarios visibility and the students can
 start working on it.
 
