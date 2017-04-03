@@ -361,3 +361,13 @@ def edit_systems():
                                            tutordb.monitutor_systems.system_id,
                                            distinct=True)
     return dict(scenario_systems = scenario_systems, user_id = user_id)
+
+
+@auth.requires_membership("admin")
+def toggle_scenario_done():
+    user_id = request.vars.userId
+    scenario_id = request.vars.scenarioId
+    scenario_user = tutordb((tutordb.scenario_user.user_id == user_id) &
+                            (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
+    scenario_user["passed"] = not scenario_user["passed"]
+    scenario_user.update_record()

@@ -3,6 +3,24 @@
     $(document).ready(function() {
         $(".init").on("click", {} , onClickInit);
         $(".trash").on("click", {} , onClickDelete);
+        $(".toggle").on("click", {}, togglePassed);
+
+        function togglePassed(event){
+            var scenarioId = String(this.id).slice(0,-7);
+            $.get("{{=URL("scenarios", "toggle_scenario_done")}}",
+            {
+                scenarioId: scenarioId,
+                userId: "{{=user.id}}"
+            }).done(function(){
+                var starElementId = "#"+scenarioId+"-star";
+                if ($(starElementId).hasClass("fa-star")){
+                        $(starElementId).removeClass("fa-star").addClass("fa-star-o");
+                    }
+                else{
+                        $(starElementId).removeClass("fa-star-o").addClass("fa-star");
+                    }
+                });
+            }
 
 
         function onClickDelete( event ){
@@ -120,46 +138,59 @@
         {{status = tutordb((tutordb.scenario_user.user_id==user_id) & (tutordb.scenario_user.scenario_id == scenario.scenario_id)).select()}}
 
 <div class="col-md-6">
-        {{if len(status) and status[0].status == "initiating" :}}
-        <div class="panel panel-warning">
+    {{if len(status) and status[0].status == "initiating" :}}
+    <div class="panel panel-warning">
         <div class="panel-heading">{{=scenario.display_name}}</div>
         <div class="panel-body"> {{=scenario.description}} <br><br>
             <b>Scenario is initiating. Please be patient.</b><br><br>
             If the initiation process takes longer then 3 minutes, please contact your supervisor.
         </div>
-        <div class="panel-body">
-
-        {{elif len(status) and status[0].status == "initiated": }}
-
-        <div class="panel panel-success">
-        <div class="panel-heading">{{=scenario.display_name}}</div>
+    </div>
+    {{elif len(status) and status[0].status == "initiated": }}
+    <div class="panel panel-success">
+        <div class="panel-heading">
+            {{if auth.has_membership("admin"):}}
+            <button id="{{=scenario.scenario_id}}-toggle" class="toggle" href="#"><i class="fa fa-check"></i></button>
+            {{pass}}
+            {{if status[0].passed:}}
+            <i id="{{=scenario.scenario_id}}-star"class="fa fa-star"></i>
+            {{else:}}
+            <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
+            {{pass}}{{=scenario.display_name}}
+        </div>
         <div class="panel-body"> {{=scenario.description}} <br><br>
-        <a href="{{=URL('scenarios','view_milestones.html',
+            <a href="{{=URL('scenarios','view_milestones.html',
                     args=[scenario.scenario_id, user.username])}}" class="btn btn-default" role="button">
             Show progress</a>
-            </div>
-        <div class="panel-body">
-                <i class='fa fa-trash trash' style="float: right; margin-right: 10px; color: red" id ="trash-{{=scenario.scenario_id}}"></i>
-
-
-
-
-        {{else:}}
-        <div class="panel panel-default">
-        <div class="panel-heading">{{=scenario.display_name}}</div>
-        <div class="panel-body"> {{=scenario.description}} <br><br>
-        <div class="btn btn-default init" id="{{=scenario.scenario_id}}">
-            Start scenario</div>
-        <div class="panel-body">
-                <a
-                href="{{=URL('scenarios','edit_systems',args=[scenario.scenario_id, user_id],
-                extension="html")}}" class='fa fa-cog' style="float: right; margin-right: 10px;" data-toggle="tooltip" data-placement="top" title="Customize your setup"></a>
-
-        {{pass}}
         </div>
-
+        <div class="panel-body">
+            <i class='fa fa-trash trash' style="float: right; margin-right: 10px; color: red" id ="trash-{{=scenario.scenario_id}}"></i>
         </div>
-
     </div>
-
+    {{else:}}
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            {{if auth.has_membership("admin"):}}
+            <button id="{{=scenario.scenario_id}}-toggle" class="toggle" href="#"><i class="fa fa-check"></i></button>
+            {{pass}}
+            {{if len(status) and status[0].passed:}}
+            <i id="{{=scenario.scenario_id}}-star"class="fa fa-star"></i>
+            {{else:}}
+            <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
+            {{pass}}
+            {{=scenario.display_name}}
+        </div>
+        <div class="panel-body">
+            {{=scenario.description}} <br><br>
+            <div class="btn btn-default init" id="{{=scenario.scenario_id}}">
+                Start scenario
+            </div>
+        </div>
+        <div class="panel-body">
+            <a href="{{=URL('scenarios','edit_systems',args=[scenario.scenario_id, user_id],
+                extension="html")}}" class='fa fa-cog' style="float: right; margin-right: 10px;" data-toggle="tooltip" data-placement="top" title="Customize your setup"></a>
+        </div>
+    </div>
+    {{pass}}
+</div>
 {{pass}}

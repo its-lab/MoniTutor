@@ -124,7 +124,8 @@ tutordb.define_table('scenario_user',
     Field('user_id', 'reference auth_user', required=True),
     Field('status', type='string', required=True),
     Field('progress', type="integer", requires=IS_INT_IN_RANGE(minimum=0, maximum=100), default="0"),
-    Field('initiation_time', type="datetime", required=False))
+    Field('initiation_time', type="datetime", required=False),
+    Field('passed', type="boolean", required=False, default=False))
 
 tutordb.define_table('monitutor_check_tasks',
     Field('check_tasks_id', type="id"),
