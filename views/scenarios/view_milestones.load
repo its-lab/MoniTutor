@@ -90,7 +90,7 @@
                         if (checkInfo.status == "DONE" || checkInfo.status == "Error" ) {
                             $(progressbar).css("width", "90%");
                             $(progressbar).css("background-color", "lightgreen");
-                            setTimeout( function (){
+                            window.setTimeout( function (){
                                     $.get("{{=URL("scenarios", "update_task")}}",
                                 {
                                     taskId: taskId.newTask
@@ -102,19 +102,26 @@
 
                         }
                         else if (checkInfo.status == "ASSIGNED") {
-                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            window.setTimeout( function(){
+				update_check(taskId, row, checkMilestoneId, progressbar)}
+				, 1000);
                             $(progressbar).css("width", "60%");
                         }
                         else if (checkInfo.status == "QUEUED") {
-                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            window.setTimeout(function () {
+				update_check(taskId, row, checkMilestoneId, progressbar)}
+				, 1000);
                             $(progressbar).css("width", "40%");
                         }
                         else if (checkInfo.status == "NEW") {
-                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            window.setTimeout(function(){update_check(taskId, row, checkMilestoneId, progressbar)}
+				, 1000);
                             $(progressbar).css("width", "20%");
                         }
                         else {
-                            setTimeout(update_check(taskId, row, checkMilestoneId, progressbar), 300);
+                            window.setTimeout(function(){
+				update_check(taskId, row, checkMilestoneId, progressbar)}
+				, 1000);
                         }
                     }
                 });
