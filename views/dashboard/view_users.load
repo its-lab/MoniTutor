@@ -10,6 +10,7 @@
             <div class="col-xs-7">
             <h5><a href="{{=URL('dashboard','view_user.html', args=user.id)}}">{{=user.first_name}} {{=user.last_name}} <i class="fa fa-info-circle"></i> </a></h5>
             {{if user.id in admin_ids:}}<h5><i class="fa fa-star"></i> Admin</h5>{{pass}}
+                Username: {{=user.username}}<br>
             {{if last_login[user.id] != "NONE":}}
                 Last Login: {{=last_login[user.id].time_stamp}} ago <br>
                 Last Action: {{=last_action[user.id].time_stamp}} ago <br>
