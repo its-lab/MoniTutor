@@ -31,11 +31,11 @@ def view_progress():
     scenario_id = request.args(0, cast=int)
     if auth.has_membership("admin"):
         update_progress(scenario_id)
-    user_scenairo = tutordb((tutordb.scenario_user.scenario_id == scenario_id) &
+    user_scenario = tutordb((tutordb.scenario_user.scenario_id == scenario_id) &
                             (tutordb.scenario_user.user_id == tutordb.auth_user.id) &
                             (tutordb.scenario_user.status == "initiated")
                             ).select(orderby=tutordb.scenario_user.progress)
-    return dict(user_scenairo=user_scenairo, scenario_id=scenario_id)
+    return dict(user_scenario=user_scenario, scenario_id=scenario_id)
 
 
 @auth.requires_membership("admin")

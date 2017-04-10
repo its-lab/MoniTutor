@@ -5,12 +5,18 @@
   <li><a href="{{=URL('overview','view_scenarios')}}">Scenario Overview</a></li>
   <li class="active">Students</li>
 </ol>
-    {{for user_s in user_scenairo:}}
+    {{for user_s in user_scenario:}}
     <div class="panel panel-default">
         <div class="panel-heading">
             <div class="panel-title"
                 <h3>
                     {{if auth.has_membership("admin"):}}
+                        <button id="{{=user_s.auth_user.id}}-toggle" class="togglePassed" href="#"><i class="fa fa-check"></i></button>
+                        {{if user_s.scenario_user.passed is  True:}}
+                        <i id="{{=user_s.auth_user.id}}-star" class="fa fa-star"></i>
+                        {{else:}}
+                        <i id="{{=user_s.auth_user.id}}-star" class="fa fa-star-o"></i>
+                        {{pass}}
                     <a href="{{=URL('scenarios','view_milestones', args=[user_s.scenario_user.scenario_id, user_s.auth_user.username])}}">
                     {{=user_s.auth_user.username}} - {{=user_s.auth_user.first_name}} {{=user_s.auth_user.last_name}}
                         </a>
@@ -32,3 +38,27 @@
     {{pass}}
 
 </div>
+
+
+<script>
+     $(document).ready(function() {
+        $(".togglePassed").on("click", {}, togglePassed);
+        function togglePassed(event){
+            var userId = String(this.id).slice(0,-7);
+            var scenarioId = "{{=scenario_id}}"
+            $.get("{{=URL("scenarios", "toggle_scenario_done")}}",
+                {
+                    scenarioId: scenarioId,
+                    userId: userId
+            }).done(function(){
+                var starElementId = "#"+userId+"-star";
+                if ($(starElementId).hasClass("fa-star")){
+                    $(starElementId).removeClass("fa-star").addClass("fa-star-o");
+                }
+                else{
+                    $(starElementId).removeClass("fa-star-o").addClass("fa-star");
+                }
+            });
+        }
+    });
+</script>
