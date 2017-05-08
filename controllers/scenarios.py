@@ -371,3 +371,17 @@ def toggle_scenario_done():
                             (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
     scenario_user["passed"] = not scenario_user["passed"]
     scenario_user.update_record()
+
+
+def get_history():
+    user_id = request.vars.userId
+    scenario_id = request.vars.scenarioId
+    object_id = request.vars.objectId
+    user_scenario = tutordb((tutordb.scenario_user.scenario_id == scenario_id)&
+            (tutordb.scenario_user.user_id == user_id)).select().first()
+    history = db((db.icinga_statehistory.object_id == object_id)&
+            (db.icinga_statehistory.state_time > user_scenario.initiation_time)).select(
+                    db.icinga_statehistory.output,
+                    db.icinga_statehistory.state,
+                    orderby=~db.icinga_statehistory.state_time)
+    return json.dumps({"history": history.as_list()})
