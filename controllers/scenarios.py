@@ -374,7 +374,10 @@ def toggle_scenario_done():
 
 
 def get_history():
-    user_id = request.vars.userId
+    if auth.has_membership("admin"):
+        user_id = request.vars.userId;
+    else:
+        user_id = auth.user_id
     scenario_id = request.vars.scenarioId
     object_id = request.vars.objectId
     user_scenario = tutordb((tutordb.scenario_user.scenario_id == scenario_id)&
