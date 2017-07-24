@@ -3,8 +3,9 @@ app_conf = AppConfig(reload=False)
 DATABASE_NAME = app_conf.take("monitutor_env.database_name")
 DATABASE_USER = app_conf.take("monitutor_env.database_user")
 DATABASE_PASSWORD = app_conf.take("monitutor_env.database_password")
+DATABASE_HOST = app_conf.take("monitutor_env.database_host")
 ICINGA2_DATABASE_NAME = app_conf.take("monitutor_env.icinga2_database_name")
-db = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@localhost/" + ICINGA2_DATABASE_NAME, migrate_enabled=False, lazy_tables=False)
+db = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@" + DATABASE_HOST + "/" + ICINGA2_DATABASE_NAME, migrate_enabled=False, lazy_tables=False)
 
 db.define_table('icinga_hosts', 
     Field('host_id', type='id'), 

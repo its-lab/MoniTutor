@@ -4,7 +4,8 @@ app_conf = AppConfig(reload=True)
 DATABASE_NAME = app_conf.take("monitutor_env.database_name")
 DATABASE_USER = app_conf.take("monitutor_env.database_user")
 DATABASE_PASSWORD = app_conf.take("monitutor_env.database_password")
-tutordb = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@localhost/" + DATABASE_NAME)
+DATABASE_HOST = app_conf.take("monitutor_env.database_host")
+tutordb = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@" + DATABASE_HOST + "/" + DATABASE_NAME)
 
 from gluon.tools import Auth
 
