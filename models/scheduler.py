@@ -8,6 +8,9 @@ from gluon.contrib.appconfig import AppConfig
 app_conf = AppConfig(reload=False)
 ICINGA2_API_USER = app_conf.take("monitutor_env.icinga2_api_user")
 ICINGA2_API_PASSWORD = app_conf.take("monitutor_env.icinga2_api_password")
+ICINGA2_API_HOST = app_conf.take("monitutor_env.icinga2_api_host")
+ICINGA2_API_URL = "https://"+ICINGA2_API_HOST+":5665/v1/"
+
 monitutorroot = "/etc/icinga2/conf.d/monitutor/"
 
 def path_init(files, path):
@@ -175,7 +178,7 @@ def init_scenario(scenarioid):
 
 
 def restart_icinga():
-    request_url = "https://localhost:5665/v1/actions/restart-process"
+    request_url = ICINGA2_API_URL+"actions/restart-process"
     headers = {
                'Accept': 'application/json',
                }
@@ -226,7 +229,7 @@ def api_init_scenario(username, scenarioid):
 
 
 def api_create_host(hostname, username):
-    request_url = "https://localhost:5665/v1/objects/hosts/" + username + "_" + hostname
+    request_url = ICINGA2_API_URL+"objects/hosts/" + username + "_" + hostname
     headers = {
                'Accept': 'application/json',
                }
@@ -243,7 +246,7 @@ def api_create_host(hostname, username):
     return True
 
 def api_create_service(service, username):
-    request_url = "https://localhost:5665/v1/objects/services/" + username + "_" + service["hostname"] + "!" + username + "_" + service["servicename"]
+    request_url = ICINGA2_API_URL+"objects/services/" + username + "_" + service["hostname"] + "!" + username + "_" + service["servicename"]
     headers = {
                'Accept': 'application/json',
                }
@@ -281,7 +284,7 @@ def drop_user_scenario( username, scenarioid):
 
 
 def drop_host(hostname):
-    request_url = "https://localhost:5665/v1/objects/hosts/" + hostname + "?cascade=1"
+    request_url = ICINGA2_API_URL+"objects/hosts/" + hostname + "?cascade=1"
     headers = {
         'Accept': 'application/json',
         }
