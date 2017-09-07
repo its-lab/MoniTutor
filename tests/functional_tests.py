@@ -22,6 +22,17 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h2').text,
                       "Log In banner not found")
 
+        # To create a new user, the admin clicks on  Sign up and is then
+        # redirected to the registration form
+        submit_row = self.browser.find_element_by_id("submit_record__row")
+        all_buttons = submit_row.find_elements_by_tag_name("button")
+        for button in all_buttons:
+            if button.text == u"Sign Up":
+                button.click()
+        self.assertIn(u"Sign Up",
+                      self.browser.find_element_by_tag_name('h2').text,
+                      "Sign Up banner not found")
+
 
 if __name__ == '__main__':
     unittest.main()
