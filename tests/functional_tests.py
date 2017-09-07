@@ -40,6 +40,28 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h2').text,
                       "Sign Up banner not found")
 
+        # The admin fills out the registration form and is redirected to the
+        # welcome page
+        self.browser.find_element_by_id("auth_user_first_name") \
+            .send_keys("Monty",
+                       Keys.TAB,
+                       "Python",
+                       Keys.TAB,
+                       "montypython@example.com",
+                       Keys.TAB,
+                       "administrator",
+                       Keys.TAB,
+                       "securepassword",
+                       Keys.TAB,
+                       "securepassword",
+                       Keys.ENTER)
+        self.wait_for_page_to_load()
+
+        # The Admin is redirected to the welcome page and is now logged in
+        self.assertIn(u"Welcome, Monty!",
+                      self.browser.find_element_by_tag_name('h1').text,
+                      "Welcome greeting not found")
+
 
 if __name__ == '__main__':
     unittest.main()
