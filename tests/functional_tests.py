@@ -58,6 +58,8 @@ class NewAdminTest(unittest.TestCase):
                        "securepassword",
                        Keys.ENTER)
         self.wait_for_page_to_load()
+        self.assertRaises(NoSuchElementException,
+                          self.browser.find_element_by_class_name, "error")
 
         # The Admin is redirected to the welcome page and is now logged in.
         # As noone assigned admin privileges to the admin yet, he can not
