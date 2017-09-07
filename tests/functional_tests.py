@@ -1,5 +1,7 @@
 from selenium import webdriver
+from selenium.webdriver.common.keys import Keys
 import unittest
+import time
 
 
 class NewAdminTest(unittest.TestCase):
@@ -12,7 +14,10 @@ class NewAdminTest(unittest.TestCase):
     def tearDown(self):
         self.browser.close()
 
-    def test_can_register_and_init_new_scenario_via_upload(self):
+    def wait_for_page_to_load(self):
+        time.sleep(.5)
+
+    def test_user_can_sign_up(self):
         # The MoniTutor stack was just set up. In order to get everything
         # prepared for the students, he first needs to register.
         self.browser.get("https://localhost")
@@ -29,6 +34,8 @@ class NewAdminTest(unittest.TestCase):
         for button in all_buttons:
             if button.text == u"Sign Up":
                 button.click()
+                break
+        self.wait_for_page_to_load()
         self.assertIn(u"Sign Up",
                       self.browser.find_element_by_tag_name('h2').text,
                       "Sign Up banner not found")
