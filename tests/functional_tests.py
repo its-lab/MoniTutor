@@ -43,8 +43,7 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h2').text,
                       "Sign Up banner not found")
 
-        # The admin fills out the registration form and is redirected to the
-        # welcome page
+        # The admin fills out the registration form
         self.browser.find_element_by_id("auth_user_first_name") \
             .send_keys("Monty",
                        Keys.TAB,
