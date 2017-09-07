@@ -76,6 +76,28 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h2').text,
                       "Log In banner not found")
 
+        # To gain admin privileges, the admin navigates to the web2py database
+        # backend, enters the admin password and adds his user to the admin
+        # group
+        self.browser.get("https://localhost/admin")
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_id("password") \
+            .send_keys("admin", Keys.ENTER)
+        self.wait_for_page_to_load()
+        self.browser \
+            .get("https://localhost/MoniTutor/appadmin/insert/tutordb/auth_membership")
+        self.wait_for_page_to_load()
+        options = self.browser.find_elements_by_tag_name("option")
+        self.assertIn([u"admin"],
+                      [option.text.split()[:1] for option in options]),
+                      "Group 'admin' does not exist")
+        self.browser.find_element_by_id("auth_membership_user_id") \
+            .send_keys("a", Keys.TAB, "a", Keys.TAB, Keys.ENTER)
+        self.wait_for_page_to_load()
+        self.assertIn("new record inserted",
+                      self.browser.find_element_by_class_name("alert-dismissable").text,
+                      "Admin membership record was not added succesfully")
+
 
 if __name__ == '__main__':
     unittest.main()
