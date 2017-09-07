@@ -9,7 +9,9 @@ class NewAdminTest(unittest.TestCase):
     def setUp(self):
         self.profile = webdriver.FirefoxProfile()
         self.profile.accept_untrusted_certs = True
-        self.browser = webdriver.Firefox(firefox_profile=self.profile)
+        self.profile.assume_untrusted_cert_issuer = True
+        self.browser = webdriver.Firefox(firefox_profile=self.profile,
+                                         capabilities={"marionette": False})
 
     def tearDown(self):
         self.browser.close()
