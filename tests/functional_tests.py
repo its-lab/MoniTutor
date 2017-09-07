@@ -15,7 +15,7 @@ class NewAdminTest(unittest.TestCase):
                                          capabilities={"marionette": False})
 
     def tearDown(self):
-        self.browser.close()
+        self.browser.quit()
 
     def wait_for_page_to_load(self):
         time.sleep(.5)
@@ -89,7 +89,7 @@ class NewAdminTest(unittest.TestCase):
         self.wait_for_page_to_load()
         options = self.browser.find_elements_by_tag_name("option")
         self.assertIn([u"admin"],
-                      [option.text.split()[:1] for option in options]),
+                      [option.text.split()[:1] for option in options],
                       "Group 'admin' does not exist")
         self.browser.find_element_by_id("auth_membership_user_id") \
             .send_keys("a", Keys.TAB, "a", Keys.TAB, Keys.ENTER)
