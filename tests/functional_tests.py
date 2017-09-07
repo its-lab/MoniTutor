@@ -1,5 +1,6 @@
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.common.exceptions import NoSuchElementException
 import unittest
 import time
 
@@ -59,16 +60,20 @@ class NewAdminTest(unittest.TestCase):
                        Keys.ENTER)
         self.wait_for_page_to_load()
 
-        # The Admin is redirected to the welcome page and is now logged in
+        # The Admin is redirected to the welcome page and is now logged in.
+        # As noone assigned admin privileges to the admin yet, he can not
+        # acces the admin area
         self.assertIn(u"Welcome, Monty!",
                       self.browser.find_element_by_tag_name('h1').text,
                       "Welcome greeting not found")
+        self.assertRaises(NoSuchElementException,
+                          self.browser.find_element_by_link_text, "Admin")
 
         # After reading the Welcome message, the admin wants to sign out again.
         self.browser.find_element_by_link_text(u"Welcome, Monty").click()
         self.browser.find_element_by_partial_link_text(u"Logout").click()
         self.wait_for_page_to_load()
-        self.self.assertIn(u"Log In",
+        self.assertIn(u"Log In",
                       self.browser.find_element_by_tag_name('h2').text,
                       "Log In banner not found")
 
