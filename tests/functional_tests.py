@@ -21,7 +21,7 @@ class NewAdminTest(unittest.TestCase):
 
     def test_user_can_sign_up(self):
         # The MoniTutor stack was just set up. In order to get everything
-        # prepared for the students, he first needs to register.
+        # prepared for the students, the admin first needs to register.
         self.browser.get("https://localhost")
 
         # The Admin is redirected to the Login page.
