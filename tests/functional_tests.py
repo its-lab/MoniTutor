@@ -64,6 +64,14 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h1').text,
                       "Welcome greeting not found")
 
+        # After reading the Welcome message, the admin wants to sign out again.
+        self.browser.find_element_by_link_text(u"Welcome, Monty").click()
+        self.browser.find_element_by_partial_link_text(u"Logout").click()
+        self.wait_for_page_to_load()
+        self.self.assertIn(u"Log In",
+                      self.browser.find_element_by_tag_name('h2').text,
+                      "Log In banner not found")
+
 
 if __name__ == '__main__':
     unittest.main()
