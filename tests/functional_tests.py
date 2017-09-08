@@ -13,15 +13,14 @@ class AdminTests(unittest.TestCase):
         self.profile.assume_untrusted_cert_issuer = True
         self.browser = webdriver.Firefox(firefox_profile=self.profile,
                                          capabilities={"marionette": False})
-        self.testuser = { "name": "Monty",
-                          "surname": "Python",
-                          "email": "monty.python@example.net",
-                          "username": "administrator",
-                          "password": "securepassowrd"}
+        self.testuser = {"name": "Monty",
+                         "surname": "Python",
+                         "email": "monty.python@example.net",
+                         "username": "administrator",
+                         "password": "securepassowrd"}
         self.hostname = "localhost"
         self.admin_password = "admin"
         self.path_to_scenario_file = "~/monitutor_scenarios/example.json"
-
 
     def tearDown(self):
         self.browser.quit()
@@ -140,7 +139,7 @@ class AdminTests(unittest.TestCase):
         self.browser.find_element_by_id("1-init").click()
         self.wait_for_page_to_load()
         self.assertTrue(self.browser.find_element_by_class_name("progress"),
-                      "Couldn't find progress bar after scenario initiation")
+                        "Couldn't find progress bar after scenario initiation")
         max_scenario_init_time = 20
         try:
             while self.browser.find_element_by_class_name("progress-bar"):
