@@ -53,11 +53,17 @@ scenarios.
 
 ![monitutor_arch](https://cloud.githubusercontent.com/assets/13717492/20060036/870647cc-a4f9-11e6-8015-d327b90a4ce5.png)
 
+
+
 ## Getting started
+
 The prefered Linux distribution for this project is Debian. All packages are
 installed from the official Debian repositories. For distributions other than
 Debian, packages may also be available. Please contact your distribution
 packagers. 
+
+### Running MoniTutor with docker
+To get MoniTutor up and running easily, you might want to check out [our docker images](http://github.com/its-lab/MoniTutor-docker). Skip to [the client setup](https://github.com/its-lab/MoniTutor#setting-up-the-monitutor-client) once the application is running.
 
 ### Installing the Base System
 
