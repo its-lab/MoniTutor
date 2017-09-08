@@ -109,6 +109,49 @@ class NewAdminTest(unittest.TestCase):
                       self.browser.find_element_by_class_name("alert-dismissable").text,
                       "Admin membership record was not added succesfully")
 
+        # The admin now want's to create a scenario. After the login the
+        # administrator uses the upload function to reuse an old scenario and
+        # initiates it after the upload finishes.
+        self.browser.get("https://"+self.hostname)
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_id("auth_user_username") \
+            .send_keys(self.testuser["username"],
+                       Keys.TAB,
+                       self.testuser["password"],
+                       Keys.ENTER)
+        self.wait_for_page_to_load()
+        self.assertIn("Admin",
+                      self.browser.find_element_by_link_text("Admin").text,
+                      "Can not find admin menu after login")
+        self.browser.find_element_by_link_text("Admin").click()
+        self.assertIn("Scenarios",
+                      self.browser.find_element_by_link_text("Scenarios").text,
+                      "Can not find scenario button in admin menu")
+        self.browser.find_element_by_link_text("Scenarios").click()
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_id("new").click()
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_id("import").click()
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_name("scenariofile") \
+            .send_keys(self.path_to_scenario_file)
+        self.browser.find_element_by_id("form2").submit()
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_id("1-init").click()
+        self.wait_for_page_to_load()
+        self.assertTrue(self.browser.find_element_by_class_name("progress"),
+                      "Couldn't find progress bar after scenario initiation")
+        max_scenario_init_time = 20
+        try:
+            while self.browser.find_element_by_class_name("progress-bar"):
+                time.sleep(2)
+                max_scenario_init_time -= 2
+                if max_scenario_init_time < 1:
+                    self.fail("Scenario initiation didn't finish")
+        except NoSuchElementException:
+            pass
+        self.browser.find_element_by_class_name("fa-eye").click()
+
 
 if __name__ == '__main__':
     unittest.main()
