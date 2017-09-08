@@ -5,7 +5,7 @@ import unittest
 import time
 
 
-class NewAdminTest(unittest.TestCase):
+class AdminTests(unittest.TestCase):
 
     def setUp(self):
         self.profile = webdriver.FirefoxProfile()
@@ -29,7 +29,7 @@ class NewAdminTest(unittest.TestCase):
     def wait_for_page_to_load(self):
         time.sleep(1)
 
-    def test_user_can_sign_up(self):
+    def test_admin_create_user_and_scenario(self):
         # The MoniTutor stack was just set up. In order to get everything
         # prepared for the students, the admin first needs to register.
         self.browser.get("https://"+self.hostname)
