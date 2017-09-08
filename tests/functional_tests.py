@@ -27,7 +27,7 @@ class NewAdminTest(unittest.TestCase):
         self.browser.quit()
 
     def wait_for_page_to_load(self):
-        time.sleep(.5)
+        time.sleep(1)
 
     def test_user_can_sign_up(self):
         # The MoniTutor stack was just set up. In order to get everything
