@@ -193,8 +193,6 @@ group.
 ```
 # su postgres
 # psql monitutor
-monitutor=# INSERT INTO auth_group (role, description) VALUES
-('admin','Administrators');
 monitutor=# INSERT INTO auth_membership (user_id, group_id) SELECT auth_user.id,
 auth_group.id FROM auth_user, auth_group WHERE auth_user.username =
 '<your-username>'
