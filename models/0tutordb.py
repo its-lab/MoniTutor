@@ -113,6 +113,10 @@ tutordb.define_table('monitutor_types',
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True))
 
+if not tutordb(tutordb.monitutor_types.name == "source").select():
+    tutordb.monitutor_types.insert(name="source", display_name="Source")
+    tutordb.monitutor_types.insert(name="dest", display_name="Destination")
+
 tutordb.define_table('monitutor_targets',
     Field('target_id', type='id'),
     Field('system_id', 'reference monitutor_systems',
