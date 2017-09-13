@@ -19,6 +19,9 @@ auth.settings.extra_fields['auth_user']= [
 
 auth.define_tables(username=True)
 
+if not tutordb.auth_group[1]:
+    tutordb.auth_group.insert(role="admin")
+
 tutordb.define_table('monitutor_scenarios',
     Field('scenario_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
@@ -109,6 +112,10 @@ tutordb.define_table('monitutor_types',
     Field('type_id', type='id'),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True))
+
+if not tutordb(tutordb.monitutor_types.name == "source").select():
+    tutordb.monitutor_types.insert(name="source", display_name="Source")
+    tutordb.monitutor_types.insert(name="dest", display_name="Destination")
 
 tutordb.define_table('monitutor_targets',
     Field('target_id', type='id'),
