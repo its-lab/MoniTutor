@@ -19,6 +19,9 @@ auth.settings.extra_fields['auth_user']= [
 
 auth.define_tables(username=True)
 
+if not tutordb.auth_group[1]:
+    tutordb.auth_group.insert(role="admin")
+
 tutordb.define_table('monitutor_scenarios',
     Field('scenario_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
