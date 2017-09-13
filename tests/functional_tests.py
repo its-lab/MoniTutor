@@ -28,7 +28,7 @@ class AdminTests(unittest.TestCase):
     def wait_for_page_to_load(self):
         time.sleep(1)
 
-    def test_admin_create_user_and_scenario(self):
+    def test_create_user(self):
         # The MoniTutor stack was just set up. In order to get everything
         # prepared for the students, the admin first needs to register.
         self.browser.get("https://"+self.hostname)
@@ -86,6 +86,7 @@ class AdminTests(unittest.TestCase):
                       self.browser.find_element_by_tag_name('h2').text,
                       "Log In banner not found")
 
+    def test_gain_admin_privs(self):
         # To gain admin privileges, the admin navigates to the web2py database
         # backend, enters the admin password and adds his user to the admin
         # group
@@ -108,6 +109,7 @@ class AdminTests(unittest.TestCase):
                       self.browser.find_element_by_class_name("alert-dismissable").text,
                       "Admin membership record was not added succesfully")
 
+    def test_import_and_init_scenario(self):
         # The admin now want's to create a scenario. After the login the
         # administrator uses the upload function to reuse an old scenario and
         # initiates it after the upload finishes.
@@ -152,5 +154,8 @@ class AdminTests(unittest.TestCase):
         self.browser.find_element_by_class_name("fa-eye").click()
 
 
+
 if __name__ == '__main__':
-    unittest.main()
+    adminTests = unittest.TestLoader().loadTestsFromTestCase(AdminTests)
+    runner = unittest.TextTestRunner()
+    runner.run(adminTests)
