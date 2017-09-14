@@ -4,8 +4,7 @@ from selenium.common.exceptions import NoSuchElementException
 import unittest
 import time
 
-
-class AdminTests(unittest.TestCase):
+class MoniTutorTests(unittest.TestCase):
 
     def setUp(self):
         self.profile = webdriver.FirefoxProfile()
@@ -17,7 +16,7 @@ class AdminTests(unittest.TestCase):
                          "surname": "Python",
                          "email": "monty.python@example.net",
                          "username": "administrator",
-                         "password": "securepassowrd"}
+                         "password": "securepassword"}
         self.hostname = "localhost"
         self.admin_password = "admin"
         self.path_to_scenario_file = "~/monitutor_scenarios/example.json"
@@ -28,30 +27,15 @@ class AdminTests(unittest.TestCase):
     def wait_for_page_to_load(self):
         time.sleep(1)
 
-    def test_create_user(self):
-        # The MoniTutor stack was just set up. In order to get everything
-        # prepared for the students, the admin first needs to register.
-        self.browser.get("https://"+self.hostname)
+    def login(self):
+        self.browser.find_element_by_id("auth_user_username") \
+            .send_keys(self.testuser["username"],
+                       Keys.TAB,
+                       self.testuser["password"],
+                       Keys.ENTER)
 
-        # The Admin is redirected to the Login page.
-        self.assertIn(u"Log In",
-                      self.browser.find_element_by_tag_name('h2').text,
-                      "Log In banner not found")
-
-        # To create a new user, the admin clicks on  Sign up and is then
-        # redirected to the registration form
-        submit_row = self.browser.find_element_by_id("submit_record__row")
-        all_buttons = submit_row.find_elements_by_tag_name("button")
-        for button in all_buttons:
-            if button.text == u"Sign Up":
-                button.click()
-                break
-        self.wait_for_page_to_load()
-        self.assertIn(u"Sign Up",
-                      self.browser.find_element_by_tag_name('h2').text,
-                      "Sign Up banner not found")
-
-        # The admin fills out the registration form
+    def register(self):
+        # The user fills out the registration form
         self.browser.find_element_by_id("auth_user_first_name") \
             .send_keys(self.testuser["name"],
                        Keys.TAB,
@@ -68,6 +52,42 @@ class AdminTests(unittest.TestCase):
         self.wait_for_page_to_load()
         self.assertRaises(NoSuchElementException,
                           self.browser.find_element_by_class_name, "error")
+    def logout(self):
+        self.browser.find_element_by_link_text(u"Welcome, "+self.testuser["name"]).click()
+        self.browser.find_element_by_partial_link_text(u"Logout").click()
+
+    def click_sign_up_button(self):
+        submit_row = self.browser.find_element_by_id("submit_record__row")
+        self.click_button_with_text_inside_element(submit_row, u"Sign Up")
+
+    def click_button_with_text_inside_element(self, element, button_text):
+        all_buttons = element.find_elements_by_tag_name("button")
+        for button in all_buttons:
+            if button.text == button_text:
+                button.click()
+                break
+
+
+class AdminTests(MoniTutorTests):
+
+    def test_create_user(self):
+        # The MoniTutor stack was just set up. In order to get everything
+        # prepared for the students, the admin first needs to register.
+        self.browser.get("https://"+self.hostname)
+
+        # The Admin is redirected to the Login page.
+        self.assertIn(u"Log In",
+                      self.browser.find_element_by_tag_name('h2').text,
+                      "Log In banner not found")
+
+        # To create a new user, the admin clicks on  Sign up and is then
+        # redirected to the registration form
+        self.click_sign_up_button()
+        self.wait_for_page_to_load()
+        self.assertIn(u"Sign Up",
+                      self.browser.find_element_by_tag_name('h2').text,
+                      "Sign Up banner not found")
+        self.register()
 
         # The Admin is redirected to the welcome page and is now logged in.
         # As noone assigned admin privileges to the admin yet, he can not
@@ -79,8 +99,7 @@ class AdminTests(unittest.TestCase):
                           self.browser.find_element_by_link_text, "Admin")
 
         # After reading the Welcome message, the admin wants to sign out again.
-        self.browser.find_element_by_link_text(u"Welcome, "+self.testuser["name"]).click()
-        self.browser.find_element_by_partial_link_text(u"Logout").click()
+        self.logout()
         self.wait_for_page_to_load()
         self.assertIn(u"Log In",
                       self.browser.find_element_by_tag_name('h2').text,
@@ -115,11 +134,7 @@ class AdminTests(unittest.TestCase):
         # initiates it after the upload finishes.
         self.browser.get("https://"+self.hostname)
         self.wait_for_page_to_load()
-        self.browser.find_element_by_id("auth_user_username") \
-            .send_keys(self.testuser["username"],
-                       Keys.TAB,
-                       self.testuser["password"],
-                       Keys.ENTER)
+        self.login()
         self.wait_for_page_to_load()
         self.assertIn("Admin",
                       self.browser.find_element_by_link_text("Admin").text,
@@ -151,6 +166,7 @@ class AdminTests(unittest.TestCase):
                     self.fail("Scenario initiation didn't finish")
         except NoSuchElementException:
             pass
+        self.wait_for_page_to_load()
         self.browser.find_element_by_class_name("fa-eye").click()
 
 
