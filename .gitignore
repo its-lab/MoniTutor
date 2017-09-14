@@ -7,3 +7,4 @@ databases/*
 *.log
 export/
 *.bak
+*.pyc
