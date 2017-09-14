@@ -1,74 +1,11 @@
-from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
+from monitutorTestCases import MoniTutorWebTest
 import unittest
 import time
 
-class MoniTutorTests(unittest.TestCase):
 
-    def setUp(self):
-        self.profile = webdriver.FirefoxProfile()
-        self.profile.accept_untrusted_certs = True
-        self.profile.assume_untrusted_cert_issuer = True
-        self.browser = webdriver.Firefox(firefox_profile=self.profile,
-                                         capabilities={"marionette": False})
-        self.testuser = {"name": "Monty",
-                         "surname": "Python",
-                         "email": "monty.python@example.net",
-                         "username": "administrator",
-                         "password": "securepassword"}
-        self.hostname = "localhost"
-        self.admin_password = "admin"
-        self.path_to_scenario_file = "~/monitutor_scenarios/example.json"
-
-    def tearDown(self):
-        self.browser.quit()
-
-    def wait_for_page_to_load(self):
-        time.sleep(1)
-
-    def login(self):
-        self.browser.find_element_by_id("auth_user_username") \
-            .send_keys(self.testuser["username"],
-                       Keys.TAB,
-                       self.testuser["password"],
-                       Keys.ENTER)
-
-    def register(self):
-        # The user fills out the registration form
-        self.browser.find_element_by_id("auth_user_first_name") \
-            .send_keys(self.testuser["name"],
-                       Keys.TAB,
-                       self.testuser["surname"],
-                       Keys.TAB,
-                       self.testuser["email"],
-                       Keys.TAB,
-                       self.testuser["username"],
-                       Keys.TAB,
-                       self.testuser["password"],
-                       Keys.TAB,
-                       self.testuser["password"],
-                       Keys.ENTER)
-        self.wait_for_page_to_load()
-        self.assertRaises(NoSuchElementException,
-                          self.browser.find_element_by_class_name, "error")
-    def logout(self):
-        self.browser.find_element_by_link_text(u"Welcome, "+self.testuser["name"]).click()
-        self.browser.find_element_by_partial_link_text(u"Logout").click()
-
-    def click_sign_up_button(self):
-        submit_row = self.browser.find_element_by_id("submit_record__row")
-        self.click_button_with_text_inside_element(submit_row, u"Sign Up")
-
-    def click_button_with_text_inside_element(self, element, button_text):
-        all_buttons = element.find_elements_by_tag_name("button")
-        for button in all_buttons:
-            if button.text == button_text:
-                button.click()
-                break
-
-
-class AdminTests(MoniTutorTests):
+class AdminTests(MoniTutorWebTest):
 
     def test_create_user(self):
         # The MoniTutor stack was just set up. In order to get everything
@@ -115,14 +52,20 @@ class AdminTests(MoniTutorTests):
             .send_keys(self.admin_password, Keys.ENTER)
         self.wait_for_page_to_load()
         self.browser \
-            .get("https://"+self.hostname+"/MoniTutor/appadmin/insert/tutordb/auth_membership")
+            .get("https://" +
+                 self.hostname +
+                 "/MoniTutor/appadmin/insert/tutordb/auth_membership")
         self.wait_for_page_to_load()
         options = self.browser.find_elements_by_tag_name("option")
         self.assertIn([u"admin"],
                       [option.text.split()[:1] for option in options],
                       "Group 'admin' does not exist")
         self.browser.find_element_by_id("auth_membership_user_id") \
-            .send_keys(self.testuser["username"], Keys.TAB, "admin", Keys.TAB, Keys.ENTER)
+            .send_keys(self.testuser["username"],
+                       Keys.TAB,
+                       "admin",
+                       Keys.TAB,
+                       Keys.ENTER)
         self.wait_for_page_to_load()
         self.assertIn("new record inserted",
                       self.browser.find_element_by_class_name("alert-dismissable").text,
@@ -168,7 +111,6 @@ class AdminTests(MoniTutorTests):
             pass
         self.wait_for_page_to_load()
         self.browser.find_element_by_class_name("fa-eye").click()
-
 
 
 if __name__ == '__main__':
