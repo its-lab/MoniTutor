@@ -17,6 +17,7 @@ class MoniTutorWebTest(unittest.TestCase):
                          "surname": "Python",
                          "email": "monty.python@example.net",
                          "username": "administrator",
+                         "hmac_secret": "securehmacsecret",
                          "password": "securepassword"}
         self.hostname = "localhost"
         self.admin_password = "admin"
@@ -49,6 +50,8 @@ class MoniTutorWebTest(unittest.TestCase):
                        self.testuser["password"],
                        Keys.TAB,
                        self.testuser["password"],
+                       Keys.TAB,
+                       self.testuser["hmac_secret"],
                        Keys.ENTER)
         self.wait_for_page_to_load()
         self.assertRaises(NoSuchElementException,
