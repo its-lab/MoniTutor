@@ -69,3 +69,9 @@ class MoniTutorWebTest(unittest.TestCase):
             if button.text == button_text:
                 button.click()
                 break
+
+    def get_panel_element_by_header_text(self, header_text):
+        for panel in self.browser.find_elements_by_class_name("panel"):
+            if header_text in panel.find_element_by_class_name("panel-heading").text:
+                return panel
+        raise NoSuchElementException
