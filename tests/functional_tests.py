@@ -1,5 +1,6 @@
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import StaleElementReferenceException
 from monitutorTestCases import MoniTutorWebTest
 import unittest
 import time
@@ -113,7 +114,63 @@ class AdminTests(MoniTutorWebTest):
         self.browser.find_element_by_class_name("fa-eye").click()
 
 
+class UserTests(MoniTutorWebTest):
+
+    def get_panel_element_by_header_text(self, header_text):
+        for panel in self.browser.find_elements_by_class_name("panel"):
+            if header_text in panel.find_element_by_class_name("panel-heading").text:
+                return panel
+        raise NoSuchElementException
+
+    def test_start_a_scenario(self):
+        # A student want's to start working on a scenario. After the login,
+        # the student sees the welcome screen and a button that says
+        # "Available Scenarios".
+        self.browser.get("https://"+self.hostname)
+        self.login()
+        self.wait_for_page_to_load()
+        self.assertIn(
+            u"Available scenarios",
+            self.browser
+                .find_element_by_link_text(u"Available scenarios").text,
+            "Available scenarios button not found after login")
+        self.browser.find_element_by_link_text(u"Available scenarios") \
+            .click()
+        self.wait_for_page_to_load()
+
+        # After the button was clicked, the user selects the Scenario with the
+        # caption "Scenario used for functional tests" and clicks on the
+        # "Start scenario" button
+        try:
+            scenario_panel = \
+                self.get_panel_element_by_header_text("Scenario used for functional tests")
+        except NoSuchElementException:
+            self.fail("Scenario 'Scenario used for functional tests' not available")
+        scenario_panel.find_element_by_class_name("init").click()
+
+        # A loading bar apears and a message tells the student to be patient
+        # while the scenario is starting up. To pass some time,
+        # the student gets himself a coffee while the process finishes
+        self.wait_for_page_to_load()
+        self.assertIn("Please be patient",
+                      scenario_panel.find_element_by_class_name("init").text,
+                      "Loading indicator not found after starting scenario")
+        max_scenario_init_time = 20
+        try:
+            while scenario_panel.find_element_by_class_name("init"):
+                time.sleep(2)
+                max_scenario_init_time -= 2
+                if max_scenario_init_time < 1:
+                    self.fail("Scenario initiation didn't finish")
+        except NoSuchElementException:
+            pass
+        except StaleElementReferenceException:
+            pass
+
 if __name__ == '__main__':
     adminTests = unittest.TestLoader().loadTestsFromTestCase(AdminTests)
+    userTests = unittest.TestSuite()
+    userTests.addTest(UserTests("test_start_a_scenario"))
     runner = unittest.TextTestRunner()
     runner.run(adminTests)
+    runner.run(userTests)
