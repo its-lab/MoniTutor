@@ -303,7 +303,7 @@
         {{if milestone.monitutor_milestone_scenario.hidden == False or auth.has_membership("admin"):}}
         <div class="panel panel-default">
           <div class="panel-heading">
-            <a><i id="{{=milestone.monitutor_milestones.milestone_id}}"
+            <a><i id="milestone-{{=milestone.monitutor_milestones.milestone_id}}"
             class='fa fa-refresh milestone' style="float: right;margin-right: 10px; margin-top: 3px;"></i></a>
             {{=milestone.monitutor_milestones.display_name}}
           </div>
@@ -311,7 +311,7 @@
             <p>{{=XML(milestone.monitutor_milestones.description)}}</p>
 
             </div>
-              <ul class="list-group {{=milestone.monitutor_milestones.milestone_id}}">
+              <ul class="list-group milestone-{{=milestone.monitutor_milestones.milestone_id}}">
                   {{checks = scenarioinfo["checks"][milestone.monitutor_milestones.milestone_id]}}
                   {{for check in checks:}}
                       {{icinga_servicename = str(username) + "_" + str(check.monitutor_checks.name)}}
