@@ -245,6 +245,7 @@ if __name__ == '__main__':
     adminTests = unittest.TestLoader().loadTestsFromTestCase(AdminTests)
     userTests = unittest.TestSuite()
     userTests.addTest(UserTests("test_start_a_scenario"))
+    userTests.addTest(UserTests("test_check_scenario_progress"))
     runner = unittest.TextTestRunner()
     runner.run(adminTests)
     runner.run(userTests)
