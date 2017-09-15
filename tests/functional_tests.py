@@ -167,6 +167,80 @@ class UserTests(MoniTutorWebTest):
         except StaleElementReferenceException:
             pass
 
+    def test_check_scenario_progress(self):
+        # After the initiation process is finished, the student clicks on
+        # "Show progress"
+        self.browser.get("https://"+self.hostname)
+        self.login()
+        self.wait_for_page_to_load()
+        self.browser.find_element_by_link_text(u"Available scenarios").click()
+        self.wait_for_page_to_load()
+        scenario_panel = \
+            self.get_panel_element_by_header_text("Scenario used for functional tests")
+        self.assertIn(u"Show progress",
+                      scenario_panel.find_element_by_link_text("Show progress").text,
+                      "'Show progress' button not found after scenario start")
+        scenario_panel.find_element_by_link_text("Show progress").click()
+        self.wait_for_page_to_load()
+
+        # The Student is now presented with his scenario-progress
+        self.assertIn("Scenario - Scenario used for functional tests",
+                      self.browser.find_element_by_class_name("active").text,
+                      "Couldn't find name of scenario in breadcrumb")
+
+        # Before the student starts working ob the objectives, he or she checks
+        # if the 'ITS Client' host is connected to the MoniTutor system by
+        # clicking on the refresh button left of the ITS Client panel.
+        self.assertIn(u"ITS Client",
+                      [host.text for host in
+                          self.browser.find_elements_by_class_name("col-sm-4")],
+                      "Host 'ITS Client' not found on Page")
+        for host_row in self.browser.find_elements_by_css_selector(".row"):
+            if "ITS Client" in host_row.find_element_by_class_name("col-sm-4").text:
+                itsclient_row = host_row
+                break
+        max_time = 40
+        while "Connected" not in itsclient_row.find_element_by_class_name("col-sm-6").text:
+            itsclient_row.find_element_by_class_name("fa-refresh").click()
+            time.sleep(2)
+            max_time -= 2
+            self.failIf(max_time <= 0, "ITS Client is not connected")
+
+        # After the status of ITS Client changed to Connected, the student
+        # clicks on the refresh button of the first milestone in oderder to see
+        # if anything is left to do.
+        self.assertIn("Stage 1 tests",
+                      [panel.text for
+                       panel in
+                       self.browser.find_elements_by_class_name("panel-body")],
+                      "Milestone 'Stage 1 tests' not found")
+        self.browser.find_element_by_css_selector(".fa-refresh.milestone").click()
+        max_time = 40
+        try:
+            while "fa-spinner" in self.browser \
+              .find_element_by_class_name("fa-pulse") \
+              .get_attribute("class"):
+                time.sleep(1)
+                max_time -= 1
+                self.failIf(max_time <= 0)
+        except NoSuchElementException:
+            pass
+        expected_check_results = \
+            {"Ping test with variable susbstitution":
+                u"1 packets transmitted, 1 packets received, 0% packet lossOK",
+             "Find /etc/hosts":
+                u"OK - exists",
+             "Find /etc/hosty":
+                u"ERROR - Datei /etc/hosty nicht gefunden"
+             }
+        for check_name in expected_check_results:
+            self.assertIn(expected_check_results[check_name],
+                          [message.text
+                           for message
+                           in self.browser.find_elements_by_class_name("col-sm-6")],
+                          check_name+" reutrned unexpected result")
+
+
 if __name__ == '__main__':
     adminTests = unittest.TestLoader().loadTestsFromTestCase(AdminTests)
     userTests = unittest.TestSuite()
