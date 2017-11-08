@@ -388,3 +388,81 @@ def get_history():
                     db.icinga_statehistory.state,
                     orderby=~db.icinga_statehistory.state_time)
     return json.dumps({"history": history.as_list()})
+
+@auth.requires_login()
+def progress():
+    """Displays progress and host for a given scenario-user tuple"""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        scenario_id = None
+    if len(request.args) > 1:
+        username = request.args(1, cast=str)
+    else:
+        username = None
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    scenario = tutordb.monitutor_scenarios[scenario_id]
+
+    hosts = tutordb((scenario_id == tutordb.monitutor_milestones.milestone_id) &
+                     (tutordb.monitutor_check_milestone.milestone_id ==
+                         tutordb.monitutor_milestones.milestone_id) &
+                     (tutordb.monitutor_check_milestone.check_id ==
+                         tutordb.monitutor_checks.check_id) &
+                     (tutordb.monitutor_systems.system_id ==
+                         tutordb.monitutor_targets.system_id) &
+                     (tutordb.monitutor_checks.check_id ==
+                         tutordb.monitutor_targets.check_id)).select(
+                                 tutordb.monitutor_systems.system_id,
+                                 tutordb.monitutor_systems.display_name,
+                                 tutordb.monitutor_systems.name,
+                                 distinct=True)
+
+    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
+                          tutordb.monitutor_milestone_scenario.milestone_id) &
+                         (tutordb.monitutor_milestone_scenario.scenario_id ==
+                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+
+    checks = dict()
+    for milestone in milestones:
+        check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id ==
+                                  milestone.monitutor_milestones.milestone_id) &
+                                  (tutordb.monitutor_check_milestone.check_id ==
+                                  tutordb.monitutor_checks.check_id) &
+                                  (tutordb.monitutor_systems.system_id ==
+                                   tutordb.monitutor_targets.system_id) &
+                                  (tutordb.monitutor_checks.check_id ==
+                                   tutordb.monitutor_targets.check_id)).select(orderby=
+                                                                            tutordb.monitutor_check_milestone.sequence_nr)
+        checks[milestone.monitutor_milestones.milestone_id] = check_milestone
+    scenario_info = {"description": scenario.description,
+                     "display_name": scenario.display_name,
+                     "scenario_id": scenario_id,
+                     "goal": scenario.goal,
+                     "milestones": milestones,
+                     "checks": checks,
+                     "hosts": hosts}
+
+    return dict(scenario_info=scenario_info)
+
+
+@auth.requires_login()
+def get_host_status():
+    """Queries Icinga-DB for the status of a given host"""
+    hostname = request.vars.hostName
+    host  = db((db.icinga_hoststatus.host_object_id == db.icinga_objects.id) &
+               (db.icinga_objects.name1 == hostname)) \
+               .select(db.icinga_hoststatus.output, db.icinga_hoststatus.current_state) \
+               .first()
+    return json.dumps(dict(output=host.output, state=host.current_state, hostName=hostname))
+
+@auth.requires_login()
+def get_service_status():
+    """Queries Icinga-DB for the status of a given service"""
+    servicename = request.vars.checkName
+    service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
+                 (db.icinga_objects.name2 == servicename)) \
+                 .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
+                 .first()
+    return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
