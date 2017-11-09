@@ -1,4 +1,7 @@
 import json
+import requests
+import random
+import string
 
 @auth.requires_login()
 def view_available_scenarios():
@@ -466,3 +469,55 @@ def get_service_status():
                  .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
                  .first()
     return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
+
+@auth.requires_login()
+def create_rabbit_user():
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_management_port = app_conf.take("monitutor_env.rabbit_mq_management_port")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    result_exchange = app_conf.take("monitutor_env.rabbit_mq_result_exchange")
+    tags = "monitutor-user"
+    if auth.has_membership("admin"):
+        tags += ", monitutor-admin"
+    rabbit_mq_url = "http://"+rabbit_mq_host+":"+rabbit_mq_management_port+"/api"
+    request_url = rabbit_mq_url+"/users/"+session.auth.user.username
+    headers = {'Accpet': 'application/json'}
+    password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(25))
+    data = {"password": password, "tags": tags}
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR setting password"})
+
+    data = {"auto_delete": True, "durable": False}
+    request_url = rabbit_mq_url+'/queues/%2F/'+session.auth.user.username
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR creating queue"})
+
+    data = {"routing_key": session.auth.user.username+".*"}
+    request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+session.auth.user.username
+    answer = requests.post(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR creating queue"})
+
+    data = {"configure": "^$", "write": "^$", "read": session.auth.user.username+".*"}
+    if auth.has_membership("admin"):
+        data["read"] = ".*"
+    request_url = rabbit_mq_url+'/permissions/%2F/'+session.auth.user.username
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR setting permissions"})
+    return json.dumps({"status": "OK", "password": password, "code": answer.status_code})
