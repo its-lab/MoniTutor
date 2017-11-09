@@ -492,7 +492,7 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR setting password"})
 
-    data = {"auto_delete": True, "durable": False}
+    data = {"auto_delete": False, "durable":True}
     request_url = rabbit_mq_url+'/queues/%2F/'+session.auth.user.username
     answer = requests.put(request_url,
                  headers=headers,
@@ -510,7 +510,7 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR creating queue"})
 
-    data = {"configure": "^$", "write": "^$", "read": session.auth.user.username+".*"}
+    data = {"configure": "^"+session.auth.user.username+"$", "write": "^$", "read": session.auth.user.username+"$"}
     if auth.has_membership("admin"):
         data["read"] = ".*"
     request_url = rabbit_mq_url+'/permissions/%2F/'+session.auth.user.username

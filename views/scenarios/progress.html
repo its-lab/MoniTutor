@@ -73,6 +73,7 @@
   </div>
   {{pass}}
 </div>
+<script src="{{=URL('static','js/stomp.js')}}"></script>
 <script>
 $(function () {
     $('[data-toggle="popover"]').popover()
@@ -99,7 +100,6 @@ function getCheckStatus(checkName){
 
 function updateCheckStatus(checkName, state, output){
   var selector = "#list-group-item-"+checkName;
-  debugger;
   switch(state){
     case 0:
       $(selector).find(".fa-lg").removeClass().addClass("fa fa-check-circle fa-lg");
@@ -136,6 +136,30 @@ function updateHostStatus(hostName, state, output){
   $(".host-name, .host-output").show().animate();
   setTimeout(function() {$(".host-name, .host-output").hide().animate()}, 3000);
 }
+
+function connectToRabbit(){
+  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
+    function(data){
+      var credentials = JSON.parse(data);
+      var webSocket = new WebSocket('ws://127.0.0.1:15674/ws'); //TODO: replace static ip
+      var client = Stomp.over(webSocket);
+      onreceive = function(m) {
+        console.log(m);
+      }
+      var on_connect = function() {
+        console.log('connected');
+        client.subscribe("/queue/{{=session.auth.user.username}}", onreceive );
+      };
+      var on_error =  function() {
+        console.log('error');
+      };
+      client.connect("{{=session.auth.user.username}}", credentials.password, on_connect, on_error, '/');
+      //client.connect("guest", "guest", on_connect, on_error, '/');
+    });
+}
+
+
+
 
 {{for host in scenario_info["hosts"]:}}
 getHostStatus("{{=host.name}}");
