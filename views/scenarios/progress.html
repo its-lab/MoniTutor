@@ -141,7 +141,7 @@ function connectToRabbit(){
   $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
     function(data){
       var credentials = JSON.parse(data);
-      var webSocket = new WebSocket('ws://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
+      var webSocket = new WebSocket('wss://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
       var client = Stomp.over(webSocket);
       onreceive = function(m) {
         console.log(m);
