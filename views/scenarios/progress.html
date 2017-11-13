@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 <div id="host-status" style="position: fixed; right: 10px; top: 100px; z-index: 99">
   {{for host in scenario_info["hosts"]:}}
-  <div class="host-status" id="host-status-{{=host.name}}">
+  <div class="host-status" id="host-status-{{=session.auth.user.username}}_{{=host.name}}">
   <span class="fa-stack">
     <i class="fa fa-plug fa-stack-1x fa-flip-horizontal"></i>
     <i class="fa fa-ban fa-stack-2x text-danger"></i>
@@ -144,6 +144,15 @@ function connectToRabbit(){
       var webSocket = new WebSocket('wss://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
       var client = Stomp.over(webSocket);
       onreceive = function(m) {
+        if (m.command == "MESSAGE"){
+          var result = JSON.parse(m.body)
+          if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
+            updateHostStatus(result.hostname, result.severity_code, result.output )
+          }
+          if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
+            updateCheckStatus(result.name, result.severity_code, result.output )
+          }
+        }
         console.log(m);
       }
       var on_connect = function() {
