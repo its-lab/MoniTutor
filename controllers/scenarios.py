@@ -2,6 +2,7 @@ import json
 import requests
 import random
 import string
+import pika
 
 @auth.requires_login()
 def view_available_scenarios():
@@ -471,6 +472,48 @@ def get_service_status():
                  .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
                  .first()
     return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
+
+@auth.requires_login()
+def put_check():
+    check_name = request.vars.taskName
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    check_host_program = tutordb((tutordb.monitutor_checks.name == check_name) &
+        (tutordb.monitutor_targets.check_id == tutordb.monitutor_checks.check_id) &
+        (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+        (tutordb.monitutor_types.name == "source") &
+        (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
+        (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id ) &
+        (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id)).select(
+            tutordb.monitutor_checks.name,
+            tutordb.monitutor_checks.params,
+            tutordb.monitutor_programs.name,
+            tutordb.monitutor_interpreters.path,
+            tutordb.monitutor_systems.name,
+            cache=(cache.ram, 360)).first()
+    check = { "name": check_host_program.monitutor_checks.name,
+              "program": check_host_program.monitutor_programs.name,
+              "params": check_host_program.monitutor_checks.params,
+              "interpreter_path": check_host_program.monitutor_interpreters.path}
+    topic = username+"."+check_host_program.monitutor_systems.name
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    task_exchange = app_conf.take("monitutor_env.rabbit_mq_task_exchange")
+    credentials = pika.credentials.PlainCredentials(rabbit_mq_user, rabbit_mq_password)
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbit_mq_host,
+            credentials=credentials))
+    channel = connection.channel()
+    channel.basic_publish(
+        exchange=task_exchange,
+        routing_key=topic,
+        body=json.dumps(check))
+    connection.close()
+    return json.dumps(dict(status="OK"))
+
 
 @auth.requires_login()
 def create_rabbit_user():

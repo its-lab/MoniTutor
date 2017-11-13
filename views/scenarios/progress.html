@@ -167,6 +167,14 @@ function connectToRabbit(){
     });
 }
 
+function newTask(taskName){
+  $.get("{{=URL('scenarios', 'put_check')}}", {
+    taskName: taskName,
+    userName: "{{=session.auth.user.username}}"
+  }, function(data){
+  });
+}
+
 {{for host in scenario_info["hosts"]:}}
 getHostStatus("{{=host.name}}");
 {{pass}}
