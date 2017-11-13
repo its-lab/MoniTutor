@@ -141,7 +141,7 @@ function connectToRabbit(){
   $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
     function(data){
       var credentials = JSON.parse(data);
-      var webSocket = new WebSocket('ws://127.0.0.1:15674/ws'); //TODO: replace static ip
+      var webSocket = new WebSocket('ws://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
       var client = Stomp.over(webSocket);
       onreceive = function(m) {
         console.log(m);
@@ -157,9 +157,6 @@ function connectToRabbit(){
       //client.connect("guest", "guest", on_connect, on_error, '/');
     });
 }
-
-
-
 
 {{for host in scenario_info["hosts"]:}}
 getHostStatus("{{=host.name}}");

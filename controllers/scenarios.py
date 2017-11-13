@@ -406,6 +406,9 @@ def progress():
         username = None
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
+    rabbit_mq_address = app_conf.take("monitutor_env.rabbit_mq_external_address")
+    rabbit_mq_port = app_conf.take("monitutor_env.rabbit_mq_websocket_port")
+    rabbit_mq_config = {"address": rabbit_mq_address, "port": rabbit_mq_port}
     scenario = tutordb.monitutor_scenarios[scenario_id]
 
     hosts = tutordb((scenario_id == tutordb.monitutor_milestones.milestone_id) &
@@ -446,8 +449,7 @@ def progress():
                      "milestones": milestones,
                      "checks": checks,
                      "hosts": hosts}
-
-    return dict(scenario_info=scenario_info)
+    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config)
 
 
 @auth.requires_login()
