@@ -93,7 +93,7 @@ function getHostStatus(hostName){
   $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName},
     function(data){
       var hostState = JSON.parse(data);
-      updateHostStatus(hostState.hostName.slice("{{=session.auth.user.username}}_".length), hostState.state, hostState.output);
+      updateHostStatus(hostState.hostName, hostState.state, hostState.output);
     });
 }
 function getCheckStatus(checkName){
