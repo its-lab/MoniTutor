@@ -65,7 +65,7 @@
             <i class="fa fa-info"></i>
           {{pass}}
           </button>
-          <a class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></a>
+          <button class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></button>
         </div>
       </li>
       {{pass}}
@@ -75,6 +75,13 @@
 </div>
 <script src="{{=URL('static','js/stomp.js')}}"></script>
 <script>
+$(".refresh-check").on("click", function(){
+  var checkName = this.id.slice("refresh-check-".length);
+  $(this).find('.fa').removeClass("fa-refresh").addClass("fa-spinner fa-pulse fa-fw");
+  this.disabled = true;
+  newTask(checkName);
+})
+
 $(function () {
     $('[data-toggle="popover"]').popover()
 })
@@ -119,6 +126,11 @@ function updateCheckStatus(checkName, state, output){
       $(selector).removeClass().addClass("list-group-item list-group-item-info");
   }
   $(selector).find(".check-output").text(output);
+  $(selector)
+    .find(".refresh-check")
+      .attr("disabled", false)
+      .find(".fa")
+        .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
 }
 
 function updateHostStatus(hostName, state, output){
@@ -163,7 +175,6 @@ function connectToRabbit(){
         console.log('error');
       };
       client.connect("{{=session.auth.user.username}}", credentials.password, on_connect, on_error, '/');
-      //client.connect("guest", "guest", on_connect, on_error, '/');
     });
 }
 
@@ -175,12 +186,15 @@ function newTask(taskName){
   });
 }
 
-{{for host in scenario_info["hosts"]:}}
-getHostStatus("{{=host.name}}");
-{{pass}}
-{{for milestone in scenario_info["milestones"]:}}
-{{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
-getCheckStatus("{{=check.monitutor_checks.name}}");
-{{pass}}
-{{pass}}
+$(document).ready(function(){
+  {{for host in scenario_info["hosts"]:}}
+  getHostStatus("{{=host.name}}");
+  {{pass}}
+  {{for milestone in scenario_info["milestones"]:}}
+  {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
+  getCheckStatus("{{=check.monitutor_checks.name}}");
+  {{pass}}
+  {{pass}}
+  connectToRabbit();
+});
 </script>
