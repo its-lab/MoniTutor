@@ -488,13 +488,16 @@ def put_check():
         (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id)).select(
             tutordb.monitutor_checks.name,
             tutordb.monitutor_checks.params,
+            tutordb.monitutor_checks.check_id,
             tutordb.monitutor_programs.name,
             tutordb.monitutor_interpreters.path,
             tutordb.monitutor_systems.name,
             cache=(cache.ram, 360)).first()
     check = { "name": check_host_program.monitutor_checks.name,
               "program": check_host_program.monitutor_programs.name,
-              "params": check_host_program.monitutor_checks.params,
+              "params": __substitute_vars(check_host_program.monitutor_checks.params,
+                                          check_host_program.monitutor_checks.check_id,
+                                          username),
               "interpreter_path": check_host_program.monitutor_interpreters.path}
     topic = username+"."+check_host_program.monitutor_systems.name
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
@@ -514,6 +517,54 @@ def put_check():
     connection.close()
     return json.dumps(dict(status="OK"))
 
+def __substitute_vars(parameters, check_id, username):
+    parameters = parameters.split()
+    parameterSnippets = []
+    for parameter in parameters:
+        if parameter[0] == "$":
+            parameter = __get_variable_value(parameter, check_id, username)
+        parameterSnippets.append(parameter)
+    return " ".join(parameterSnippets)
+
+def __get_variable_value(variable, check_id, username):
+    system_type = variable.split(".")[0].lower()[1:]
+    attribute = None
+    if len(system_type) is 2:
+        attribute = ''.join(variable.split("."))[1:]
+    system = tutordb((tutordb.monitutor_targets.check_id == check_id) &
+                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
+                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+                      (tutordb.monitutor_types.name == system_type)
+                      ).select(tutordb.monitutor_systems.ALL, cache=(cache.ram, 360), cacheable=True).first()
+    # check if the system was customized
+    user_system = tutordb((system.system_id ==
+                           tutordb.monitutor_user_system.system_id) &
+                          (username == tutordb.auth_user.username) &
+                          (tutordb.auth_user.id == tutordb.monitutor_user_system.user_id)
+                         ).select(cache=(cache.ram, 360), cacheable=True)
+    if len(user_system):
+        user_system = user_system.first()
+        system.hostname = user_system.monitutor_user_system.hostname
+        system.ip4_address = user_system.monitutor_user_system.ip4_address
+        system.ip6_address = user_system.monitutor_user_system.ip6_address
+    if attribute is None or attribute == "hostname":
+        parameter = system.hostname
+    if attribute == "ipv4_address":
+        parameter = str(system.ip4_address)
+    elif attribute == "ipv6_address":
+        parameter = str(system.ip6_address)
+    else:
+        # in this case the attribute is a custom attribute
+        custom_attributes = tutordb((tutordb.monitutor_customvar_system.name == attribute) &
+                                    (tutordb.monitutor_customvar_system.system_id ==
+                                     system.system_id)
+                                    ).select(cache=(cache.ram, 360), cacheable=True)
+        if len(custom_attributes):
+            parameter = custom_attributes.value
+        else:
+            # Fallback to hostname in case the attribute was not found
+            parameter = system.hostname
+    return parameter
 
 @auth.requires_login()
 def create_rabbit_user():
