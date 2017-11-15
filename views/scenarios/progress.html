@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 <div id="host-status" style="position: fixed; right: 10px; top: 100px; z-index: 99">
   {{for host in scenario_info["hosts"]:}}
-  <div class="host-status" id="host-status-{{=session.auth.user.username}}_{{=host.name}}">
+  <div class="host-status" id="host-status-{{=scenario_info["username"]}}_{{=host.name}}">
     <span class="fa-stack">
       <i class="fa fa-plug fa-stack-1x fa-flip-horizontal"></i>
       <i class="fa fa-ban fa-stack-2x text-danger"></i>
@@ -89,7 +89,7 @@ $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().ani
                  .mouseleave(function(){$(".host-name, .host-output").hide().animate()});
 
 function getHostStatus(hostName){
-  hostName = "{{=session.auth.user.username}}_"+hostName
+  hostName = "{{=scenario_info["username"]}}_"+hostName
   $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName},
     function(data){
       var hostState = JSON.parse(data);
@@ -97,11 +97,11 @@ function getHostStatus(hostName){
     });
 }
 function getCheckStatus(checkName){
-  checkName = "{{=session.auth.user.username}}_"+checkName
+  checkName = "{{=scenario_info["username"]}}_"+checkName
   $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName},
     function(data){
       var checkState = JSON.parse(data);
-      updateCheckStatus(checkState.checkName.slice("{{=session.auth.user.username}}_".length), checkState.state, checkState.output);
+      updateCheckStatus(checkState.checkName.slice("{{=scenario_info["username"]}}_".length), checkState.state, checkState.output);
     });
 }
 
@@ -163,7 +163,7 @@ function connectToRabbit(){
       }
       var on_connect = function() {
         console.log('connected');
-        client.subscribe("/queue/{{=session.auth.user.username}}", onreceive );
+        client.subscribe("/queue/{{=scenario_info["username"]}}", onreceive );
       };
       var on_error =  function() {
         console.log("Start polling")
@@ -176,7 +176,7 @@ function connectToRabbit(){
 function newTask(taskName){
   $.get("{{=URL('scenarios', 'put_check')}}", {
     taskName: taskName,
-    userName: "{{=session.auth.user.username}}"
+    userName: "{{=scenario_info["username"]}}"
   }, function(data){
   });
 }
@@ -184,7 +184,7 @@ function newTask(taskName){
 function pollResults(){
   console.log("POLL");
   $.get("{{=URL('scenarios', 'poll_results')}}", {
-    userName: "{{=session.auth.user.username}}"
+    userName: "{{=scenario_info["username"]}}"
   }, function(data){
     var data = JSON.parse(data);
     data.results.forEach(function(result){

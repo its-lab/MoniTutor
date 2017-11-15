@@ -449,7 +449,8 @@ def progress():
                      "goal": scenario.goal,
                      "milestones": milestones,
                      "checks": checks,
-                     "hosts": hosts}
+                     "hosts": hosts,
+                     "username": username}
     return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config)
 
 
