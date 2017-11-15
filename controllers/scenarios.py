@@ -617,3 +617,29 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR setting permissions"})
     return json.dumps({"status": "OK", "password": password, "code": answer.status_code})
+
+@auth.requires_login()
+def poll_results():
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    result_exchange = app_conf.take("monitutor_env.rabbit_mq_result_exchange")
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbit_mq_host,
+            credentials=pika.PlainCredentials(rabbit_mq_user, rabbit_mq_password)
+            )
+        )
+    channel = connection.channel()
+    results = []
+    while True:
+        method, header, result = channel.basic_get(queue=username)
+        if result == None:
+            break
+        else:
+            results.append(result)
+            channel.basic_ack(method.delivery_tag)
+    return json.dumps(dict(results=results))

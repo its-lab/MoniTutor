@@ -186,6 +186,23 @@ function newTask(taskName){
   });
 }
 
+function pollResults(){
+  $.get("{{=URL('scenarios', 'poll_results')}}", {
+    userName: "{{=session.auth.user.username}}"
+  }, function(data){
+    var data = JSON.parse(data);
+    data.results.forEach(function(result){
+      result = JSON.parse(result);
+      if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
+        updateHostStatus(result.hostname, result.severity_code, result.output )
+      }
+      if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
+        updateCheckStatus(result.name, result.severity_code, result.output )
+      }
+    });
+  });
+}
+
 $(document).ready(function(){
   {{for host in scenario_info["hosts"]:}}
   getHostStatus("{{=host.name}}");
