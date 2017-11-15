@@ -157,13 +157,8 @@ function connectToRabbit(){
       var client = Stomp.over(webSocket);
       onreceive = function(m) {
         if (m.command == "MESSAGE"){
-          var result = JSON.parse(m.body)
-          if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
-            updateHostStatus(result.hostname, result.severity_code, result.output )
-          }
-          if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
-            updateCheckStatus(result.name, result.severity_code, result.output )
-          }
+          var result = JSON.parse(m.body);
+          processResult(result);
         }
         console.log(m);
       }
@@ -193,14 +188,18 @@ function pollResults(){
     var data = JSON.parse(data);
     data.results.forEach(function(result){
       result = JSON.parse(result);
+      processResult(result);
+    });
+  });
+}
+
+function processResult(result){
       if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
         updateHostStatus(result.hostname, result.severity_code, result.output )
       }
       if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
         updateCheckStatus(result.name, result.severity_code, result.output )
       }
-    });
-  });
 }
 
 $(document).ready(function(){
