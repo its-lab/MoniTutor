@@ -166,7 +166,8 @@ function connectToRabbit(){
         client.subscribe("/queue/{{=session.auth.user.username}}", onreceive );
       };
       var on_error =  function() {
-        console.log('error');
+        console.log("Start polling")
+        setInterval(pollResults, 2500);
       };
       client.connect("{{=session.auth.user.username}}", credentials.password, on_connect, on_error, '/');
     });
@@ -181,6 +182,7 @@ function newTask(taskName){
 }
 
 function pollResults(){
+  console.log("POLL");
   $.get("{{=URL('scenarios', 'poll_results')}}", {
     userName: "{{=session.auth.user.username}}"
   }, function(data){
