@@ -86,7 +86,12 @@ $(function () {
     $('[data-toggle="popover"]').popover()
 })
 $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().animate()})
-                 .mouseleave(function(){$(".host-name, .host-output").hide().animate()});
+                 .mouseleave(
+                   function(){
+                     setTimeout(
+                       function(){$(".host-name, .host-output").hide().animate();},
+                       4000);
+                   });
 
 function getHostStatus(hostName){
   hostName = "{{=scenario_info["username"]}}_"+hostName
