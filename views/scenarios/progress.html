@@ -168,13 +168,22 @@ function connectToRabbit(){
       }
       var on_connect = function() {
         console.log('connected');
-        client.subscribe("/queue/{{=scenario_info["username"]}}", onreceive );
+        var headers = credentials.queue_args["arguments"]
+        headers["auto_delete"] = credentials.queue_args["auto_delete"];
+        headers["durable"] = credentials.queue_args["durable"];
+        headers["id"] = new Date().getTime();
+        client.subscribe("/queue/"+credentials.queue_name, onreceive, headers );
       };
       var on_error =  function() {
         console.log("Start polling")
         setInterval(pollResults, 2500);
       };
-      client.connect("{{=session.auth.user.username}}", credentials.password, on_connect, on_error, '/');
+      var headers = {
+        login: "{{=session.auth.user.username}}",
+        passcode: credentials.password,
+        host: "/"
+      };
+      client.connect(headers, on_connect, on_error);
     });
 }
 

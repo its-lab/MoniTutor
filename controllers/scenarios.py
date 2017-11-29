@@ -592,25 +592,36 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR setting password"})
 
-    data = {"auto_delete": False, "durable":True}
-    request_url = rabbit_mq_url+'/queues/%2F/'+session.auth.user.username
+    queue_args = {
+                  "durable": True,
+                  "auto-delete": False,
+                  "exclusive": False,
+                  "arguments": {
+                    "x-message-ttl": 120000, # 2 min
+                    "x-expires": 120000 # 2 min
+                    }
+                  }
+    queue_name =  session.auth.user.username+"-"+__generate_random_string(6)
+    request_url = rabbit_mq_url + \
+                 '/queues/%2F/' + \
+                 queue_name
     answer = requests.put(request_url,
                  headers=headers,
                  auth=(rabbit_mq_user, rabbit_mq_password),
-                 data=json.dumps(data))
+                 data=json.dumps(queue_args))
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR creating queue"})
 
     data = {"routing_key": session.auth.user.username+".*"}
-    request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+session.auth.user.username
+    request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+queue_name
     answer = requests.post(request_url,
                  headers=headers,
                  auth=(rabbit_mq_user, rabbit_mq_password),
                  data=json.dumps(data))
     if answer.status_code > 299:
-        return json.dumps({"status": "ERROR creating queue"})
+        return json.dumps({"status": "ERROR creating bind"})
 
-    data = {"configure": "^"+session.auth.user.username+"$", "write": "^$", "read": session.auth.user.username+"$"}
+    data = {"configure": "^"+session.auth.user.username+"-.{6}$", "write": "^$", "read": "^"+session.auth.user.username+"-.{6}$"}
     if auth.has_membership("admin"):
         data["read"] = ".*"
     request_url = rabbit_mq_url+'/permissions/%2F/'+session.auth.user.username
@@ -620,7 +631,7 @@ def create_rabbit_user():
                  data=json.dumps(data))
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR setting permissions"})
-    return json.dumps({"status": "OK", "password": password, "code": answer.status_code})
+    return json.dumps({"status": "OK", "password": password, "queue_name": queue_name, "queue_args": queue_args, "code": answer.status_code})
 
 @auth.requires_login()
 def poll_results():
