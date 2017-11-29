@@ -636,8 +636,10 @@ def create_rabbit_user():
 @auth.requires_login()
 def poll_results():
     username = request.vars.userName
+    queue_name = str(request.vars.queueName)
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
+    queue_name = username +"-"+ queue_name.split("-")[1]
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
     rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
@@ -651,7 +653,7 @@ def poll_results():
     channel = connection.channel()
     results = []
     while True:
-        method, header, result = channel.basic_get(queue=username)
+        method, header, result = channel.basic_get(queue=queue_name)
         if result == None:
             break
         else:

@@ -176,7 +176,7 @@ function connectToRabbit(){
       };
       var on_error =  function() {
         console.log("Start polling")
-        setInterval(pollResults, 2500);
+        setInterval(function(){pollResults(credentials.queue_name)}, 2500);
       };
       var headers = {
         login: "{{=session.auth.user.username}}",
@@ -195,10 +195,11 @@ function newTask(taskName){
   });
 }
 
-function pollResults(){
+function pollResults(queueName){
   console.log("POLL");
   $.get("{{=URL('scenarios', 'poll_results')}}", {
-    userName: "{{=scenario_info["username"]}}"
+    userName: "{{=scenario_info["username"]}}",
+    queueName: queueName
   }, function(data){
     var data = JSON.parse(data);
     data.results.forEach(function(result){
