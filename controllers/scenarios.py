@@ -567,6 +567,9 @@ def __get_variable_value(variable, check_id, username):
             parameter = system.hostname
     return parameter
 
+def __generate_random_string(length):
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
+
 @auth.requires_login()
 def create_rabbit_user():
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
@@ -580,7 +583,7 @@ def create_rabbit_user():
     rabbit_mq_url = "http://"+rabbit_mq_host+":"+rabbit_mq_management_port+"/api"
     request_url = rabbit_mq_url+"/users/"+session.auth.user.username
     headers = {'Accpet': 'application/json'}
-    password = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(25))
+    password = __generate_random_string(24)
     data = {"password": password, "tags": tags}
     answer = requests.put(request_url,
                  headers=headers,
