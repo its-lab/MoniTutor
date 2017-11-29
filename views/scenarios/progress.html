@@ -55,7 +55,7 @@
             <span class="check-output"></span>
           </div>
         <div class="col-md-3 text-right">
-          {{if check.monitutor_checks.hint != "":}}
+          {{if check.monitutor_checks.hint != "" and check.monitutor_checks.hint is not None:}}
           <button class="btn btn-default info-check"
                   id="info-check-{{=check.monitutor_checks.name}}"
                   data-container="body"
