@@ -511,6 +511,9 @@ def put_check():
             host=rabbit_mq_host,
             credentials=credentials))
     channel = connection.channel()
+    channel.exchange_declare(exchange=task_exchange, exchange_type="topic")
+    channel.queue_declare(queue=topic, durable=True)
+    channel.queue_bind(queue=topic, exchange=task_exchange, routing_key=topic)
     channel.basic_publish(
         exchange=task_exchange,
         routing_key=topic,
