@@ -491,6 +491,7 @@ def edit_check():
                    formstyle="divs",
                    fields=["name", "display_name", "program_id","params", "hint"])
     if form.accepts(request, session):
+        tutordb(tutordb.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
         response.flash = 'form accepted'
 
     return dict(form=form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)

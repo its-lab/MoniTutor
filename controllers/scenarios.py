@@ -494,10 +494,12 @@ def put_check():
             tutordb.monitutor_interpreters.path,
             tutordb.monitutor_systems.name,
             cache=(cache.ram, 360)).first()
-    check = { "name": check_host_program.monitutor_checks.name,
+    check = tutordb(tutordb.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
+            cache=(cache.ram, 3600)).first()
+    check = { "name": check.name,
               "program": check_host_program.monitutor_programs.name,
-              "params": __substitute_vars(check_host_program.monitutor_checks.params,
-                                          check_host_program.monitutor_checks.check_id,
+              "params": __substitute_vars(check.params,
+                                          check.check_id,
                                           username),
               "interpreter_path": check_host_program.monitutor_interpreters.path}
     topic = username+"."+check_host_program.monitutor_systems.name
