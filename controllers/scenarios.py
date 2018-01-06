@@ -412,7 +412,9 @@ def progress():
     rabbit_mq_config = {"address": rabbit_mq_address, "port": rabbit_mq_port}
     scenario = tutordb.monitutor_scenarios[scenario_id]
 
-    hosts = tutordb((scenario_id == tutordb.monitutor_milestones.milestone_id) &
+    hosts = tutordb((scenario_id == tutordb.monitutor_milestone_scenario.scenario_id) &
+                     (tutordb.monitutor_milestone_scenario.milestone_id ==
+                         tutordb.monitutor_milestones.milestone_id) &
                      (tutordb.monitutor_check_milestone.milestone_id ==
                          tutordb.monitutor_milestones.milestone_id) &
                      (tutordb.monitutor_check_milestone.check_id ==
