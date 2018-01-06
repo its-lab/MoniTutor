@@ -441,6 +441,7 @@ def progress():
                                   tutordb.monitutor_checks.check_id) &
                                   (tutordb.monitutor_systems.system_id ==
                                    tutordb.monitutor_targets.system_id) &
+                                  (tutordb.monitutor_targets.type_id == 1) & # 1 = source
                                   (tutordb.monitutor_checks.check_id ==
                                    tutordb.monitutor_targets.check_id)).select(orderby=
                                                                             tutordb.monitutor_check_milestone.sequence_nr)
