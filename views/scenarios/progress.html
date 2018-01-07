@@ -35,8 +35,13 @@
     </div>
   </div>
   {{pass}}
+  <div id="loadingAlert" class="alert alert-info" role="alert">
+      <i class="fa fa-spinner fa-pulse fa-fw"></i>
+      <span class="sr-only">Loading...</span>
+      <span id="loadingState">Loading current host states...</span>
+  </div>
   {{for milestone in scenario_info["milestones"]:}}
-  <div class="panel panel-default" id="panel-{{=milestone.monitutor_milestones.name}}">
+  <div class="panel panel-default milestone" id="panel-{{=milestone.monitutor_milestones.name}}" style="display: none">
     <div class="panel-heading">
       {{=milestone.monitutor_milestones.display_name}}
     </div>
@@ -114,7 +119,6 @@ function getAllCheckStatus(checkNames){
     function(data){
       var checkStates = JSON.parse(data);
       checkStates.forEach(function(checkState){
-          console.log(checkState)
           updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
       })
     });
@@ -177,7 +181,8 @@ function connectToRabbit(){
         }
       }
       var on_connect = function() {
-        console.log('connected');
+        $("#loadingAlert").remove();
+        $(".panel.milestone").show();
         var headers = credentials.queue_args["arguments"]
         headers["auto_delete"] = credentials.queue_args["auto_delete"];
         headers["durable"] = credentials.queue_args["durable"];
@@ -185,6 +190,8 @@ function connectToRabbit(){
         client.subscribe("/queue/"+credentials.queue_name, onreceive, headers );
       };
       var on_error =  function() {
+        $("#loadingAlert").remove();
+        $(".panel.milestone").show();
         console.log("Start polling")
         setInterval(function(){pollResults(credentials.queue_name)}, 5000);
       };
@@ -232,12 +239,14 @@ $(document).ready(function(){
   {{for host in scenario_info["hosts"]:}}
   getHostStatus("{{=host.name}}");
   {{pass}}
+  $("#loadingState").text("Loading progress data...")
   {{for milestone in scenario_info["milestones"]:}}
   {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
   allCheckNames.push("{{=check.monitutor_checks.name}}");
   {{pass}}
   {{pass}}
   getAllCheckStatus(allCheckNames)
+  $("#loadingState").text("Establishing websocket connection...")
   connectToRabbit();
 });
 
