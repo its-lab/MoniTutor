@@ -109,6 +109,16 @@ function getCheckStatus(checkName){
       updateCheckStatus(checkState.checkName.slice("{{=scenario_info["username"]}}_".length), checkState.state, checkState.output);
     });
 }
+function getAllCheckStatus(checkNames){
+    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), username: "{{=scenario_info["username"]}}"},
+    function(data){
+      var checkStates = JSON.parse(data);
+      checkStates.forEach(function(checkState){
+          console.log(checkState)
+          updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
+      })
+    });
+}
 
 function updateCheckStatus(checkName, state, output){
   var selector = "#list-group-item-"+checkName;
@@ -217,16 +227,19 @@ function processResult(result){
         updateCheckStatus(result.name, result.severity_code, result.output )
       }
 }
-
 $(document).ready(function(){
+  var allCheckNames = new Array()
   {{for host in scenario_info["hosts"]:}}
   getHostStatus("{{=host.name}}");
   {{pass}}
   {{for milestone in scenario_info["milestones"]:}}
   {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
-  getCheckStatus("{{=check.monitutor_checks.name}}");
+  allCheckNames.push("{{=check.monitutor_checks.name}}");
   {{pass}}
   {{pass}}
+  getAllCheckStatus(allCheckNames)
   connectToRabbit();
 });
+
+
 </script>

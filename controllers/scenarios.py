@@ -478,6 +478,22 @@ def get_service_status():
     return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
 
 @auth.requires_login()
+def get_services_status():
+    """Queries Icinga-DB for the status of a given service"""
+    servicenames = json.loads(request.vars.checkNames)
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    status = list()
+    for servicename in servicenames:
+        service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
+                (db.icinga_objects.name2 == username+"_"+servicename)) \
+                     .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
+                     .first()
+        status.append(dict(output=service.output, state=service.current_state, checkName=servicename))
+    return json.dumps(status)
+
+@auth.requires_login()
 def put_check():
     check_name = request.vars.taskName
     username = request.vars.userName
