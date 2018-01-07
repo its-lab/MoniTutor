@@ -84,6 +84,11 @@ $(".refresh-check").on("click", function(){
   var checkName = this.id.slice("refresh-check-".length);
   $(this).find('.fa').removeClass("fa-refresh").addClass("fa-spinner fa-pulse fa-fw");
   this.disabled = true;
+  window.setTimeout(function(){
+    $("#refresh-check-"+checkName).attr("disabled", false)
+        .find(".fa")
+        .removeClass("fa-spinner fa-pulse fa-fw").addClass("fa-refresh");
+  }, 20000);
   newTask(checkName);
 })
 
