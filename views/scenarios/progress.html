@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 <div id="host-status" style="position: fixed; right: 10px; top: 100px; z-index: 99">
   {{for host in scenario_info["hosts"]:}}
-  <div class="host-status" id="host-status-{{=scenario_info["username"]}}_{{=host.name}}">
+  <div class="host-status" id="host-status-{{=scenario_info["username"].replace('.','_')}}_{{=host.name}}">
     <span class="fa-stack">
       <i class="fa fa-plug fa-stack-1x fa-flip-horizontal"></i>
       <i class="fa fa-ban fa-stack-2x text-danger"></i>
@@ -139,7 +139,7 @@ function updateCheckStatus(checkName, state, output){
 }
 
 function updateHostStatus(hostName, state, output){
-  var hostSelector = "#host-status-"+hostName
+  var hostSelector = "#host-status-"+hostName.replace(".","_")
   if(state==0){
     $(hostSelector).find(".fa-plug").addClass("text-success");
     $(hostSelector).find(".fa-ban").hide();
