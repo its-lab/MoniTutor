@@ -186,7 +186,7 @@ function connectToRabbit(){
       };
       var on_error =  function() {
         console.log("Start polling")
-        setInterval(function(){pollResults(credentials.queue_name)}, 2500);
+        setInterval(function(){pollResults(credentials.queue_name)}, 5000);
       };
       var headers = {
         login: "{{=session.auth.user.username}}",
