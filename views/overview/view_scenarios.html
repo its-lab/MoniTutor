@@ -30,7 +30,7 @@
                                 {{=scenario.monitutor_scenarios.display_name}}
                             </a>
                         </td>
-                        <td>{{=scenario._extra["COUNT(monitutor_scenarios.scenario_id)"]}}</td>
+                        <td>{{=scenario._extra['count("monitutor_scenarios"."scenario_id")']}}</td>
                     </tr>
                     {{counter += 1}}
                     {{pass}}
@@ -65,7 +65,7 @@
                                 {{=scenario.monitutor_scenarios.display_name}}
                             </a>
                         </td>
-                        <td>{{=scenario._extra["COUNT(monitutor_scenarios.scenario_id)"]}}</td>
+                        <td>{{=scenario._extra['count("monitutor_scenarios"."scenario_id")']}}</td>
                     </tr>
                     {{counter += 1}}
                     {{pass}}
