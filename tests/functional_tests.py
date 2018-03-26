@@ -183,32 +183,33 @@ class UserTests(MoniTutorWebTest):
                       "Couldn't find name of scenario in breadcrumb")
 
         # Before the student starts working ob the objectives, he or she checks
-        # if the 'ITS Client' host is connected to the MoniTutor system by
-        # clicking on the refresh button left of the ITS Client panel.
+        # if the 'ITS Client' host is connected to the MoniTutor system.
+        # A green plug in the upper right corner indicates that the client is
+        # indeed connected.
         self.assertIn(u"ITS Client",
                       [host.text for host in
-                          self.browser.find_elements_by_class_name("col-sm-4")],
+                          self.browser.find_elements_by_class_name("host-name")],
                       "Host 'ITS Client' not found on Page")
-        for host_row in self.browser.find_elements_by_css_selector(".row"):
-            if "ITS Client" in host_row.find_element_by_class_name("col-sm-4").text:
-                itsclient_row = host_row
+        for host_status in self.browser.find_elements_by_class_name("host-status"):
+            if u"ITS Client" in host_status.find_element_by_class_name("host-name").text:
+                itsclient_status = host_status
                 break
         max_time = 40
-        while "Connected" not in itsclient_row.find_element_by_class_name("col-sm-6").text:
-            itsclient_row.find_element_by_class_name("fa-refresh").click()
+        while "Connected" not in itsclient_status.find_element_by_class_name("host-output").text:
             time.sleep(2)
             max_time -= 2
             self.failIf(max_time <= 0, "ITS Client is not connected")
 
         # After the status of ITS Client changed to Connected, the student
-        # clicks on the refresh button of the first milestone in oderder to see
-        # if anything is left to do.
+        # clicks on the refresh button of the first milestone in oderder to
+        # valiadate the configuration of the client.
         self.assertIn("Stage 1 tests",
                       [panel.text for
                        panel in
                        self.browser.find_elements_by_class_name("panel-body")],
                       "Milestone 'Stage 1 tests' not found")
-        self.browser.find_element_by_css_selector(".fa-refresh.milestone").click()
+        for check_element in self.browser.find_elements_by_class_name("refresh-check"):
+            check_element.click()
         max_time = 40
         try:
             while "fa-spinner" in self.browser \
@@ -221,7 +222,7 @@ class UserTests(MoniTutorWebTest):
             pass
         expected_check_results = \
             {"Ping test with variable susbstitution":
-                u"1 packets transmitted, 1 packets received, 0% packet lossOK",
+                u"1 packets transmitted",
              "Find /etc/hosts":
                 u"OK - exists",
              "Find /etc/hosty":
@@ -229,9 +230,9 @@ class UserTests(MoniTutorWebTest):
              }
         for check_name in expected_check_results:
             self.assertIn(expected_check_results[check_name],
-                          [message.text
+                          ''.join([message.text
                            for message
-                           in self.browser.find_elements_by_class_name("col-sm-6")],
+                           in self.browser.find_elements_by_class_name("check-output")]),
                           check_name+" reutrned unexpected result")
 
 

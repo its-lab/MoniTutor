@@ -11,8 +11,7 @@ class MoniTutorWebTest(unittest.TestCase):
         self.profile = webdriver.FirefoxProfile()
         self.profile.accept_untrusted_certs = True
         self.profile.assume_untrusted_cert_issuer = True
-        self.browser = webdriver.Firefox(firefox_profile=self.profile,
-                                         capabilities={"marionette": False})
+        self.browser = webdriver.Firefox(firefox_profile=self.profile)
         self.testuser = {"name": "Monty",
                          "surname": "Python",
                          "email": "monty.python@example.net",

@@ -1,0 +1,259 @@
+{{extend 'layout.html'}}
+<div id="host-status" style="position: fixed; right: 10px; top: 100px; z-index: 99">
+  {{for host in scenario_info["hosts"]:}}
+  <div class="host-status" id="host-status-{{=scenario_info["username"].replace('.','_')}}_{{=host.name}}">
+    <span class="fa-stack">
+      <i class="fa fa-plug fa-stack-1x fa-flip-horizontal"></i>
+      <i class="fa fa-ban fa-stack-2x text-danger"></i>
+    </span>
+    <span class="host-name" style="display: none">{{=host.display_name}}</span>
+    <span class="host-output" style="display: none"> - Not connected</span>
+  </div>
+  {{pass}}
+</div>
+<div class="container">
+  <ol class="breadcrumb">
+    <li><a href="{{=URL('default','index')}}">Home</a></li>
+    <li><a href="{{=URL('scenarios','view_available_scenarios')}}">Scenarios</a></li>
+    <li class="active">Scenario - {{=scenario_info["display_name"]}}</li>
+  </ol>
+  <noscript><b>JavaScript is turned off. Please enable JavaScript to view full site.</b></noscript>
+  {{if scenario_info["description"] != "" or scenario_info["goal"] != "":}}
+  <div class="panel panel-primary">
+    <div class="panel-heading">
+      {{=scenario_info["display_name"]}}
+    </div>
+    <div class="panel-body">
+      {{if scenario_info["description"] != "":}}
+      <b>Description:</b><br>
+      {{=scenario_info["description"]}}<br>
+      {{pass}}
+      {{if scenario_info["goal"] != "":}}
+      <b>Goal:</b><br>
+      {{=scenario_info["goal"]}}
+      {{pass}}
+    </div>
+  </div>
+  {{pass}}
+  <div id="loadingAlert" class="alert alert-info" role="alert">
+      <i class="fa fa-spinner fa-pulse fa-fw"></i>
+      <span class="sr-only">Loading...</span>
+      <span id="loadingState">Loading current host states...</span>
+  </div>
+  {{for milestone in scenario_info["milestones"]:}}
+  <div class="panel panel-default milestone" id="panel-{{=milestone.monitutor_milestones.name}}" style="display: none">
+    <div class="panel-heading">
+      {{=milestone.monitutor_milestones.display_name}}
+    </div>
+    {{if milestone.monitutor_milestones.description != "":}}
+    <div class="panel-body">
+      {{=milestone.monitutor_milestones.description}}
+    </div>
+    {{pass}}
+    <ul class="list-group">
+      {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
+      <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.monitutor_checks.name}}">
+        <div class="row">
+          <div class="col-md-9">
+            <i class="fa fa-lg fa-question-circle"></i>
+            <span class="check-display-name" style="margin-left: 10px; margin-right: 10px">{{=check.monitutor_checks.display_name}}</span>-
+            <span class="check-output"></span>
+          </div>
+        <div class="col-md-3 text-right">
+          {{if check.monitutor_checks.hint != "" and check.monitutor_checks.hint is not None:}}
+          <button class="btn btn-default info-check"
+                  id="info-check-{{=check.monitutor_checks.name}}"
+                  data-container="body"
+                  data-toggle="popover"
+                  data-placement="left"
+                  data-content="{{=check.monitutor_checks.hint}}">
+            <i class="fa fa-info"></i>
+          {{pass}}
+          </button>
+          <button class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></button>
+        </div>
+      </li>
+      {{pass}}
+    </ul>
+  </div>
+  {{pass}}
+</div>
+<script src="{{=URL('static','js/stomp.js')}}"></script>
+<script>
+$(".refresh-check").on("click", function(){
+  var checkName = this.id.slice("refresh-check-".length);
+  $(this).find('.fa').removeClass("fa-refresh").addClass("fa-spinner fa-pulse fa-fw");
+  this.disabled = true;
+  window.setTimeout(function(){
+    $("#refresh-check-"+checkName).attr("disabled", false)
+        .find(".fa")
+        .removeClass("fa-spinner fa-pulse fa-fw").addClass("fa-refresh");
+  }, 20000);
+  newTask(checkName);
+})
+
+$(function () {
+    $('[data-toggle="popover"]').popover()
+})
+$(".host-status").mouseenter(function(){$(".host-name, .host-output").show().animate()})
+                 .mouseleave(
+                   function(){
+                     setTimeout(
+                       function(){$(".host-name, .host-output").hide().animate();},
+                       4000);
+                   });
+
+function getHostStatus(hostName){
+  hostName = "{{=scenario_info["username"]}}_"+hostName
+  $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName},
+    function(data){
+      var hostState = JSON.parse(data);
+      updateHostStatus(hostState.hostName, hostState.state, hostState.output);
+    });
+}
+function getCheckStatus(checkName){
+  checkName = "{{=scenario_info["username"]}}_"+checkName
+  $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName},
+    function(data){
+      var checkState = JSON.parse(data);
+      updateCheckStatus(checkState.checkName.slice("{{=scenario_info["username"]}}_".length), checkState.state, checkState.output);
+    });
+}
+function getAllCheckStatus(checkNames){
+    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), username: "{{=scenario_info["username"]}}"},
+    function(data){
+      var checkStates = JSON.parse(data);
+      checkStates.forEach(function(checkState){
+          updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
+      })
+    });
+}
+
+function updateCheckStatus(checkName, state, output){
+  var selector = "#list-group-item-"+checkName;
+  switch(state){
+    case 0:
+      $(selector).find(".fa-lg").removeClass().addClass("fa fa-check-circle fa-lg");
+      $(selector).removeClass().addClass("list-group-item list-group-item-success");
+      $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
+      break;
+    case 1:
+      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).removeClass().addClass("list-group-item list-group-item-warning");
+      break;
+    case 2:
+      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).removeClass().addClass("list-group-item list-group-item-danger");
+      break;
+    default:
+      $(selector).find(".fa-lg").removeClass().addClass("fa fa-question-circle fa-lg");
+      $(selector).removeClass().addClass("list-group-item list-group-item-info");
+  }
+  $(selector).find(".check-output").text(output);
+  $(selector)
+    .find(".refresh-check")
+      .attr("disabled", false)
+      .find(".fa")
+        .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
+}
+
+function updateHostStatus(hostName, state, output){
+  var hostSelector = "#host-status-"+hostName.replace(".","_")
+  if(state==0){
+    $(hostSelector).find(".fa-plug").addClass("text-success");
+    $(hostSelector).find(".fa-ban").hide();
+    $(hostSelector).find(".host-output").text(" - "+output);
+  }
+  else{
+    $(hostSelector).find(".fa-plug").removeClass("text-success");
+    $(hostSelector).find(".fa-ban").show();
+    $(hostSelector).find(".host-output").text(" - "+output);
+  }
+  $(".host-name, .host-output").show().animate();
+  setTimeout(function() {$(".host-name, .host-output").hide().animate()}, 3000);
+}
+
+function connectToRabbit(){
+  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
+    function(data){
+      var credentials = JSON.parse(data);
+      var webSocket = new WebSocket('wss://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
+      var client = Stomp.over(webSocket);
+      onreceive = function(m) {
+        if (m.command == "MESSAGE"){
+          var result = JSON.parse(m.body);
+          processResult(result);
+        }
+      }
+      var on_connect = function() {
+        $("#loadingAlert").remove();
+        $(".panel.milestone").show();
+        var headers = credentials.queue_args["arguments"]
+        headers["auto_delete"] = credentials.queue_args["auto_delete"];
+        headers["durable"] = credentials.queue_args["durable"];
+        headers["id"] = new Date().getTime();
+        client.subscribe("/queue/"+credentials.queue_name, onreceive, headers );
+      };
+      var on_error =  function() {
+        $("#loadingAlert").remove();
+        $(".panel.milestone").show();
+        console.log("Start polling")
+        setInterval(function(){pollResults(credentials.queue_name)}, 5000);
+      };
+      var headers = {
+        login: "{{=session.auth.user.username}}",
+        passcode: credentials.password,
+        host: "/"
+      };
+      client.connect(headers, on_connect, on_error);
+    });
+}
+
+function newTask(taskName){
+  $.get("{{=URL('scenarios', 'put_check')}}", {
+    taskName: taskName,
+    userName: "{{=scenario_info["username"]}}"
+  }, function(data){
+  });
+}
+
+function pollResults(queueName){
+  console.log("POLL");
+  $.get("{{=URL('scenarios', 'poll_results')}}", {
+    userName: "{{=scenario_info["username"]}}",
+    queueName: queueName
+  }, function(data){
+    var data = JSON.parse(data);
+    data.results.forEach(function(result){
+      result = JSON.parse(result);
+      processResult(result);
+    });
+  });
+}
+
+function processResult(result){
+      if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
+        updateHostStatus(result.hostname, result.severity_code, result.output )
+      }
+      if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
+        updateCheckStatus(result.name, result.severity_code, result.output )
+      }
+}
+$(document).ready(function(){
+  var allCheckNames = new Array()
+  {{for host in scenario_info["hosts"]:}}
+  getHostStatus("{{=host.name}}");
+  {{pass}}
+  $("#loadingState").text("Loading progress data...")
+  {{for milestone in scenario_info["milestones"]:}}
+  {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
+  allCheckNames.push("{{=check.monitutor_checks.name}}");
+  {{pass}}
+  {{pass}}
+  getAllCheckStatus(allCheckNames)
+  $("#loadingState").text("Establishing websocket connection...")
+  connectToRabbit();
+});
+
+
+</script>

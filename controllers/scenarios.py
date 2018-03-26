@@ -1,4 +1,8 @@
 import json
+import requests
+import random
+import string
+import pika
 
 @auth.requires_login()
 def view_available_scenarios():
@@ -388,3 +392,295 @@ def get_history():
                     db.icinga_statehistory.state,
                     orderby=~db.icinga_statehistory.state_time)
     return json.dumps({"history": history.as_list()})
+
+@auth.requires_login()
+def progress():
+    """Displays progress and host for a given scenario-user tuple"""
+    if len(request.args):
+        scenario_id = request.args(0, cast=int)
+    else:
+        redirect(URL('default','index'))
+        scenario_id = None
+    if len(request.args) > 1:
+        username = request.args(1, cast=str)
+    else:
+        username = None
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    rabbit_mq_address = app_conf.take("monitutor_env.rabbit_mq_external_address")
+    rabbit_mq_port = app_conf.take("monitutor_env.rabbit_mq_websocket_port")
+    rabbit_mq_config = {"address": rabbit_mq_address, "port": rabbit_mq_port}
+    scenario = tutordb.monitutor_scenarios[scenario_id]
+
+    hosts = tutordb((scenario_id == tutordb.monitutor_milestone_scenario.scenario_id) &
+                     (tutordb.monitutor_milestone_scenario.milestone_id ==
+                         tutordb.monitutor_milestones.milestone_id) &
+                     (tutordb.monitutor_check_milestone.milestone_id ==
+                         tutordb.monitutor_milestones.milestone_id) &
+                     (tutordb.monitutor_check_milestone.check_id ==
+                         tutordb.monitutor_checks.check_id) &
+                     (tutordb.monitutor_systems.system_id ==
+                         tutordb.monitutor_targets.system_id) &
+                     (tutordb.monitutor_checks.check_id ==
+                         tutordb.monitutor_targets.check_id)).select(
+                                 tutordb.monitutor_systems.system_id,
+                                 tutordb.monitutor_systems.display_name,
+                                 tutordb.monitutor_systems.name,
+                                 distinct=True)
+
+    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
+                          tutordb.monitutor_milestone_scenario.milestone_id) &
+                         (tutordb.monitutor_milestone_scenario.scenario_id ==
+                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+
+    checks = dict()
+    for milestone in milestones:
+        check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id ==
+                                  milestone.monitutor_milestones.milestone_id) &
+                                  (tutordb.monitutor_check_milestone.check_id ==
+                                  tutordb.monitutor_checks.check_id) &
+                                  (tutordb.monitutor_systems.system_id ==
+                                   tutordb.monitutor_targets.system_id) &
+                                  (tutordb.monitutor_targets.type_id == 1) & # 1 = source
+                                  (tutordb.monitutor_checks.check_id ==
+                                   tutordb.monitutor_targets.check_id)).select(orderby=
+                                                                            tutordb.monitutor_check_milestone.sequence_nr)
+        checks[milestone.monitutor_milestones.milestone_id] = check_milestone
+    scenario_info = {"description": scenario.description,
+                     "display_name": scenario.display_name,
+                     "scenario_id": scenario_id,
+                     "goal": scenario.goal,
+                     "milestones": milestones,
+                     "checks": checks,
+                     "hosts": hosts,
+                     "username": username}
+    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config)
+
+
+@auth.requires_login()
+def get_host_status():
+    """Queries Icinga-DB for the status of a given host"""
+    hostname = request.vars.hostName
+    host  = db((db.icinga_hoststatus.host_object_id == db.icinga_objects.id) &
+               (db.icinga_objects.name1 == hostname)) \
+               .select(db.icinga_hoststatus.output, db.icinga_hoststatus.current_state) \
+               .first()
+    return json.dumps(dict(output=host.output, state=host.current_state, hostName=hostname))
+
+@auth.requires_login()
+def get_service_status():
+    """Queries Icinga-DB for the status of a given service"""
+    servicename = request.vars.checkName
+    service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
+                 (db.icinga_objects.name2 == servicename)) \
+                 .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
+                 .first()
+    return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
+
+@auth.requires_login()
+def get_services_status():
+    """Queries Icinga-DB for the status of a given service"""
+    servicenames = json.loads(request.vars.checkNames)
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    status = list()
+    for servicename in servicenames:
+        service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
+                (db.icinga_objects.name2 == username+"_"+servicename)) \
+                     .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
+                     .first()
+        status.append(dict(output=service.output, state=service.current_state, checkName=servicename))
+    return json.dumps(status)
+
+@auth.requires_login()
+def put_check():
+    check_name = request.vars.taskName
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    check_host_program = tutordb((tutordb.monitutor_checks.name == check_name) &
+        (tutordb.monitutor_targets.check_id == tutordb.monitutor_checks.check_id) &
+        (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+        (tutordb.monitutor_types.name == "source") &
+        (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
+        (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id ) &
+        (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id)).select(
+            tutordb.monitutor_checks.name,
+            tutordb.monitutor_checks.params,
+            tutordb.monitutor_checks.check_id,
+            tutordb.monitutor_programs.name,
+            tutordb.monitutor_interpreters.path,
+            tutordb.monitutor_systems.name,
+            cache=(cache.ram, 360)).first()
+    check = tutordb(tutordb.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
+            cache=(cache.ram, 3600)).first()
+    check = { "name": check.name,
+              "program": check_host_program.monitutor_programs.name,
+              "params": __substitute_vars(check.params,
+                                          check.check_id,
+                                          username),
+              "interpreter_path": check_host_program.monitutor_interpreters.path}
+    topic = username+"."+check_host_program.monitutor_systems.name
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    task_exchange = app_conf.take("monitutor_env.rabbit_mq_task_exchange")
+    credentials = pika.credentials.PlainCredentials(rabbit_mq_user, rabbit_mq_password)
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbit_mq_host,
+            credentials=credentials))
+    channel = connection.channel()
+    channel.exchange_declare(exchange=task_exchange, exchange_type="topic")
+    channel.queue_declare(queue=topic, durable=True)
+    channel.queue_bind(queue=topic, exchange=task_exchange, routing_key=topic)
+    channel.basic_publish(
+        exchange=task_exchange,
+        routing_key=topic,
+        body=json.dumps(check))
+    connection.close()
+    return json.dumps(dict(status="OK"))
+
+def __substitute_vars(parameters, check_id, username):
+    parameters = parameters.split()
+    parameterSnippets = []
+    for parameter in parameters:
+        if parameter[0] == "$":
+            parameter = __get_variable_value(parameter, check_id, username)
+        parameterSnippets.append(parameter)
+    return " ".join(parameterSnippets)
+
+def __get_variable_value(variable, check_id, username):
+    system_type = variable.split(".")[0].lower()[1:]
+    attribute = None
+    if len(system_type) is 2:
+        attribute = ''.join(variable.split("."))[1:]
+    system = tutordb((tutordb.monitutor_targets.check_id == check_id) &
+                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
+                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
+                      (tutordb.monitutor_types.name == system_type)
+                      ).select(tutordb.monitutor_systems.ALL, cache=(cache.ram, 360), cacheable=True).first()
+    # check if the system was customized
+    user_system = tutordb((system.system_id ==
+                           tutordb.monitutor_user_system.system_id) &
+                          (username == tutordb.auth_user.username) &
+                          (tutordb.auth_user.id == tutordb.monitutor_user_system.user_id)
+                         ).select(cache=(cache.ram, 360), cacheable=True)
+    if len(user_system):
+        user_system = user_system.first()
+        system.hostname = user_system.monitutor_user_system.hostname
+        system.ip4_address = user_system.monitutor_user_system.ip4_address
+        system.ip6_address = user_system.monitutor_user_system.ip6_address
+    if attribute is None or attribute == "hostname":
+        parameter = system.hostname
+    if attribute == "ipv4_address":
+        parameter = str(system.ip4_address)
+    elif attribute == "ipv6_address":
+        parameter = str(system.ip6_address)
+    else:
+        # in this case the attribute is a custom attribute
+        custom_attributes = tutordb((tutordb.monitutor_customvar_system.name == attribute) &
+                                    (tutordb.monitutor_customvar_system.system_id ==
+                                     system.system_id)
+                                    ).select(cache=(cache.ram, 360), cacheable=True)
+        if len(custom_attributes):
+            parameter = custom_attributes.value
+        else:
+            # Fallback to hostname in case the attribute was not found
+            parameter = system.hostname
+    return parameter
+
+def __generate_random_string(length):
+    return ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(length))
+
+@auth.requires_login()
+def create_rabbit_user():
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_management_port = app_conf.take("monitutor_env.rabbit_mq_management_port")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    result_exchange = app_conf.take("monitutor_env.rabbit_mq_result_exchange")
+    tags = "monitutor-user"
+    if auth.has_membership("admin"):
+        tags += ", monitutor-admin"
+    rabbit_mq_url = "http://"+rabbit_mq_host+":"+rabbit_mq_management_port+"/api"
+    request_url = rabbit_mq_url+"/users/"+session.auth.user.username
+    headers = {'Accpet': 'application/json'}
+    password = __generate_random_string(24)
+    data = {"password": password, "tags": tags}
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR setting password"})
+
+    queue_args = {
+                  "durable": True,
+                  "auto-delete": False,
+                  "exclusive": False,
+                  "arguments": {
+                    "x-message-ttl": 120000, # 2 min
+                    "x-expires": 120000 # 2 min
+                    }
+                  }
+    queue_name =  session.auth.user.username+"-"+__generate_random_string(6)
+    request_url = rabbit_mq_url + \
+                 '/queues/%2F/' + \
+                 queue_name
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(queue_args))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR creating queue"})
+
+    data = {"routing_key": session.auth.user.username+".*"}
+    request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+queue_name
+    answer = requests.post(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR creating bind"})
+
+    data = {"configure": "^"+session.auth.user.username+"-.{6}$", "write": "^$", "read": "^"+session.auth.user.username+"-.{6}$"}
+    if auth.has_membership("admin"):
+        data["read"] = ".*"
+    request_url = rabbit_mq_url+'/permissions/%2F/'+session.auth.user.username
+    answer = requests.put(request_url,
+                 headers=headers,
+                 auth=(rabbit_mq_user, rabbit_mq_password),
+                 data=json.dumps(data))
+    if answer.status_code > 299:
+        return json.dumps({"status": "ERROR setting permissions"})
+    return json.dumps({"status": "OK", "password": password, "queue_name": queue_name, "queue_args": queue_args, "code": answer.status_code})
+
+@auth.requires_login()
+def poll_results():
+    username = request.vars.userName
+    queue_name = str(request.vars.queueName)
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    queue_name = username +"-"+ queue_name.split("-")[1]
+    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
+    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
+    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
+    result_exchange = app_conf.take("monitutor_env.rabbit_mq_result_exchange")
+    connection = pika.BlockingConnection(
+        pika.ConnectionParameters(
+            host=rabbit_mq_host,
+            credentials=pika.PlainCredentials(rabbit_mq_user, rabbit_mq_password)
+            )
+        )
+    channel = connection.channel()
+    results = []
+    while True:
+        method, header, result = channel.basic_get(queue=queue_name)
+        if result == None:
+            break
+        else:
+            results.append(result)
+            channel.basic_ack(method.delivery_tag)
+    return json.dumps(dict(results=results))

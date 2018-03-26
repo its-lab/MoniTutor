@@ -45,7 +45,7 @@ template Host "monitutor-system" {
   retry_interval = 1m
   check_command = "passive"
   enable_passive_checks = true
-  enable_active_checks = true
+  enable_active_checks = false
   enable_notifications = false
   }
     """
