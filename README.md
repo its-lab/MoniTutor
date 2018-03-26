@@ -30,9 +30,8 @@ Bugs and feature requests can be submitted via [github issues](https://github.co
 * Presentation-mode to display live-status
 
 ### Screenshots
-![monitutor1](https://cloud.githubusercontent.com/assets/13717492/20059691/cef75b9a-a4f7-11e6-845f-e1a9635fe739.jpg)
-Student view. Lists all milestones and the corrosponding checks and their
-results.
+![milestone](https://user-images.githubusercontent.com/13717492/37915630-417302e6-311a-11e8-9d20-aebc1dcae667.png)
+Student view. Lists all milestones, the corrosponding checks and their results.
 
 ![monitutor2](https://cloud.githubusercontent.com/assets/13717492/20059704/da3e70f6-a4f7-11e6-9ef6-72b8c23dae25.jpg)
 Admin scenario overview. In the admin area the administrator can add and modify
@@ -69,6 +68,12 @@ client application that comes with the server script of the [monitutor tunnel
 application](https://github.com/its-lab/MoniTutor-Tunnel).
 
 Make sure, that all students execute the client application with valid parameters. Use `python start_client.py --help` to get a list of all parameters.
+
+Buttons on the upper right corner in the student webinterfaceinfe indicatee which systems are connected.
+
+![host_indicator](https://user-images.githubusercontent.com/13717492/37915958-ec7fc278-311a-11e8-8109-227e6ef34eb6.png)
+
+When hovering over the indicator icons, the names of the systems are shown.
 
 ## Administration
 
