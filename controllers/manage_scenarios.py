@@ -80,19 +80,16 @@ def edit_scenario():
 @auth.requires_membership('admin')
 def hide_scenario():
     """Sets the value of a given Scenarios hidden field to True"""
-    scenario_id = request.args(0, cast=int)
+    scenario_id = request.vars.scenarioId
     tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=True)
-    redirect(URL('manage_scenarios', 'view_scenarios'))
-    return dict(scenarioid=scenario_id)
-
+    return json.dumps({"scenarioId": scenario_id})
 
 @auth.requires_membership('admin')
 def show_scenario():
     """Sets the value of a given Scenarios hidden field to False"""
-    scenario_id = request.args(0, cast=int)
+    scenario_id = request.vars.scenarioId
     tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=False)
-    redirect(URL('manage_scenarios', 'view_scenarios'))
-    return dict(scenarioid=scenario_id)
+    return json.dumps({"scenarioId": scenario_id})
 
 
 @auth.requires_membership('admin')
