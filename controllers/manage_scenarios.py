@@ -621,7 +621,7 @@ def get_scenario():
         milestone["name"] = milestone_row.name
         milestone["uuid"] = milestone_row.uuid
         milestone["display_name"] = milestone_row.display_name
-        milestone["description"] = milestone_row.display_name
+        milestone["description"] = milestone_row.description
         check_refs = []
         check_ref_table = tutordb(tutordb.monitutor_check_milestone.milestone_id == milestone_ref_row.milestone_id).select()
         for check_ref_row in check_ref_table:
@@ -651,8 +651,12 @@ def get_scenario():
                 customvars = []
                 customvar_table = tutordb(tutordb.monitutor_customvar_system.system_id == system_row.system_id).select()
                 for customvar_row in customvar_table:
-                    customvar = {"name": customvar_row.name, "uuid": customvar_row.uuid, "display_name": customvar_row.display_name, 
-                                 "value": customvar_row.value}
+                    customvar = {
+                        "name": customvar_row.name,
+                        "uuid": customvar_row.uuid,
+                        "display_name": customvar_row.display_name,
+                        "value": customvar_row.value,
+                        }
                     customvars.append(customvar)
                 system["customvars"] = customvars
                 target["system"] = system
@@ -665,8 +669,11 @@ def get_scenario():
             program["display_name"] = program_row.display_name
             program["code"] = program_row.code
             interpreter_row = tutordb.monitutor_interpreters[program_row.interpreter_id]
-            program["interpreter"] = {"name": interpreter_row.name, "display_name": interpreter_row.display_name,
-                                      "path": interpreter_row.path}
+            program["interpreter"] = {
+                "name": interpreter_row.name,
+                "display_name": interpreter_row.display_name,
+                "path": interpreter_row.path
+                }
             check["program"] = program
             check_ref["check"] = check
             check_refs.append(check_ref)
@@ -678,8 +685,8 @@ def get_scenario():
 
 @auth.requires_membership("admin")
 def upload_scenario():
-    form2 = FORM( INPUT(_type="file", _name="scenariofile", 
-                        _form="form2", requires=IS_NOT_EMPTY(error_message='Select a .json file')), 
+    form2 = FORM( INPUT(_type="file", _name="scenariofile",
+                        _form="form2", requires=IS_NOT_EMPTY(error_message='Select a .json file')),
                   INPUT(_type="submit", _form="form2"), _id="form2")
     if form2.accepts(request, session):
         scenario = json.loads(form2.vars.scenariofile.value)
