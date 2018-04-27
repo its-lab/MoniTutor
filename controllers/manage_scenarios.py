@@ -694,6 +694,8 @@ def upload_scenario():
             existing_scenario.display_name = scenario["display_name"]
             existing_scenario.goal = scenario["goal"]
             existing_scenario.description = scenario["description"]
+            existing_scenario.initiated = False
+            existing_scenario.hidden = True
             existing_scenario.update_record()
             scenario_id = existing_scenario.scenario_id
         else:
@@ -701,9 +703,9 @@ def upload_scenario():
                                                       display_name=scenario["display_name"],
                                                       goal=scenario["goal"],
                                                       description=scenario["description"],
-                                                      uuid=scenario["uuid"])
-        tutordb.monitutor_scenarios[scenario_id].hidden = True
-        tutordb.monitutor_scenarios[scenario_id].initiated = False
+                                                      uuid=scenario["uuid"],
+                                                      initiated=False,
+                                                      hidden=True)
         for milestone_ref in scenario["milestone_refs"]:
             milestone = milestone_ref["milestone"]
             existing_milestone = tutordb(tutordb.monitutor_milestones.uuid == milestone["uuid"]).select()
