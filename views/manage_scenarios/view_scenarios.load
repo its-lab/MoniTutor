@@ -9,6 +9,9 @@
      $(".fa.fa-repeat").on("click", {}, onClickInit);
      $(".delete-scenario").on("click", {}, onClickDeleteScenario);
      $(".erase-scenario").on("click", {}, onClickErase);
+     $(".showScenarioButton").on("click", {}, showScenario);
+     $(".hideScenarioButton").on("click", {}, hideScenario);
+
 
      function onClickErase(event){
          var confirm = window.confirm("Are you sure you want to flush all userdata for this Scenario?");
@@ -98,6 +101,28 @@
                      });
          }, 300);
      }
+
+     function hideScenario( event ){
+       var scenarioId = String(this.id).slice(0,-5);
+       $.get("{{=URL("manage_scenarios", "hide_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                   location.reload();
+                  });
+     }
+
+     function showScenario( event ){
+       var scenarioId = String(this.id).slice(0,-5);
+       $.get("{{=URL("manage_scenarios", "show_scenario")}}",
+                    {
+                        scenarioId: scenarioId
+                    },
+                 function (data, status) {
+                   location.reload();
+                  });
+     }
  });
 </script>
     <table class="table">
@@ -126,13 +151,15 @@
                             fa-power-off" style="margin-left: 10px"></i>
                     {{else:}}
                         <i id="{{=scenario.scenario_id}}-init" class="fa fa-repeat" style="margin-left: 10px"></i>
-                            {{if scenario.hidden is True:}}
-                                <a href="{{=URL('manage_scenarios','show_scenario', args=scenario.scenario_id)}}">
-                                <i class="fa fa-eye" style="margin-left: 10px"></i></a>
-                            {{else:}}
-                                <a href="{{=URL('manage_scenarios','hide_scenario', args=scenario.scenario_id)}}">
-                                <i class="fa fa-eye-slash" style="margin-left: 10px"></i></a>
-                            {{pass}}
+                        {{if scenario.hidden is True:}}
+                        <a class="showScenarioButton" id="{{=scenario.scenario_id}}-show">
+                          <i class="fa fa-eye" style="margin-left: 10px"></i>
+                        </a>
+                        {{else:}}
+                        <a class="hideScenarioButton" id="{{=scenario.scenario_id}}-hide">
+                          <i class="fa fa-eye-slash" style="margin-left: 10px"></i>
+                        </a>
+                        {{pass}}
                     {{pass}}
                     <a href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}"
                         download="{{=scenario.name}}.json">
