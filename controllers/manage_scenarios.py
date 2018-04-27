@@ -22,6 +22,8 @@ def view_scenarios():
 
     scenarios = tutordb(tutordb.monitutor_scenarios).select()
     form = SQLFORM(tutordb.monitutor_scenarios)
+    form.vars.initiated = False
+    form.vars.hidden = True
     if form.accepts(request, session):
         session.flash = 'Record inserted.'
         redirect(URL())

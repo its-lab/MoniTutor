@@ -174,9 +174,35 @@
         {{pass}}
 </table>
 <br>
-
-<h3><div id="new" class="btn btn-default"><i class="fa fa-plus"></i> <b>Add Scenario</b></div> </h3>
-    <div id="new-hide" hidden="True" style="margin-top:10px">
-    {{=form}}
-<h3><a href="{{=URL("manage_scenarios","upload_scenario.html")}}" id="import"
-class="btn btn-default"><i class="fa fa-plus"></i> <b>Import Scenario</b></h3></a>
+<h3>
+  <div id="new" class="btn btn-default">
+    <i class="fa fa-plus"></i><b>Add Scenario</b>
+  </div>
+</h3>
+<div id="new-hide" hidden="True" style="margin-top:10px">
+  {{=form.custom.begin}}
+  <div class="input-group">
+    <span class="input-group-addon" style="width: 100px; text-align: left">Name</span>
+    <input class="form-control" type="text" name="name"></input>
+  </div>
+  <br>
+  <div class="input-group">
+    <span class="input-group-addon"style="width: 100px; text-align: left">Display Name</span>
+    <input class="form-control" type="text" name="display_name"></input>
+  </div>
+  <br>
+  <b>Description:</b>
+  <textarea class="form-control" type="text" name="description"></textarea>
+  <br>
+  <b>Goal</b>
+  <textarea class="form-control" type="text" name="goal"></textarea>
+  <br>
+  {{=form.custom.submit}}
+{{=form.custom.end}}
+<h3>
+  <a href="{{=URL("manage_scenarios","upload_scenario.html")}}" id="import"
+     class="btn btn-default">
+    <i class="fa fa-plus"></i>
+    <b>Import Scenario</b>
+  </a>
+</h3>
