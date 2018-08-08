@@ -61,7 +61,11 @@ class ResultDatabase():
         elif check_name is None:
             check_results = check_results_view(startkey=[username], endkey=[username,{}])
         else:
-            check_results = check_results_view(keys=[[username, check_name]])
+            if isinstance(check_name, list):
+                keys = map(lambda x: [username, x], check_name)
+            else:
+                keys = [[username, check_name]]
+            check_results = check_results_view(keys=keys)
         return check_results["rows"]
 
 resultdb = ResultDatabase(COUCHDB_HOST, COUCHDB_DATABASE, COUCHDB_USERNAME, COUCHDB_PASSWORD)

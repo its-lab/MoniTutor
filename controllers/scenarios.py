@@ -459,38 +459,45 @@ def progress():
 
 @auth.requires_login()
 def get_host_status():
-    """Queries Icinga-DB for the status of a given host"""
+    """Get current status of a given host"""
     hostname = request.vars.hostName
-    host  = db((db.icinga_hoststatus.host_object_id == db.icinga_objects.id) &
-               (db.icinga_objects.name1 == hostname)) \
-               .select(db.icinga_hoststatus.output, db.icinga_hoststatus.current_state) \
-               .first()
-    return json.dumps(dict(output=host.output, state=host.current_state, hostName=hostname))
+    username = request.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    host = resultdb.host_status(username=username, hostname=hostname)
+    if host:
+        hoststate = host[0]["value"]["severity"]
+        output = host[0]["value"]["output"]
+    else:
+        hoststate = 3
+        output = "Unknown"
+    return json.dumps(dict(output=output, state=hoststate, hostName=username+"_"+hostname))
 
 @auth.requires_login()
 def get_service_status():
-    """Queries Icinga-DB for the status of a given service"""
-    servicename = request.vars.checkName
-    service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
-                 (db.icinga_objects.name2 == servicename)) \
-                 .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
-                 .first()
-    return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
+    """Get status of a given service"""
+    check_name = request.vars.checkName
+    username = requset.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    check_result = resultdb.check_results(username=username, check_name=check_name)
+    if check_result:
+        checkstate = check_result[0]["value"]["severity"]
+        output = check_result[0]["value"]["output"]
+    else:
+        checkstate = 3
+        output = "Unknown"
+    return json.dumps(dict(output=output, state=checkstate, checkName=check_name))
 
 @auth.requires_login()
 def get_services_status():
-    """Queries Icinga-DB for the status of a given service"""
-    servicenames = json.loads(request.vars.checkNames)
+    checknames = json.loads(request.vars.checkNames)
     username = request.vars.userName
-    if not auth.has_membership("admin") or username is None:
+    if not auth.has_membership("admin"):
         username = session.auth.user.username
     status = list()
-    for servicename in servicenames:
-        service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
-                (db.icinga_objects.name2 == username+"_"+servicename)) \
-                     .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
-                     .first()
-        status.append(dict(output=service.output, state=service.current_state, checkName=servicename))
+    for row in resultdb.check_results(username=username, check_name=checknames):
+        status.append(dict(output=row["value"]["output"], state=row["value"]["severity"], checkName=row["key"][1]))
     return json.dumps(status)
 
 @auth.requires_login()

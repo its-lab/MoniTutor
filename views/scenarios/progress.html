@@ -104,23 +104,23 @@ $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().ani
                    });
 
 function getHostStatus(hostName){
-  hostName = "{{=scenario_info["username"]}}_"+hostName
-  $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName},
+  userName = "{{=scenario_info["username"]}}"
+  $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName, userName: userName},
     function(data){
       var hostState = JSON.parse(data);
       updateHostStatus(hostState.hostName, hostState.state, hostState.output);
     });
 }
 function getCheckStatus(checkName){
-  checkName = "{{=scenario_info["username"]}}_"+checkName
-  $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName},
+  userName = "{{=scenario_info["username"]}}"
+  $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName, userName: userName},
     function(data){
       var checkState = JSON.parse(data);
-      updateCheckStatus(checkState.checkName.slice("{{=scenario_info["username"]}}_".length), checkState.state, checkState.output);
+      updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
     });
 }
 function getAllCheckStatus(checkNames){
-    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), username: "{{=scenario_info["username"]}}"},
+    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), userName: "{{=scenario_info["username"]}}"},
     function(data){
       var checkStates = JSON.parse(data);
       checkStates.forEach(function(checkState){
