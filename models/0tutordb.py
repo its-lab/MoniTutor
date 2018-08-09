@@ -132,18 +132,6 @@ tutordb.define_table('scenario_user',
     Field('user_id', 'reference auth_user', required=True),
     Field('passed', type="boolean", required=False, default=False))
 
-tutordb.define_table('monitutor_check_tasks',
-    Field('check_tasks_id', type="id"),
-    Field('interpreter_path', type="string"),
-    Field('username', type="string"),
-    Field('hostname', type="string"),
-    Field('prio', type="integer"),
-    Field('status', type="string"),
-    Field('timestamp', type="datetime"),
-    Field('check_name', type="string"),
-    Field('parameters', type="string"),
-    Field('program_name', type="string"))
-
 tutordb.define_table('monitutor_customvars',
     Field('customvar_id', type="id", required=True),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
