@@ -30,40 +30,6 @@ def view_scenarios():
                 orphan_check_count=orphan_check_count,
                 orphan_checks=orphan_checks)
 
-
-@auth.requires_membership('admin')
-def init_scenario():
-    scenario_id = request.vars.scenarioId
-    task_id = initializer.queue_task('init_scenario', group_name="init", pargs=[scenario_id])
-    return json.dumps({"taskId": task_id.id, "progress": 20})
-
-
-@auth.requires_membership('admin')
-def update_task_status():
-    """Queries tutordb for task status. When finished, it returns the status of the corresponding service"""
-    task_id = request.vars.taskId
-    task_info = initializer.task_status(int(task_id), output=True)
-    if task_info is not None:
-        status = task_info.scheduler_task.status
-        error = None
-    else:
-        status = "UNKNOWN TaskID: " + task_id
-        error  = "Couldn't find task"
-    if status == "QUEUED":
-        progress = 40
-    elif status == "ASSIGNED":
-        progress = 60
-    elif status == "RUNNING":
-        progress = 80
-    elif status == "COMPLETED":
-        progress = 100
-    else:
-        progress = 0
-        error = "STATUS: " + status
-
-    return json.dumps({"progress": progress, "error": error})
-
-
 @auth.requires_membership('admin')
 def edit_scenario():
     """Displays a form to edit a given scenario"""
@@ -576,18 +542,6 @@ def delete_scenario():
     return json.dumps(dict(scenario_id=scenario_id))
 
 @auth.requires_membership("admin")
-def erase_scenario():
-    scenario_id = request.vars.scenarioId
-    for user in tutordb(tutordb.auth_user).select():
-        initializer.queue_task('drop_user_scenario', group_name="init", pargs=[user.username, scenario_id])
-        tutordb.scenario_user.update_or_insert((tutordb.scenario_user.scenario_id == scenario_id) &
-                                           (tutordb.scenario_user.user_id == user.id),
-                                            scenario_id=scenario_id,
-                                            user_id=user.id,
-                                            status="")
-    return json.dumps(dict(scenario_id=scenario_id))
-
-@auth.requires_membership("admin")
 def get_scenario():
     """Returns a json dict that exports a given scenario"""
     if len(request.args):
@@ -603,7 +557,6 @@ def get_scenario():
     scenario["description"] = scenario_table.description
     scenario["goal"] = scenario_table.goal
     scenario["hidden"] = True
-    scenario["initiated"] = False
     milestone_refs = []
     milestone_ref_table = tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).select()
     for milestone_ref_row in milestone_ref_table:
@@ -692,7 +645,6 @@ def upload_scenario():
             existing_scenario.display_name = scenario["display_name"]
             existing_scenario.goal = scenario["goal"]
             existing_scenario.description = scenario["description"]
-            existing_scenario.initiated = False
             existing_scenario.hidden = True
             existing_scenario.update_record()
             scenario_id = existing_scenario.scenario_id
@@ -702,7 +654,6 @@ def upload_scenario():
                                                       goal=scenario["goal"],
                                                       description=scenario["description"],
                                                       uuid=scenario["uuid"],
-                                                      initiated=False,
                                                       hidden=True)
         for milestone_ref in scenario["milestone_refs"]:
             milestone = milestone_ref["milestone"]
