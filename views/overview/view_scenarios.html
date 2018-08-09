@@ -17,20 +17,22 @@
                             Scenario name
                         </td>
                         <td>
-                            Active users
+                            Active students
                         </td>
                     </tr>
                 {{counter = 1}}
                 {{for scenario in scenarios:}}
-                    {{if scenario.monitutor_scenarios.hidden == False:}}
+                    {{if scenario.hidden == False:}}
                     <tr>
                         <td>{{=counter}}.</td>
                         <td>
-                            <a href="{{=URL('overview', 'view_progress', args=[scenario.monitutor_scenarios.scenario_id])}}">
-                                {{=scenario.monitutor_scenarios.display_name}}
+                            <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
+                                {{=scenario.display_name}}
                             </a>
                         </td>
-                        <td>{{=scenario._extra['count("monitutor_scenarios"."scenario_id")']}}</td>
+                        <td>
+                          {{=active_students[scenario.name]}}
+                        </td>
                     </tr>
                     {{counter += 1}}
                     {{pass}}
@@ -52,20 +54,22 @@
                         Scenario name
                     </td>
                     <td>
-                        Active users
+                        Active students
                     </td>
                 </tr>
                 {{counter = 1}}
                 {{for scenario in scenarios:}}
-                    {{if scenario.monitutor_scenarios.hidden == True:}}
+                    {{if scenario.hidden == True:}}
                     <tr>
                         <td>{{=counter}}.</td>
                         <td>
-                            <a href="{{=URL('overview', 'view_progress', args=[scenario.monitutor_scenarios.scenario_id])}}">
-                                {{=scenario.monitutor_scenarios.display_name}}
+                            <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
+                                {{=scenario.display_name}}
                             </a>
                         </td>
-                        <td>{{=scenario._extra['count("monitutor_scenarios"."scenario_id")']}}</td>
+                        <td>
+                          {{=active_students[scenario.name]}}
+                        </td>
                     </tr>
                     {{counter += 1}}
                     {{pass}}

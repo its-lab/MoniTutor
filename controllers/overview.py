@@ -1,27 +1,15 @@
 @auth.requires_login()
 def view_scenarios():
-    """Display available scenarios and the number of active students for each of them"""
+    """Display available scenarios"""
     count = tutordb.monitutor_scenarios.scenario_id.count()
     if auth.has_membership("admin"):
-        scenarios = tutordb(
-                            (tutordb.monitutor_scenarios.initiated == True) &
-                            (tutordb.monitutor_scenarios.scenario_id == tutordb.scenario_user.scenario_id) &
-                            (tutordb.scenario_user.status == "initiated")
-                            ).select(tutordb.monitutor_scenarios.ALL,
-                                     count,
-                                     groupby=tutordb.monitutor_scenarios.scenario_id)
+        scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
     else:
-        scenarios = tutordb(
-                            (tutordb.monitutor_scenarios.initiated == True) &
-                            (tutordb.monitutor_scenarios.hidden == False) &
-                            (tutordb.monitutor_scenarios.scenario_id == tutordb.scenario_user.scenario_id) &
-                            (tutordb.scenario_user.status == "initiated")
-                            ).select(tutordb.monitutor_scenarios.ALL,
-                                     count,
-                                     groupby=tutordb.monitutor_scenarios.scenario_id)
-
-    return dict(scenarios=scenarios)
-
+        scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
+    active_students = dict()
+    for scenario in scenarios:
+        active_students[scenario.name] = len(resultdb.active_students(scenario.name))
+    return dict(scenarios=scenarios, active_students=active_students)
 
 @auth.requires_login()
 def view_progress():
