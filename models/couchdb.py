@@ -44,6 +44,14 @@ class ResultDatabase():
         result_ddoc = self._get_ddoc()
         return result_ddoc.get_view("severity")
 
+    def _get_scenario_severity(self):
+        result_ddoc = self._get_ddoc()
+        return result_ddoc.get_view("scenario_severity")
+
+    def _get_successful_checks(self):
+        result_ddoc = self._get_ddoc()
+        return result_ddoc.get_view("successful_checks")
+
     def host_status(self, username=None, hostname=None):
         host_status_view = self._get_host_status()
         if username is None and hostname is None:
@@ -67,5 +75,21 @@ class ResultDatabase():
                 keys = [[username, check_name]]
             check_results = check_results_view(keys=keys)
         return check_results["rows"]
+
+    def active_students(self, scenario_name):
+        successful_checks_view = self._get_successful_checks()
+        students = map(lambda x: x["key"][1],
+                       successful_checks_view(startkey=[scenario_name],
+                                              endkey=[scenario_name,{}],
+                                              group_level=2,
+                                              reduce=True)["rows"])
+        return students
+
+    def successful_checks_count(self, scenario_name, username):
+        successful_checks_view = self._get_successful_checks()
+        return len(successful_checks_view(startkey=[scenario_name, username],
+                                          endkey=[scenario_name, username, {}],
+                                          group_level=3,
+                                          reduce=True)["rows"])
 
 resultdb = ResultDatabase(COUCHDB_HOST, COUCHDB_DATABASE, COUCHDB_USERNAME, COUCHDB_PASSWORD)
