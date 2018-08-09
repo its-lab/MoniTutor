@@ -449,6 +449,7 @@ def progress():
     scenario_info = {"description": scenario.description,
                      "display_name": scenario.display_name,
                      "scenario_id": scenario_id,
+                     "scenario_name": scenario.name,
                      "goal": scenario.goal,
                      "milestones": milestones,
                      "checks": checks,
@@ -470,7 +471,7 @@ def get_host_status():
         output = host[0]["value"]["output"]
     else:
         hoststate = 3
-        output = "Unknown"
+        output = "Disconnected"
     return json.dumps(dict(output=output, state=hoststate, hostName=username+"_"+hostname))
 
 @auth.requires_login()
@@ -504,6 +505,7 @@ def get_services_status():
 def put_check():
     check_name = request.vars.taskName
     username = request.vars.userName
+    scenario_name = request.vars.scenarioName
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
     check_host_program = tutordb((tutordb.monitutor_checks.name == check_name) &
@@ -527,7 +529,8 @@ def put_check():
               "params": __substitute_vars(check.params,
                                           check.check_id,
                                           username),
-              "interpreter_path": check_host_program.monitutor_interpreters.path}
+              "interpreter_path": check_host_program.monitutor_interpreters.path,
+              "scenario_name": scenario_name}
     topic = username+"."+check_host_program.monitutor_systems.name
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")

@@ -212,7 +212,8 @@ function connectToRabbit(){
 function newTask(taskName){
   $.get("{{=URL('scenarios', 'put_check')}}", {
     taskName: taskName,
-    userName: "{{=scenario_info["username"]}}"
+    userName: "{{=scenario_info["username"]}}",
+    scenarioName: "{{=scenario_info["scenario_name"]}}"
   }, function(data){
   });
 }
