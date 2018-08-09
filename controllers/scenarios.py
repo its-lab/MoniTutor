@@ -11,9 +11,10 @@ def view_available_scenarios():
         user_id = request.args(0, cast=str)
     else:
         user_id = auth.user_id
-
-    scenarios = tutordb((tutordb.monitutor_scenarios.hidden == False) &
-                        (tutordb.monitutor_scenarios.initiated == True)).select()
+    if auth.has_membership("admin"):
+        scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
+    else:
+        scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
     return dict(scenarios=scenarios, user_id=user_id)
 
 
