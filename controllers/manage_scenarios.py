@@ -3,7 +3,6 @@ import json
 @auth.requires_membership('admin')
 def view_scenarios():
     """Displays all Scenarios and global scenario information"""
-
     orphan_milestones = tutordb((tutordb.monitutor_milestone_scenario.milestone_id == None)).select(
         tutordb.monitutor_milestone_scenario.ALL,
         tutordb.monitutor_milestones.ALL,
@@ -12,17 +11,14 @@ def view_scenarios():
 
         )
     orphan_milestone_count = len(orphan_milestones)
-
     orphan_checks = tutordb(tutordb.monitutor_check_milestone.check_id == None).select(
         tutordb.monitutor_check_milestone.ALL, tutordb.monitutor_checks.ALL,
         left=tutordb.monitutor_check_milestone.on(tutordb.monitutor_check_milestone.check_id ==
                                              tutordb.monitutor_checks.check_id)
         )
     orphan_check_count = len(orphan_checks)
-
     scenarios = tutordb(tutordb.monitutor_scenarios).select()
     form = SQLFORM(tutordb.monitutor_scenarios)
-    form.vars.initiated = False
     form.vars.hidden = True
     if form.accepts(request, session):
         session.flash = 'Record inserted.'

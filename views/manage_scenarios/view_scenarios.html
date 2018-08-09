@@ -9,32 +9,9 @@
      $("#orphan-milestones").on("click",{}, onClickShow);
      $("#orphan-checks").on("click",{}, onClickShow);
      $(".btn").on("click", {}, onClickShow);
-     $(".fa.fa-power-off").on("click", {}, onClickInit);
-     $(".fa.fa-repeat").on("click", {}, onClickInit);
      $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
      $(".delete-check").on("click", {}, onClickDeleteCheck);
      $(".delete-scenario").on("click", {}, onClickDeleteScenario);
-     $(".erase-scenario").on("click", {}, onClickErase);
-
-     function onClickErase(event){
-         var confirm = window.confirm("Are you sure you want to flush all userdata for this Scenario?");
-         if (!confirm) {
-             return;
-         }
-        var scenarioId = String(this.id).slice(0,-9);
-        $(this).off("click");
-        $.get("{{=URL("manage_scenarios", "erase_scenario")}}",
-                {
-                    scenarioId: scenarioId
-                },
-             function (data, status) {
-                 if (status == "success") {
-                     var file = JSON.parse(data);
-                     $(this).on("click", {}, onClickErase);
-                    }
-                });
-     }
-
 
      function onClickDeleteScenario( event ) {
          var confirm = window.confirm("Are you sure you want to delete the Scenario?");
@@ -56,53 +33,6 @@
      function onClickShow( event ){
          var elment = "#"+String(this.id) + "-hide";
          $(elment).toggle("medium", function(){});
-     }
-
-     function onClickInit( event ){
-         var scenarioId = String(this.id);
-         $(this).off("click", function(){});
-         scenarioId = scenarioId.slice(0,-5); // slices "-init" off.
-         var progressdiv = document.createElement("div");
-         $(progressdiv).addClass("progress");
-         $(progressdiv).css("margin-top", "10px");
-         $(progressdiv).css("margin-bottom", "10px");
-         var progressbar = document.createElement("div");
-         $(progressdiv).append(progressbar);
-         $(progressbar).addClass("progress-bar").addClass("progress-bar-striped").addClass("active");
-         $(progressbar).role = "progressbar";
-         $(progressbar).css("width", "3%");
-         $("#top").append(progressdiv);
-
-         $.get("{{=URL("manage_scenarios", "init_scenario")}}",
-                    {
-                        scenarioId: scenarioId
-                    },
-                 function (data, status) {
-                        var info = JSON.parse(data);
-                        var progress = String(info.progress) + "%";
-                        var taskId = info.taskId;
-                        window.setTimeout(function () {
-                            updateProgress(taskId, scenarioId, progressbar, progress)
-                        }, 300);
-                    });
-     }
-
-     function updateProgress(taskId, scenarioId, progressbar, progress){
-         $(progressbar).css("width", progress);
-         if(progress == "100%"){
-             location.reload();
-         }
-         window.setTimeout(function() {
-             $.get("{{=URL("manage_scenarios", "update_task_status")}}",
-                     {
-                         taskId: taskId
-                     },
-                     function (data, status) {
-                         var info = JSON.parse(data);
-                         progress = String(info.progress) + "%";
-                         updateProgress(taskId, scenarioId, progressbar, progress);
-                     });
-         }, 300);
      }
 
      function onClickDeleteMilestone(event){
