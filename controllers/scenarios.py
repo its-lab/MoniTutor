@@ -15,7 +15,15 @@ def view_available_scenarios():
         scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
     else:
         scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
-    return dict(scenarios=scenarios, user_id=user_id)
+    passed = dict()
+    for scenario in scenarios:
+        passed_rows = tutordb((tutordb.scenario_user.scenario_id==scenario.scenario_id)
+                               &(user_id == tutordb.scenario_user.user_id)).select()
+        if passed_rows:
+            passed[scenario.name] = passed_rows[0].passed
+        else:
+            passed[scenario.name] = False
+    return dict(scenarios=scenarios, user_id=user_id, passed=passed)
 
 
 @auth.requires_login()

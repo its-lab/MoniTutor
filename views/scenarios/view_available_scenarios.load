@@ -27,7 +27,11 @@ $(document).ready(function() {
       {{if auth.has_membership("admin"):}}
       <button id="{{=scenario.scenario_id}}-toggle" class="toggle" href="#"><i class="fa fa-check"></i></button>
       {{pass}}
+      {{if passed[scenario.name]:}}
+      <i id="{{=scenario.scenario_id}}-star" class="fa fa-star"></i>
+      {{else:}}
       <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
+      {{pass}}
       {{=scenario.display_name}}
     </div>
     <div class="panel-body"> {{=scenario.description}} <br><br>
