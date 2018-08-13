@@ -32,5 +32,10 @@ def view_progress():
     check_amount = len(checks)
     student_progress = dict()
     for student in active_students:
-        student_progress[student] = resultdb.successful_checks_count(scenario.name, student)
+        student_progress[student] = {"successful_check_amount": resultdb.successful_checks_count(scenario.name, student)}
+    passed_students = tutordb((tutordb.scenario_user.user_id == tutordb.auth_user.id)
+                               &(tutordb.scenario_user.passed == True)).select()
+    for student in passed_students:
+        student_progress[student.auth_user.username]["passed"] = True
+
     return dict(student_progress=student_progress, check_amount=check_amount, scenario_id=scenario_id)

@@ -115,7 +115,10 @@ def edit_systems():
 
 @auth.requires_membership("admin")
 def toggle_scenario_done():
+    username = request.vars.username
     user_id = request.vars.userId
+    if user_id is None and username is not None:
+        user_id = tutordb(tutordb.auth_user.username == username).select().first().id
     scenario_id = request.vars.scenarioId
     scenario_user = tutordb((tutordb.scenario_user.user_id == user_id) &
                             (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
