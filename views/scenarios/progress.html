@@ -174,7 +174,9 @@ function updateHostStatus(hostName, state, output){
 }
 
 function connectToRabbit(){
-  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
+  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {
+    username: "{{=scenario_info["username"]}}"
+  },
     function(data){
       var credentials = JSON.parse(data);
       var webSocket = new WebSocket('wss://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');

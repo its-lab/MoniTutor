@@ -152,8 +152,6 @@ def progress():
         scenario_id = None
     if len(request.args) > 1:
         username = request.args(1, cast=str)
-    else:
-        username = None
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
     rabbit_mq_address = app_conf.take("monitutor_env.rabbit_mq_external_address")
@@ -355,6 +353,10 @@ def __generate_random_string(length):
 
 @auth.requires_login()
 def create_rabbit_user():
+    username = request.vars.username
+    if username is None or not auth.has_membership("admin"):
+        username = session.auth.user.username
+    scenario_name = request.vars.scenarioName
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_management_port = app_conf.take("monitutor_env.rabbit_mq_management_port")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
@@ -384,7 +386,7 @@ def create_rabbit_user():
                     "x-expires": 120000 # 2 min
                     }
                   }
-    queue_name =  session.auth.user.username+"-"+__generate_random_string(6)
+    queue_name =  username+"-"+__generate_random_string(6)
     request_url = rabbit_mq_url + \
                  '/queues/%2F/' + \
                  queue_name
@@ -395,7 +397,7 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR creating queue"})
 
-    data = {"routing_key": session.auth.user.username+".*"}
+    data = {"routing_key": username+".*"}
     request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+queue_name
     answer = requests.post(request_url,
                  headers=headers,
