@@ -8,6 +8,7 @@
      $(".fa.fa-edit").on("click", {}, onClickShow);
      $("#orphan-milestones").on("click",{}, onClickShow);
      $("#orphan-checks").on("click",{}, onClickShow);
+     $("#without-source").on("click",{}, onClickShow);
      $(".btn").on("click", {}, onClickShow);
      $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
      $(".delete-check").on("click", {}, onClickDeleteCheck);
@@ -79,27 +80,38 @@
                 <p><i class="fa fa-tachometer"></i> Defined scenarios: {{=len(scenarios)}}</p>
                 <p><i class="fa fa-users"></i> Registered users: {{=len(tutordb(tutordb.auth_user).select())}}</p>
                 <div id="orphan-checks">
-                    <p>
-                        <i class="fa
-                            {{if orphan_check_count:}}
-                                fa-bolt" style="color: red"
-                            {{else:}}
-                                fa-leaf" style="color: green"
-                            {{pass}}
-                            >
-                        </i> Orphan checks:  {{=orphan_check_count}}</p>
+                  <p>
+                  {{if orphan_check_count:}}
+                    <i class="fa fa-bolt" style="color: red"></i>
+                  {{else:}}
+                    <i class="fa fa-leaf" style="color: green"></i>
+                  {{pass}}
+                  Orphan checks: {{=orphan_check_count}}
+                  </p>
                 </div>
             </div>
             <div class="col-sm-6">
-                <p><i class="fa fa-tachometer"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
-                <div id="orphan-milestones">
-                    <p><i class="fa
-                    {{if orphan_milestone_count:}}
-                        fa-bolt" style="color: red"
-                    {{else:}}
-                        fa-leaf" style="color: green"
-                    {{pass}}
-                ></i> Orphan Milestones: {{=orphan_milestone_count}}</p></div>
+              <p><i class="fa fa-eye"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
+              <div id="orphan-milestones">
+                <p>
+                {{if orphan_milestone_count:}}
+                  <i class="fa fa-bolt" style="color: red"></i>
+                {{else:}}
+                  <i class="fa fa-leaf" style="color: green"></i>
+                {{pass}}
+                Orphan Milestones: {{=orphan_milestone_count}}
+                </p>
+              </div>
+              <div id="without-source">
+                <p>
+                {{if without_source_count:}}
+                  <i class="fa fa-bolt" style="color: red"></i>
+                {{else:}}
+                  <i class="fa fa-leaf" style="color: green"></i>
+                {{pass}}
+                Checks without source: {{=without_source_count}}
+                </p>
+              </div>
             </div>
         </div>
     </div>
@@ -160,7 +172,26 @@
         </div>
     </div>
     {{pass}}
-
+    {{if without_source_count:}}
+    <div id="without-source-hide" class="jumbotron" hidden="False">
+        <h2>Checks without source</h2><br>
+        <div class="row">
+            {{for check in without_source:}}
+                <div id="{{=check.monitutor_targets.target_id}}-col" class="col-sm-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <a href="{{=URL("manage_scenarios", "edit_check", args=[check.monitutor_checks.check_id,
+                                                                                  check.monitutor_milestone_scenario.scenario_id,
+                                                                                  check.monitutor_milestones.milestone_id])}}">
+                            {{=check.monitutor_checks.display_name}}</a>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            {{pass}}
+        </div>
+    </div>
+    {{pass}}
 </div>
             {{=LOAD('manage_scenarios','view_scenarios.load', ajax=True)}}
 

@@ -17,6 +17,18 @@ def view_scenarios():
                                              tutordb.monitutor_checks.check_id)
         )
     orphan_check_count = len(orphan_checks)
+    without_source = tutordb((tutordb.monitutor_targets.type_id == None) &
+                             (tutordb.monitutor_checks.check_id == tutordb.monitutor_check_milestone.check_id) &
+                             (tutordb.monitutor_check_milestone.milestone_id == tutordb.monitutor_milestones.milestone_id) &
+                             (tutordb.monitutor_milestones.milestone_id == tutordb.monitutor_milestone_scenario.milestone_id)
+            ).select(
+            tutordb.monitutor_targets.ALL,
+            tutordb.monitutor_checks.ALL,
+            tutordb.monitutor_milestones.milestone_id,
+            tutordb.monitutor_milestone_scenario.scenario_id,
+            left=tutordb.monitutor_targets.on(tutordb.monitutor_checks.check_id ==
+                                              tutordb.monitutor_targets.check_id))
+    without_source_count = len(without_source)
     scenarios = tutordb(tutordb.monitutor_scenarios).select()
     form = SQLFORM(tutordb.monitutor_scenarios)
     form.vars.hidden = True
@@ -28,7 +40,9 @@ def view_scenarios():
                 orphan_milestones=orphan_milestones,
                 orphan_milestone_count=orphan_milestone_count,
                 orphan_check_count=orphan_check_count,
-                orphan_checks=orphan_checks)
+                orphan_checks=orphan_checks,
+                without_source=without_source,
+                without_source_count=without_source_count)
 
 @auth.requires_membership('admin')
 def edit_scenario():
