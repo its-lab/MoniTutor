@@ -259,10 +259,10 @@ function pollResults(queueName){
 }
 
 function processResult(result){
-      if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
+      if (result.type == "HOST_RESULT"){
         updateHostStatus(result.hostname, result.severity_code, result.output )
       }
-      if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
+      if (result.type == "CHECK_RESULT"){
         updateCheckStatus(result.name, result.severity_code, result.output )
       }
 }
