@@ -249,6 +249,14 @@ def get_services_status():
     return json.dumps(status)
 
 @auth.requires_login()
+def get_successful_checks():
+    scenario_name = request.vars.scenarioName
+    username = request.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    return json.dumps(resultdb.successful_checks(scenario_name, username))
+
+@auth.requires_login()
 def put_check():
     check_name = request.vars.taskName
     username = request.vars.userName

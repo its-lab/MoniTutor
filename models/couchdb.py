@@ -86,10 +86,16 @@ class ResultDatabase():
         return students
 
     def successful_checks_count(self, scenario_name, username):
+        return len(self.successful_checks(scenario_name, username))
+
+    def successful_checks(self, scenario_name, username):
         successful_checks_view = self._get_successful_checks()
-        return len(successful_checks_view(startkey=[scenario_name, username],
-                                          endkey=[scenario_name, username, {}],
-                                          group_level=3,
-                                          reduce=True)["rows"])
+        successful_checks_rows = successful_checks_view(startkey=[scenario_name, username],
+                                      endkey=[scenario_name, username, {}],
+                                      group_level=3,
+                                      reduce=True)["rows"]
+        return map(lambda x: x["key"][2], successful_checks_rows)
+
+
 
 resultdb = ResultDatabase(COUCHDB_HOST, COUCHDB_DATABASE, COUCHDB_USERNAME, COUCHDB_PASSWORD)

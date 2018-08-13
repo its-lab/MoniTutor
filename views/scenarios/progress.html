@@ -53,9 +53,12 @@
     <ul class="list-group">
       {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
       <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.monitutor_checks.name}}">
+      <div style="position: absolute; left: -25px; z-index: 99;">
+            <i class="history-status-icon fa fa-lg fa-check-circle" style="display: none; color: green" data-toggle="tooltip" data-placement="top" data-delay=1000 title="Check was successful in the past"></i>
+      </div>
         <div class="row">
           <div class="col-md-9">
-            <i class="fa fa-lg fa-question-circle"></i>
+            <i class="current-status-icon fa fa-lg fa-question-circle "></i>
             <span class="check-display-name" style="margin-left: 10px; margin-right: 10px">{{=check.monitutor_checks.display_name}}</span>-
             <span class="check-output"></span>
           </div>
@@ -93,7 +96,8 @@ $(".refresh-check").on("click", function(){
 })
 
 $(function () {
-    $('[data-toggle="popover"]').popover()
+    $('[data-toggle="popover"]').popover();
+    $('[data-toggle="tooltip"]').tooltip();
 })
 $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().animate()})
                  .mouseleave(
@@ -111,6 +115,7 @@ function getHostStatus(hostName){
       updateHostStatus(hostState.hostName, hostState.state, hostState.output);
     });
 }
+
 function getCheckStatus(checkName){
   userName = "{{=scenario_info["username"]}}"
   $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName, userName: userName},
@@ -119,6 +124,19 @@ function getCheckStatus(checkName){
       updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
     });
 }
+
+function get_successful_checks(){
+  userName = "{{=scenario_info["username"]}}"
+  scenarioName = "{{=scenario_info["scenario_name"]}}"
+  $.get("{{=URL('scenarios', 'get_successful_checks')}}", {scenarioName: scenarioName, userName: userName},
+    function(data){
+      var successfulChecks = JSON.parse(data);
+      successfulChecks.forEach(function(successfulCheck){
+        updateCheckHistoryStatus(successfulCheck);
+      });
+    });
+}
+
 function getAllCheckStatus(checkNames){
     $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), userName: "{{=scenario_info["username"]}}"},
     function(data){
@@ -133,20 +151,21 @@ function updateCheckStatus(checkName, state, output){
   var selector = "#list-group-item-"+checkName;
   switch(state){
     case 0:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-check-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-check-circle fa-lg");
+      $(selector).find(".history-status-icon").show();
       $(selector).removeClass().addClass("list-group-item list-group-item-success");
       $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
       break;
     case 1:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-exclamation-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-warning");
       break;
     case 2:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-exclamation-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-danger");
       break;
     default:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-question-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-question-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-info");
   }
   $(selector).find(".check-output").text(output);
@@ -155,6 +174,11 @@ function updateCheckStatus(checkName, state, output){
       .attr("disabled", false)
       .find(".fa")
         .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
+}
+
+function updateCheckHistoryStatus(checkName){
+  var selector = "#list-group-item-"+checkName;
+      $(selector).find(".history-status-icon").show();
 }
 
 function updateHostStatus(hostName, state, output){
@@ -253,8 +277,10 @@ $(document).ready(function(){
   allCheckNames.push("{{=check.monitutor_checks.name}}");
   {{pass}}
   {{pass}}
-  getAllCheckStatus(allCheckNames)
+  getAllCheckStatus(allCheckNames);
+  get_successful_checks();
   $("#loadingState").text("Establishing websocket connection...")
+  $(".panel.milestone").show();
   connectToRabbit();
 });
 
