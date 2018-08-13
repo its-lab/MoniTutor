@@ -91,7 +91,6 @@
                 </div>
             </div>
             <div class="col-sm-6">
-                <p><i class="fa fa-tachometer"></i> Initiated scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.initiated == True).select())}}</p>
                 <p><i class="fa fa-tachometer"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
                 <div id="orphan-milestones">
                     <p><i class="fa
