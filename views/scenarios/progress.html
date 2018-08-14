@@ -69,7 +69,7 @@
       {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
       <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.monitutor_checks.name}}">
       <div style="position: absolute; left: -25px; z-index: 99;">
-            <i class="history-status-icon fa fa-lg fa-check-circle" style="display: none; color: green" data-toggle="tooltip" data-placement="top" data-delay=1000 title="Check was successful in the past"></i>
+            <i class="history-status-icon fa fa-lg fa-check-circle" style="display: none; color: green" data-toggle="tooltip" data-delay=1000></i>
       </div>
         <div class="row">
           <div class="col-md-9">
@@ -167,6 +167,7 @@ function updateCheckStatus(checkName, state, output){
   switch(state){
     case 0:
       $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-check-circle fa-lg");
+      $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date()));
       $(selector).find(".history-status-icon").show();
       $(selector).removeClass().addClass("list-group-item list-group-item-success");
       $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
@@ -191,9 +192,12 @@ function updateCheckStatus(checkName, state, output){
         .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
 }
 
-function updateCheckHistoryStatus(checkName){
-  var selector = "#list-group-item-"+checkName;
-      $(selector).find(".history-status-icon").show();
+function updateCheckHistoryStatus(check){
+  var checkName = 0;
+  var checkTime = 1;
+  var selector = "#list-group-item-"+check[checkName];
+  $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date(check[checkTime])));
+  $(selector).find(".history-status-icon").show();
 }
 
 function updateHostStatus(hostName, state, output){

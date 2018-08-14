@@ -94,7 +94,7 @@ class ResultDatabase():
                                       endkey=[scenario_name, username, {}],
                                       group_level=3,
                                       reduce=True)["rows"]
-        return map(lambda x: x["key"][2], successful_checks_rows)
+        return map(lambda x: [x["key"][2], x["value"]], successful_checks_rows)
 
 
 
