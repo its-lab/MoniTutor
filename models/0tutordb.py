@@ -13,8 +13,7 @@ auth = Auth(tutordb)
 
 auth.settings.extra_fields['auth_user']= [
         Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16]),
-        Field('image', type='upload', uploadfield='image_data'),
-        Field('image_data', type='blob')
+        Field('image', type='upload')
         ]
 
 auth.define_tables(username=True)
@@ -34,8 +33,7 @@ tutordb.define_table('monitutor_scenarios',
 
 tutordb.define_table('monitutor_data',
     Field('data_id', type='id'),
-    Field('data', type='upload', required=True, uploadfield='data_data'),
-    Field('data_data', type='blob'),
+    Field('data', type='upload', required=True),
     Field('description', type='text'),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True))

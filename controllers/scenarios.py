@@ -163,6 +163,8 @@ def progress():
                           tutordb.monitutor_milestone_scenario.milestone_id) &
                          (tutordb.monitutor_milestone_scenario.scenario_id ==
                           scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+    data = tutordb((tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id) &
+                    (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select()
 
     checks = dict()
     for milestone in milestones:
@@ -186,7 +188,7 @@ def progress():
                      "checks": checks,
                      "hosts": hosts,
                      "username": username}
-    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config)
+    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config, data=data)
 
 
 @auth.requires_login()

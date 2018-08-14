@@ -18,19 +18,34 @@
     <li class="active">Scenario - {{=scenario_info["display_name"]}}</li>
   </ol>
   <noscript><b>JavaScript is turned off. Please enable JavaScript to view full site.</b></noscript>
-  {{if scenario_info["description"] != "" or scenario_info["goal"] != "":}}
+  {{if scenario_info["description"] != "" or scenario_info["goal"] != "" or data:}}
   <div class="panel panel-primary">
     <div class="panel-heading">
       {{=scenario_info["display_name"]}}
     </div>
     <div class="panel-body">
       {{if scenario_info["description"] != "":}}
-      <b>Description:</b><br>
-      {{=scenario_info["description"]}}<br>
+      <p>{{=scenario_info["description"]}}</p>
       {{pass}}
       {{if scenario_info["goal"] != "":}}
-      <b>Goal:</b><br>
-      {{=scenario_info["goal"]}}
+      <p>{{=scenario_info["goal"]}}</p>
+      {{pass}}
+      {{if data:}}
+      <p><b>Downloadable Attachments:</b></p>
+      <ul class="list-group">
+      {{for row in data:}}
+        {{if row.monitutor_data.description:}}
+        <li class="list-group-item" data-toggle="tooltip" data-placement="left" data-delay=1000 title="{{=row.monitutor_data.description}}">
+        {{else:}}
+        <li class="list-group-item">
+        {{pass}}
+          <a href="{{=URL("default", "download", args=row.monitutor_data.data)}}">
+            <i class="fa fa-lg fa-download" style="margin-right: 10px"></i>
+          </a>
+          {{=row.monitutor_data.display_name}}
+        </li>
+      {{pass}}
+      </ul>
       {{pass}}
     </div>
   </div>
