@@ -460,6 +460,11 @@ def edit_check():
         scenario_id = None
         milestone_id = None
 
+    attachment_form = SQLFORM(tutordb.monitutor_attachments,
+        showid=False,
+        formstyle="divs",
+        fields=["name", "producer","filter", "requires_status"])
+    attachment_form.vars.check_id = check_id
     form = SQLFORM(tutordb.monitutor_checks,
                    check_id,
                    showid=False,
@@ -468,8 +473,9 @@ def edit_check():
     if form.accepts(request, session):
         tutordb(tutordb.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
         response.flash = 'form accepted'
-
-    return dict(form=form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
+    if attachment_form.accepts(request, session):
+        response.flash = 'form accepted'
+    return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
 
 @auth.requires_membership('admin')
@@ -536,6 +542,39 @@ def view_target():
                       (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)).select()
     return dict(targets=targets)
 
+
+@auth.requires_membership('admin')
+def view_attachment():
+    """Displays all information of a target"""
+    if len(request.args):
+        check_id = request.args(0, cast=int)
+    else:
+        check_id = None
+    attachments = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_attachments.check_id) &
+                          (tutordb.monitutor_targets.check_id == check_id)).select()
+    return dict(attachments=attachments)
+
+@auth.requires_membership('admin')
+def edit_attachment():
+    if len(request.args):
+        attachment_id = request.args(0, cast=int)
+    else:
+        attachment_id = None
+    form = SQLFORM(tutordb.monitutor_attachments,
+        attachment_id,
+        showid=False,
+        formstyle="divs",
+        fields=["name", "producer","filter", "requires_status"])
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+    return dict(form=form)
+
+@auth.requires_membership("admin")
+def delete_attachment():
+    """Removes a system from a check by deleting the target"""
+    attachment_id = request.vars.attachmentId
+    tutordb(tutordb.monitutor_attachments.attachment_id == attachment_id).delete()
+    return json.dumps(dict(attachment_id=attachment_id))
 
 @auth.requires_membership("admin")
 def delete_target():

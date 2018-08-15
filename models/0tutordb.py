@@ -83,9 +83,18 @@ tutordb.define_table('monitutor_checks',
     Field('name', type='string', required=True, requires=[IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]),
     Field('display_name', type='string', required=True),
     Field('params', type='string'),
-    Field('program_id', 'reference monitutor_programs', required=True, 
+    Field('program_id', 'reference monitutor_programs', required=True,
           requires=IS_IN_DB(tutordb, tutordb.monitutor_programs, '%(name)s')),
     Field('hint', type="text"))
+
+tutordb.define_table('monitutor_attachments',
+    Field('attachment_id', type='id'),
+    Field('name', type='string', required=True),
+    Field('producer', type='text', required=True),
+    Field('filter', type='text'),
+    Field('requires_status', type='integer'),
+    Field('check_id', 'reference monitutor_checks', required=True,
+          requires=IS_IN_DB(tutordb, tutordb.monitutor_checks, '%(name)s')))
 
 tutordb.define_table('monitutor_check_milestone',
     Field('check_milestone_id', type='id'),

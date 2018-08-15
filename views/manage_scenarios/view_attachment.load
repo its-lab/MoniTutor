@@ -1,0 +1,37 @@
+<script>
+    $(document).ready(function() {
+        $(".delete-attachment").on("click", {}, onClickDeleteAttachment);
+        function onClickDeleteAttachment(event){
+            var target = $(this).data("attachmentid");
+            var iconElement = this;
+            var col = "#" + target + "-col";
+            $(iconElement).off("click");
+            $.get("{{=URL("manage_scenarios", "delete_attachment")}}",
+                    {
+                        attachmentId: target
+                    },
+                    function (data, status) {
+                        if (status == "success") {
+                            $(col).remove();
+                        }
+                    }
+                );
+        }
+    });
+</script>
+<hr>
+<h2>Attachments</h2>
+<div class="row">
+{{for attachment in attachments:}}
+    <div id="{{=attachment.monitutor_attachments.attachment_id}}-col" class="col-md-6 col-xs-12">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <a><i class="fa fa-trash delete-attachment" data-attachmentid="{{=attachment.monitutor_attachments.attachment_id}}"></i></a>
+          {{=attachment.monitutor_attachments.name}}
+        </div>
+        <div class="panel-body">
+          {{=LOAD('manage_scenarios','edit_attachment',ajax=True, args=attachment.monitutor_attachments.attachment_id)}}
+        </div>
+      </div>
+    </div>
+{{pass}}

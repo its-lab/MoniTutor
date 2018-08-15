@@ -16,7 +16,17 @@
         </li>
         <li class="active">Edit Check</li>
     </ol>
+    <div class="row">
+      <div class="col-md-6 col-xs-12">
+      <h3>Edit Check</h3>
             {{=form}}
+      </div>
+      <div class="col-md-6 col-xs-12">
+      <h3>Add Attachment</h3>
+            {{=attachment_form}}
+      </div>
+    </div>
+    {{=LOAD('manage_scenarios','view_attachment.load',ajax=True, args=checkid)}}
     <hr>
-{{=LOAD('manage_scenarios','add_target.load',ajax=True, args=checkid)}}
+    {{=LOAD('manage_scenarios','add_target.load',ajax=True, args=checkid)}}
 </div>
