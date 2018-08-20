@@ -265,6 +265,7 @@ def put_check():
             cache=(cache.ram, 360)).first()
     check = tutordb(tutordb.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
             cache=(cache.ram, 3600)).first()
+    attachments = tutordb(tutordb.monitutor_attachments.check_id == check.check_id).select(cache=(cache.ram, 360))
     check = { "name": check.name,
               "program": check_host_program.monitutor_programs.name,
               "params": __substitute_vars(check.params,
@@ -272,6 +273,15 @@ def put_check():
                                           username),
               "interpreter_path": check_host_program.monitutor_interpreters.path,
               "scenario_name": scenario_name}
+    if attachments:
+        check["attachments"] = []
+        for attachment in attachments:
+            check_attachment = {"name": attachment.name, "producer": attachment.producer}
+            if attachment.filter:
+                check_attachment["filter"] = attachment.filter
+            if attachment.requires_status:
+                check_attachment["requires_status"] = attachment.requires_status
+            check["attachments"].append(check_attachment)
     topic = username+"."+check_host_program.monitutor_systems.name
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
