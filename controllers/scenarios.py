@@ -205,7 +205,7 @@ def get_host_status():
     else:
         hoststate = 3
         output = "Disconnected"
-    return json.dumps(dict(output=output, state=hoststate, hostName=username+"_"+hostname))
+    return json.dumps(dict(output=output, state=hoststate, hostName=hostname))
 
 @auth.requires_login()
 def get_service_status():
