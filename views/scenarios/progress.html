@@ -223,7 +223,7 @@ function updateCheckStatus(checkName, state, output, attachments){
   var fileContainer = $(selector).find(".file-attachment-container");
   for (var attachment in attachments){
     var attachmentName = attachments[attachment].name;
-    var attachmentId = "attachment-"+checkName+"-"+attachmentName;
+    var attachmentId = "attachment-"+checkName+"-"+attachmentName.replace(".","-");
     if (!$(fileContainer).find("#"+attachmentId).length){
       var fileElement = document.createElement("li");
       var fileLink = document.createElement("a");
