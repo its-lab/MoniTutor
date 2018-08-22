@@ -96,6 +96,13 @@ class ResultDatabase():
                                       reduce=True)["rows"]
         return map(lambda x: [x["key"][2], x["value"]], successful_checks_rows)
 
-
+    def get_attachment(self, username, checkname, attachment_name):
+        document_id ="attachments_"+username+"_"+checkname
+        couchdb_database = self._get_db_handle()
+        if document_id in couchdb_database:
+            document = couchdb_database[document_id]
+            return document.get_attachment(attachment_name)
+        else:
+            return dict()
 
 resultdb = ResultDatabase(COUCHDB_HOST, COUCHDB_DATABASE, COUCHDB_USERNAME, COUCHDB_PASSWORD)

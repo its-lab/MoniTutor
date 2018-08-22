@@ -11,6 +11,22 @@
   </div>
   {{pass}}
 </div>
+<div class="modal fade" id="attachment-modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="attachment-modalLabel"></h4>
+      </div>
+      <div class="modal-body">
+        <pre class="well" id="attachment-container" style="white-space: pre-wrap; font-family: Courier, monospace;">Test\n asd"asdas"\n</pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="container">
   <ol class="breadcrumb">
     <li><a href="{{=URL('default','index')}}">Home</a></li>
@@ -78,6 +94,19 @@
             <span class="check-output"></span>
           </div>
         <div class="col-md-3 text-right">
+          <div class="btn-group">
+          <button class="btn btn-default dropdown-toggle file-attachments"
+                  type=button"
+                  id="info-check-{{=check.monitutor_checks.name}}"
+                  data-container="body"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  style="display: none">
+            <i class="fa fa-files-o" style="margin-right:5px"></i><span class="caret"></span></button>
+            <ul class="dropdown-menu file-attachment-container">
+            </ul>
+          </div>
           {{if check.monitutor_checks.hint != "" and check.monitutor_checks.hint is not None:}}
           <button class="btn btn-default info-check"
                   id="info-check-{{=check.monitutor_checks.name}}"
@@ -86,8 +115,8 @@
                   data-placement="left"
                   data-content="{{=check.monitutor_checks.hint}}">
             <i class="fa fa-info"></i>
-          {{pass}}
           </button>
+          {{pass}}
           <button class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></button>
         </div>
       </li>
@@ -157,12 +186,12 @@ function getAllCheckStatus(checkNames){
     function(data){
       var checkStates = JSON.parse(data);
       checkStates.forEach(function(checkState){
-          updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
+          updateCheckStatus(checkState.checkName, checkState.state, checkState.output, checkState.attachments);
       })
     });
 }
 
-function updateCheckStatus(checkName, state, output){
+function updateCheckStatus(checkName, state, output, attachments){
   var selector = "#list-group-item-"+checkName;
   switch(state){
     case 0:
@@ -190,6 +219,39 @@ function updateCheckStatus(checkName, state, output){
       .attr("disabled", false)
       .find(".fa")
         .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
+  var fileButton = $(selector).find(".file-attachments");
+  var fileContainer = $(selector).find(".file-attachment-container");
+  for (var attachment in attachments){
+    var attachmentName = attachments[attachment].name;
+    var attachmentId = "attachment-"+checkName+"-"+attachmentName;
+    if (!$(fileContainer).find("#"+attachmentId).length){
+      var fileElement = document.createElement("li");
+      var fileLink = document.createElement("a");
+      $(fileLink).data("attachmentName", attachmentName)
+                 .data("checkName", checkName)
+                 .on("click", function(){
+                   getAttachment(
+                     $(this).data("checkName"),
+                     $(this).data("attachmentName"));})
+                 .addClass("fileLink")
+                 .attr("id",attachmentId)
+                 .text(attachmentName);
+      $(fileElement).append(fileLink)
+      $(fileContainer).append(fileElement);
+      $(fileButton).toggle(true);
+    }
+  }
+}
+
+function getAttachment(checkName, attachmentName){
+    $.get("{{=URL('scenarios', 'get_attachment')}}", {check: checkName, userName: "{{=scenario_info["username"]}}", attachment: attachmentName},
+    function(data){
+      var attachment = JSON.parse(data);
+      $("#attachment-container").text(attachment.result);
+      $("#attachment-modalLabel").text(attachmentName);
+      $('#attachment-modal').modal('show');
+      console.log(attachment);
+    });
 }
 
 function updateCheckHistoryStatus(check){
@@ -282,7 +344,7 @@ function processResult(result){
         updateHostStatus(result.hostname, result.severity_code, result.output )
       }
       if (result.type == "CHECK_RESULT"){
-        updateCheckStatus(result.name, result.severity_code, result.output )
+        updateCheckStatus(result.name, result.severity_code, result.output, result.check.attachments )
       }
 }
 $(document).ready(function(){

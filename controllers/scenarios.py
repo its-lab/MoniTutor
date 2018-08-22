@@ -231,7 +231,11 @@ def get_services_status():
         username = session.auth.user.username
     status = list()
     for row in resultdb.check_results(username=username, check_name=checknames):
-        status.append(dict(output=row["value"]["output"], state=row["value"]["severity"], checkName=row["key"][1]))
+        status.append(dict(output=row["value"]["output"],
+                           state=row["value"]["severity"],
+                           checkName=row["key"][1],
+                           attachments=row["value"]["attachments"],
+                           hostname=row["value"]["hostname"]))
     return json.dumps(status)
 
 @auth.requires_login()
@@ -449,3 +453,12 @@ def poll_results():
             results.append(result)
             channel.basic_ack(method.delivery_tag)
     return json.dumps(dict(results=results))
+
+@auth.requires_login()
+def get_attachment():
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    attachment = request.vars.attachment
+    check = request.vars.check
+    return json.dumps(dict(result=resultdb.get_attachment(username, check, attachment)))
