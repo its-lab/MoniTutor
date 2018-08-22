@@ -452,6 +452,7 @@ def poll_results():
         else:
             results.append(result)
             channel.basic_ack(method.delivery_tag)
+    connection.close()
     return json.dumps(dict(results=results))
 
 @auth.requires_login()
