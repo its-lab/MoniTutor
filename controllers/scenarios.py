@@ -122,8 +122,11 @@ def toggle_scenario_done():
     scenario_id = request.vars.scenarioId
     scenario_user = tutordb((tutordb.scenario_user.user_id == user_id) &
                             (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
-    scenario_user["passed"] = not scenario_user["passed"]
-    scenario_user.update_record()
+    if scenario_user is None:
+        tutordb.scenario_user.insert(scenario_id=scenario_id, user_id=user_id, passed=True)
+    else:
+        scenario_user["passed"] = not scenario_user["passed"]
+        scenario_user.update_record()
 
 
 @auth.requires_login()
