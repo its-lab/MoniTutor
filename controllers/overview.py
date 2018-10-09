@@ -1,4 +1,4 @@
-@auth.requires_login()
+@auth.requires_membership("admin")
 def view_scenarios():
     """Display available scenarios"""
     count = tutordb.monitutor_scenarios.scenario_id.count()
@@ -11,7 +11,7 @@ def view_scenarios():
         active_students[scenario.name] = len(resultdb.active_students(scenario.name))
     return dict(scenarios=scenarios, active_students=active_students)
 
-@auth.requires_login()
+@auth.requires_membership("admin")
 def view_progress():
     """Display the name and progress for each student working on a given scenario"""
     if len(request.args) is 0:
