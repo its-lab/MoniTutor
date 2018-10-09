@@ -32,6 +32,9 @@ $(document).ready(function() {
       {{else:}}
       <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
       {{pass}}
+      {{if scenario.hidden:}}
+      <i class="fa fa-eye-slash"></i>
+      {{pass}}
       {{=scenario.display_name}}
     </div>
     <div class="panel-body"> {{=scenario.description}} <br><br>
