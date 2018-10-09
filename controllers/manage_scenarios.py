@@ -551,7 +551,7 @@ def view_attachment():
     else:
         check_id = None
     attachments = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_attachments.check_id) &
-                          (tutordb.monitutor_targets.check_id == check_id)).select()
+                          (tutordb.monitutor_checks.check_id == check_id)).select()
     return dict(attachments=attachments)
 
 @auth.requires_membership('admin')
