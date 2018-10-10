@@ -244,13 +244,18 @@ function updateCheckStatus(checkName, state, output, attachments){
 }
 
 function getAttachment(checkName, attachmentName){
+    $("#attachment-modalLabel").text(attachmentName);
+    $("#attachment-container").text("Loading file...");
+    $('#attachment-modal').modal('show');
     $.get("{{=URL('scenarios', 'get_attachment')}}", {check: checkName, userName: "{{=scenario_info["username"]}}", attachment: attachmentName},
     function(data){
       var attachment = JSON.parse(data);
-      $("#attachment-container").text(attachment.result);
-      $("#attachment-modalLabel").text(attachmentName);
-      $('#attachment-modal').modal('show');
-      console.log(attachment);
+      if( jQuery.isEmptyObject(attachment.result)){
+        $("#attachment-container").text("File not available");
+        }
+      else{
+        $("#attachment-container").text(attachment.result);
+      }
     });
 }
 
