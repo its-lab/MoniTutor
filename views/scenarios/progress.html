@@ -196,7 +196,6 @@ function updateCheckStatus(checkName, state, output, attachments){
   switch(state){
     case 0:
       $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-check-circle fa-lg");
-      $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date()));
       $(selector).find(".history-status-icon").show();
       $(selector).removeClass().addClass("list-group-item list-group-item-success");
       $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
