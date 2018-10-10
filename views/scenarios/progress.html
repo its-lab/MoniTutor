@@ -263,7 +263,7 @@ function updateCheckHistoryStatus(check){
   var checkName = 0;
   var checkTime = 1;
   var selector = "#list-group-item-"+check[checkName];
-  $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date(check[checkTime])));
+  $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(new Date(check[checkTime])));
   $(selector).find(".history-status-icon").show();
 }
 
