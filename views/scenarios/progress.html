@@ -188,6 +188,7 @@ function getAllCheckStatus(checkNames){
       checkStates.forEach(function(checkState){
           updateCheckStatus(checkState.checkName, checkState.state, checkState.output, checkState.attachments);
       })
+    get_successful_checks();
     });
 }
 
@@ -196,6 +197,7 @@ function updateCheckStatus(checkName, state, output, attachments){
   switch(state){
     case 0:
       $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-check-circle fa-lg");
+      $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date()));
       $(selector).find(".history-status-icon").show();
       $(selector).removeClass().addClass("list-group-item list-group-item-success");
       $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
@@ -363,7 +365,6 @@ $(document).ready(function(){
   {{pass}}
   {{pass}}
   getAllCheckStatus(allCheckNames);
-  get_successful_checks();
   $("#loadingState").text("Establishing websocket connection...")
   $(".panel.milestone").show();
   connectToRabbit();
