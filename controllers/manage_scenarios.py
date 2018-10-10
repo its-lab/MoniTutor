@@ -475,6 +475,7 @@ def edit_check():
         response.flash = 'form accepted'
     if attachment_form.accepts(request, session):
         response.flash = 'form accepted'
+        tutordb(tutordb.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
     return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
 
