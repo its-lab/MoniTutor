@@ -36,6 +36,7 @@ def view_progress():
     passed_students = tutordb((tutordb.scenario_user.user_id == tutordb.auth_user.id)
                                &(tutordb.scenario_user.passed == True)).select()
     for student in passed_students:
+        if student.auth_user.username not in student_progress:
+            student_progress[student.auth_user.username] = {"successful_check_amount": 0}
         student_progress[student.auth_user.username]["passed"] = True
-
     return dict(student_progress=student_progress, check_amount=check_amount, scenario_id=scenario_id)
