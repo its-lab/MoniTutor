@@ -8,3 +8,4 @@ databases/*
 export/
 *.bak
 *.pyc
+*.swp

@@ -1,10 +1,7 @@
 {{user = tutordb.auth_user[user_id]}}
 <script>
 $(document).ready(function() {
-  $(".init").on("click", {} , onClickInit);
-  $(".trash").on("click", {} , onClickDelete);
   $(".toggle").on("click", {}, togglePassed);
-
   function togglePassed(event){
     var scenarioId = String(this.id).slice(0,-7);
     $.get("{{=URL("scenarios", "toggle_scenario_done")}}",
@@ -21,154 +18,32 @@ $(document).ready(function() {
       }
     });
   }
-
-  function onClickDelete( event ){
-    var confirm = window.confirm("Are you sure you want to trash your scenario data?");
-    var scenarioId = String(this.id).slice(6);
-    if (!confirm){
-      return;
-    }
-    $(this).off("click");
-    var panel = $(this).parent();
-    var progressbar = document.createElement("div");
-    $(progressbar).css("background-color", "red");
-    $(progressbar).css("height", "2px");
-    $(progressbar).css("width", "3%");
-    $(progressbar).css("margin-top", "20px");
-    $(panel).append(progressbar);
-    $(panel).prev().html("<b>Deleting scenario data. Please be patient.</b><br>");
-    $.get("{{=URL("scenarios", "delete_scenario")}}",
-        {
-          scenarioId: scenarioId,
-          userId: "{{=user.id}}"
-        },
-        function (data, status) {
-          var info = JSON.parse(data);
-          var progress = String(info.progress) + "%";
-          var newTask = info.newTask;
-          $(progressbar).css("width", progress);
-          window.setTimeout(function () {
-            updateProgress(newTask, panel, progressbar, this, scenarioId)
-          }, 300);
-        });
-  }
-
-  function onClickInit( event ) {
-    var panel = $(this).parent();
-    var scenarioId = this.id;
-    var progressbar = document.createElement("div");
-    $(progressbar).css("background-color", "lightblue");
-    $(progressbar).css("height", "2px");
-    $(progressbar).css("width", "3%");
-    $(progressbar).css("margin-top", "20px");
-    $(panel).append(progressbar);
-    $(this).removeClass("btn");
-    $(this).removeClass("btn-default");
-    $(this).html("<b>Scenario is initiating. Please be patient.</b><br>");
-    $(this).off("click");
-    $.get("{{=URL("scenarios", "init_scenario")}}",
-        {
-          scenarioid: scenarioId,
-          username: "{{=user.username}}"
-        },
-        function (data, status) {
-          var info = JSON.parse(data);
-          var progress = String(info.progress) + "%";
-          var newTask = info.newTask;
-          $(progressbar).css("width", progress);
-          window.setTimeout(function () {
-            updateProgress(newTask, panel, progressbar, this, scenarioId)
-          }, 300);
-        });
-  }
-
-  function updateProgress( taskId, panel , progressbar, button, scenarioId ){
-    newtaskId = taskId;
-    $.get("{{=URL("scenarios", "update_task_status")}}",
-        {
-          taskId: newtaskId
-        },
-        function (data, status) {
-          var info = JSON.parse(data);
-          var progress = String(info.progress) + "%";
-          var error = info.error;
-          if( error != "None"){
-            var errordiv = document.createElement("div");
-            $(errordiv).addClass("alert");
-            $(errordiv).addClass("alert-danger");
-            $(errordiv).html("An error occured! " + error);
-            $(panel).append(errordiv);
-            return;
-          }
-          $(progressbar).css("width", progress);
-          if(progress == "100%"){
-            location.reload();
-            return;
-          }
-          window.setTimeout(function(){
-            updateProgress( newtaskId, panel, progressbar, button, scenarioId )}, 300);
-        });
-  }
-
-  $(function () {$('[data-toggle="tooltip"]').tooltip()})
 });
 </script>
 {{for scenario in scenarios:}}
-{{status = tutordb((tutordb.scenario_user.user_id==user_id) & (tutordb.scenario_user.scenario_id == scenario.scenario_id)).select()}}
 <div class="col-md-6">
-  {{if len(status) and status[0].status == "initiating" :}}
-  <div class="panel panel-warning">
-    <div class="panel-heading">{{=scenario.display_name}}</div>
-    <div class="panel-body"> {{=scenario.description}} <br><br>
-      <b>Scenario is initiating. Please be patient.</b><br><br>
-      If the initiation process takes longer then 3 minutes, please contact your supervisor.
-    </div>
-  </div>
-  {{elif len(status) and status[0].status == "initiated": }}
-  <div class="panel panel-success">
-    <div class="panel-heading">
-      {{if auth.has_membership("admin"):}}
-      <button id="{{=scenario.scenario_id}}-toggle" class="toggle" href="#"><i class="fa fa-check"></i></button>
-      {{pass}}
-      {{if status[0].passed:}}
-      <i id="{{=scenario.scenario_id}}-star"class="fa fa-star"></i>
-      {{else:}}
-      <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
-      {{pass}}{{=scenario.display_name}}
-    </div>
-    <div class="panel-body"> {{=scenario.description}} <br><br>
-      <a href="{{=URL('scenarios','progress.html',
-      args=[scenario.scenario_id, user.username])}}" class="btn btn-default" role="button">
-        Show progress</a>
-    </div>
-    <div class="panel-body">
-      <i class='fa fa-trash trash' style="float: right; margin-right: 10px; color: red" id ="trash-{{=scenario.scenario_id}}"></i>
-    </div>
-  </div>
-  {{else:}}
   <div class="panel panel-default">
     <div class="panel-heading">
       {{if auth.has_membership("admin"):}}
       <button id="{{=scenario.scenario_id}}-toggle" class="toggle" href="#"><i class="fa fa-check"></i></button>
       {{pass}}
-      {{if len(status) and status[0].passed:}}
-      <i id="{{=scenario.scenario_id}}-star"class="fa fa-star"></i>
+      {{if passed[scenario.name]:}}
+      <i id="{{=scenario.scenario_id}}-star" class="fa fa-star"></i>
       {{else:}}
       <i id="{{=scenario.scenario_id}}-star" class="fa fa-star-o"></i>
       {{pass}}
+      {{if scenario.hidden:}}
+      <i class="fa fa-eye-slash"></i>
+      {{pass}}
       {{=scenario.display_name}}
     </div>
-    <div class="panel-body">
-      {{=scenario.description}} <br><br>
-      <div class="btn btn-default init" id="{{=scenario.scenario_id}}">
-        Start scenario
-      </div>
-    </div>
-    <div class="panel-body">
+    <div class="panel-body"> {{=scenario.description}} <br><br>
       <a href="{{=URL('scenarios','edit_systems',args=[scenario.scenario_id, user_id],
       extension="html")}}" class='fa fa-cog' style="float: right; margin-right: 10px;" data-toggle="tooltip" data-placement="top" title="Customize your setup"></a>
+      <a href="{{=URL('scenarios','progress.html',
+      args=[scenario.scenario_id, user.username])}}" class="btn btn-default" role="button">
+        Show progress</a>
     </div>
   </div>
-  {{pass}}
 </div>
 {{pass}}

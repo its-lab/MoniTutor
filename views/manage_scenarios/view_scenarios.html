@@ -8,33 +8,11 @@
      $(".fa.fa-edit").on("click", {}, onClickShow);
      $("#orphan-milestones").on("click",{}, onClickShow);
      $("#orphan-checks").on("click",{}, onClickShow);
+     $("#without-source").on("click",{}, onClickShow);
      $(".btn").on("click", {}, onClickShow);
-     $(".fa.fa-power-off").on("click", {}, onClickInit);
-     $(".fa.fa-repeat").on("click", {}, onClickInit);
      $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
      $(".delete-check").on("click", {}, onClickDeleteCheck);
      $(".delete-scenario").on("click", {}, onClickDeleteScenario);
-     $(".erase-scenario").on("click", {}, onClickErase);
-
-     function onClickErase(event){
-         var confirm = window.confirm("Are you sure you want to flush all userdata for this Scenario?");
-         if (!confirm) {
-             return;
-         }
-        var scenarioId = String(this.id).slice(0,-9);
-        $(this).off("click");
-        $.get("{{=URL("manage_scenarios", "erase_scenario")}}",
-                {
-                    scenarioId: scenarioId
-                },
-             function (data, status) {
-                 if (status == "success") {
-                     var file = JSON.parse(data);
-                     $(this).on("click", {}, onClickErase);
-                    }
-                });
-     }
-
 
      function onClickDeleteScenario( event ) {
          var confirm = window.confirm("Are you sure you want to delete the Scenario?");
@@ -56,53 +34,6 @@
      function onClickShow( event ){
          var elment = "#"+String(this.id) + "-hide";
          $(elment).toggle("medium", function(){});
-     }
-
-     function onClickInit( event ){
-         var scenarioId = String(this.id);
-         $(this).off("click", function(){});
-         scenarioId = scenarioId.slice(0,-5); // slices "-init" off.
-         var progressdiv = document.createElement("div");
-         $(progressdiv).addClass("progress");
-         $(progressdiv).css("margin-top", "10px");
-         $(progressdiv).css("margin-bottom", "10px");
-         var progressbar = document.createElement("div");
-         $(progressdiv).append(progressbar);
-         $(progressbar).addClass("progress-bar").addClass("progress-bar-striped").addClass("active");
-         $(progressbar).role = "progressbar";
-         $(progressbar).css("width", "3%");
-         $("#top").append(progressdiv);
-
-         $.get("{{=URL("manage_scenarios", "init_scenario")}}",
-                    {
-                        scenarioId: scenarioId
-                    },
-                 function (data, status) {
-                        var info = JSON.parse(data);
-                        var progress = String(info.progress) + "%";
-                        var taskId = info.taskId;
-                        window.setTimeout(function () {
-                            updateProgress(taskId, scenarioId, progressbar, progress)
-                        }, 300);
-                    });
-     }
-
-     function updateProgress(taskId, scenarioId, progressbar, progress){
-         $(progressbar).css("width", progress);
-         if(progress == "100%"){
-             location.reload();
-         }
-         window.setTimeout(function() {
-             $.get("{{=URL("manage_scenarios", "update_task_status")}}",
-                     {
-                         taskId: taskId
-                     },
-                     function (data, status) {
-                         var info = JSON.parse(data);
-                         progress = String(info.progress) + "%";
-                         updateProgress(taskId, scenarioId, progressbar, progress);
-                     });
-         }, 300);
      }
 
      function onClickDeleteMilestone(event){
@@ -149,28 +80,38 @@
                 <p><i class="fa fa-tachometer"></i> Defined scenarios: {{=len(scenarios)}}</p>
                 <p><i class="fa fa-users"></i> Registered users: {{=len(tutordb(tutordb.auth_user).select())}}</p>
                 <div id="orphan-checks">
-                    <p>
-                        <i class="fa
-                            {{if orphan_check_count:}}
-                                fa-bolt" style="color: red"
-                            {{else:}}
-                                fa-leaf" style="color: green"
-                            {{pass}}
-                            >
-                        </i> Orphan checks:  {{=orphan_check_count}}</p>
+                  <p>
+                  {{if orphan_check_count:}}
+                    <i class="fa fa-bolt" style="color: red"></i>
+                  {{else:}}
+                    <i class="fa fa-leaf" style="color: green"></i>
+                  {{pass}}
+                  Orphan checks: {{=orphan_check_count}}
+                  </p>
                 </div>
             </div>
             <div class="col-sm-6">
-                <p><i class="fa fa-tachometer"></i> Initiated scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.initiated == True).select())}}</p>
-                <p><i class="fa fa-tachometer"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
-                <div id="orphan-milestones">
-                    <p><i class="fa
-                    {{if orphan_milestone_count:}}
-                        fa-bolt" style="color: red"
-                    {{else:}}
-                        fa-leaf" style="color: green"
-                    {{pass}}
-                ></i> Orphan Milestones: {{=orphan_milestone_count}}</p></div>
+              <p><i class="fa fa-eye"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
+              <div id="orphan-milestones">
+                <p>
+                {{if orphan_milestone_count:}}
+                  <i class="fa fa-bolt" style="color: red"></i>
+                {{else:}}
+                  <i class="fa fa-leaf" style="color: green"></i>
+                {{pass}}
+                Orphan Milestones: {{=orphan_milestone_count}}
+                </p>
+              </div>
+              <div id="without-source">
+                <p>
+                {{if without_source_count:}}
+                  <i class="fa fa-bolt" style="color: red"></i>
+                {{else:}}
+                  <i class="fa fa-leaf" style="color: green"></i>
+                {{pass}}
+                Checks without source: {{=without_source_count}}
+                </p>
+              </div>
             </div>
         </div>
     </div>
@@ -231,7 +172,26 @@
         </div>
     </div>
     {{pass}}
-
+    {{if without_source_count:}}
+    <div id="without-source-hide" class="jumbotron" hidden="False">
+        <h2>Checks without source</h2><br>
+        <div class="row">
+            {{for check in without_source:}}
+                <div id="{{=check.monitutor_targets.target_id}}-col" class="col-sm-6">
+                    <div class="panel panel-default">
+                        <div class="panel-heading">
+                          <a href="{{=URL("manage_scenarios", "edit_check", args=[check.monitutor_checks.check_id,
+                                                                                  check.monitutor_milestone_scenario.scenario_id,
+                                                                                  check.monitutor_milestones.milestone_id])}}">
+                            {{=check.monitutor_checks.display_name}}</a>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+            {{pass}}
+        </div>
+    </div>
+    {{pass}}
 </div>
             {{=LOAD('manage_scenarios','view_scenarios.load', ajax=True)}}
 

@@ -2,10 +2,6 @@
 <div class="container">
     <div class="jumbotron" style="text-align: center">
         <h1>Welcome, {{=session.auth.user.first_name}}!</h1>
-        <br>
-        <p class="lead">
-            To get started, klick on <b>Available scenarios</b>, select a scenario and hit Start.
-        </p>
     </div>
     <div class="col-md-2"></div>
     <div class="col-md-8">
@@ -15,11 +11,13 @@
                     Available scenarios
                 </a>
             </div>
+            {{if auth.has_membership("admin"):}}
             <div class="btn-group" role="group">
                 <a class="btn btn-default" href="{{=URL('overview','view_scenarios')}}">
                     Student overview
                 </a>
             </div>
+            {{pass}}
         </div>
     </div>
 </div>

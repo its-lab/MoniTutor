@@ -1,7 +1,7 @@
 {{extend 'layout.html'}}
 <div id="host-status" style="position: fixed; right: 10px; top: 100px; z-index: 99">
   {{for host in scenario_info["hosts"]:}}
-  <div class="host-status" id="host-status-{{=scenario_info["username"].replace('.','_')}}_{{=host.name}}">
+  <div class="host-status" id="host-status-{{=host.name}}">
     <span class="fa-stack">
       <i class="fa fa-plug fa-stack-1x fa-flip-horizontal"></i>
       <i class="fa fa-ban fa-stack-2x text-danger"></i>
@@ -11,6 +11,22 @@
   </div>
   {{pass}}
 </div>
+<div class="modal fade" id="attachment-modal" tabindex="-1" role="dialog" aria-labelledby="modalLabel">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+        <h4 class="modal-title" id="attachment-modalLabel"></h4>
+      </div>
+      <div class="modal-body">
+        <pre class="well" id="attachment-container" style="white-space: pre-wrap; font-family: Courier, monospace;">Test\n asd"asdas"\n</pre>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+      </div>
+    </div>
+  </div>
+</div>
 <div class="container">
   <ol class="breadcrumb">
     <li><a href="{{=URL('default','index')}}">Home</a></li>
@@ -18,19 +34,34 @@
     <li class="active">Scenario - {{=scenario_info["display_name"]}}</li>
   </ol>
   <noscript><b>JavaScript is turned off. Please enable JavaScript to view full site.</b></noscript>
-  {{if scenario_info["description"] != "" or scenario_info["goal"] != "":}}
+  {{if scenario_info["description"] != "" or scenario_info["goal"] != "" or data:}}
   <div class="panel panel-primary">
     <div class="panel-heading">
       {{=scenario_info["display_name"]}}
     </div>
     <div class="panel-body">
       {{if scenario_info["description"] != "":}}
-      <b>Description:</b><br>
-      {{=scenario_info["description"]}}<br>
+      <p>{{=scenario_info["description"]}}</p>
       {{pass}}
       {{if scenario_info["goal"] != "":}}
-      <b>Goal:</b><br>
-      {{=scenario_info["goal"]}}
+      <p>{{=scenario_info["goal"]}}</p>
+      {{pass}}
+      {{if data:}}
+      <p><b>Downloadable Attachments:</b></p>
+      <ul class="list-group">
+      {{for row in data:}}
+        {{if row.monitutor_data.description:}}
+        <li class="list-group-item" data-toggle="tooltip" data-placement="left" data-delay=1000 title="{{=row.monitutor_data.description}}">
+        {{else:}}
+        <li class="list-group-item">
+        {{pass}}
+          <a href="{{=URL("default", "download", args=row.monitutor_data.data)}}">
+            <i class="fa fa-lg fa-download" style="margin-right: 10px"></i>
+          </a>
+          {{=row.monitutor_data.display_name}}
+        </li>
+      {{pass}}
+      </ul>
       {{pass}}
     </div>
   </div>
@@ -53,13 +84,29 @@
     <ul class="list-group">
       {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
       <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.monitutor_checks.name}}">
+      <div style="position: absolute; left: -25px; z-index: 99;">
+            <i class="history-status-icon fa fa-lg fa-check-circle" style="display: none; color: green" data-toggle="tooltip" data-delay=1000></i>
+      </div>
         <div class="row">
           <div class="col-md-9">
-            <i class="fa fa-lg fa-question-circle"></i>
+            <i class="current-status-icon fa fa-lg fa-question-circle "></i>
             <span class="check-display-name" style="margin-left: 10px; margin-right: 10px">{{=check.monitutor_checks.display_name}}</span>-
             <span class="check-output"></span>
           </div>
         <div class="col-md-3 text-right">
+          <div class="btn-group">
+          <button class="btn btn-default dropdown-toggle file-attachments"
+                  type=button"
+                  id="info-check-{{=check.monitutor_checks.name}}"
+                  data-container="body"
+                  data-toggle="dropdown"
+                  aria-haspopup="true"
+                  aria-expanded="false"
+                  style="display: none">
+            <i class="fa fa-files-o" style="margin-right:5px"></i><span class="caret"></span></button>
+            <ul class="dropdown-menu file-attachment-container">
+            </ul>
+          </div>
           {{if check.monitutor_checks.hint != "" and check.monitutor_checks.hint is not None:}}
           <button class="btn btn-default info-check"
                   id="info-check-{{=check.monitutor_checks.name}}"
@@ -68,8 +115,8 @@
                   data-placement="left"
                   data-content="{{=check.monitutor_checks.hint}}">
             <i class="fa fa-info"></i>
-          {{pass}}
           </button>
+          {{pass}}
           <button class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></button>
         </div>
       </li>
@@ -93,7 +140,8 @@ $(".refresh-check").on("click", function(){
 })
 
 $(function () {
-    $('[data-toggle="popover"]').popover()
+    $('[data-toggle="popover"]').popover();
+    $('[data-toggle="tooltip"]').tooltip();
 })
 $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().animate()})
                  .mouseleave(
@@ -104,49 +152,66 @@ $(".host-status").mouseenter(function(){$(".host-name, .host-output").show().ani
                    });
 
 function getHostStatus(hostName){
-  hostName = "{{=scenario_info["username"]}}_"+hostName
-  $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName},
+  userName = "{{=scenario_info["username"]}}"
+  $.get("{{=URL('scenarios', 'get_host_status')}}", {hostName: hostName, userName: userName},
     function(data){
       var hostState = JSON.parse(data);
       updateHostStatus(hostState.hostName, hostState.state, hostState.output);
     });
 }
+
 function getCheckStatus(checkName){
-  checkName = "{{=scenario_info["username"]}}_"+checkName
-  $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName},
+  userName = "{{=scenario_info["username"]}}"
+  $.get("{{=URL('scenarios', 'get_service_status')}}", {checkName: checkName, userName: userName},
     function(data){
       var checkState = JSON.parse(data);
-      updateCheckStatus(checkState.checkName.slice("{{=scenario_info["username"]}}_".length), checkState.state, checkState.output);
-    });
-}
-function getAllCheckStatus(checkNames){
-    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), username: "{{=scenario_info["username"]}}"},
-    function(data){
-      var checkStates = JSON.parse(data);
-      checkStates.forEach(function(checkState){
-          updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
-      })
+      updateCheckStatus(checkState.checkName, checkState.state, checkState.output);
     });
 }
 
-function updateCheckStatus(checkName, state, output){
+function get_successful_checks(){
+  userName = "{{=scenario_info["username"]}}"
+  scenarioName = "{{=scenario_info["scenario_name"]}}"
+  $.get("{{=URL('scenarios', 'get_successful_checks')}}", {scenarioName: scenarioName, userName: userName},
+    function(data){
+      var successfulChecks = JSON.parse(data);
+      successfulChecks.forEach(function(successfulCheck){
+        updateCheckHistoryStatus(successfulCheck);
+      });
+    });
+}
+
+function getAllCheckStatus(checkNames){
+    $.get("{{=URL('scenarios', 'get_services_status')}}", {checkNames: JSON.stringify(checkNames), userName: "{{=scenario_info["username"]}}"},
+    function(data){
+      var checkStates = JSON.parse(data);
+      checkStates.forEach(function(checkState){
+          updateCheckStatus(checkState.checkName, checkState.state, checkState.output, checkState.attachments);
+      })
+    get_successful_checks();
+    });
+}
+
+function updateCheckStatus(checkName, state, output, attachments){
   var selector = "#list-group-item-"+checkName;
   switch(state){
     case 0:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-check-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-check-circle fa-lg");
+      $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(Date()));
+      $(selector).find(".history-status-icon").show();
       $(selector).removeClass().addClass("list-group-item list-group-item-success");
       $(selector).fadeTo('fast', 0.5).fadeTo('fast', 1.0);
       break;
     case 1:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-exclamation-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-warning");
       break;
     case 2:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-exclamation-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-exclamation-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-danger");
       break;
     default:
-      $(selector).find(".fa-lg").removeClass().addClass("fa fa-question-circle fa-lg");
+      $(selector).find(".current-status-icon").removeClass().addClass("current-status-icon fa fa-question-circle fa-lg");
       $(selector).removeClass().addClass("list-group-item list-group-item-info");
   }
   $(selector).find(".check-output").text(output);
@@ -155,10 +220,56 @@ function updateCheckStatus(checkName, state, output){
       .attr("disabled", false)
       .find(".fa")
         .removeClass("fa-spinner fa-fw fa-pulse").addClass("fa-refresh");
+  var fileButton = $(selector).find(".file-attachments");
+  var fileContainer = $(selector).find(".file-attachment-container");
+  for (var attachment in attachments){
+    var attachmentName = attachments[attachment].name;
+    var attachmentId = "attachment-"+checkName+"-"+attachmentName.replace(".","-");
+    if (!$(fileContainer).find("#"+attachmentId).length){
+      var fileElement = document.createElement("li");
+      var fileLink = document.createElement("a");
+      $(fileLink).data("attachmentName", attachmentName)
+                 .data("checkName", checkName)
+                 .on("click", function(){
+                   getAttachment(
+                     $(this).data("checkName"),
+                     $(this).data("attachmentName"));})
+                 .addClass("fileLink")
+                 .attr("id",attachmentId)
+                 .text(attachmentName);
+      $(fileElement).append(fileLink)
+      $(fileContainer).append(fileElement);
+      $(fileButton).toggle(true);
+    }
+  }
+}
+
+function getAttachment(checkName, attachmentName){
+    $("#attachment-modalLabel").text(attachmentName);
+    $("#attachment-container").text("Loading file...");
+    $('#attachment-modal').modal('show');
+    $.get("{{=URL('scenarios', 'get_attachment')}}", {check: checkName, userName: "{{=scenario_info["username"]}}", attachment: attachmentName},
+    function(data){
+      var attachment = JSON.parse(data);
+      if( jQuery.isEmptyObject(attachment.result)){
+        $("#attachment-container").text("File not available");
+        }
+      else{
+        $("#attachment-container").text(attachment.result);
+      }
+    });
+}
+
+function updateCheckHistoryStatus(check){
+  var checkName = 0;
+  var checkTime = 1;
+  var selector = "#list-group-item-"+check[checkName];
+  $(selector).find(".history-status-icon").attr("title","Last time successful: "+String(new Date(check[checkTime])));
+  $(selector).find(".history-status-icon").show();
 }
 
 function updateHostStatus(hostName, state, output){
-  var hostSelector = "#host-status-"+hostName.replace(".","_")
+  var hostSelector = "#host-status-"+hostName
   if(state==0){
     $(hostSelector).find(".fa-plug").addClass("text-success");
     $(hostSelector).find(".fa-ban").hide();
@@ -174,7 +285,9 @@ function updateHostStatus(hostName, state, output){
 }
 
 function connectToRabbit(){
-  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {},
+  $.get("{{=URL('scenarios', 'create_rabbit_user')}}", {
+    username: "{{=scenario_info["username"]}}"
+  },
     function(data){
       var credentials = JSON.parse(data);
       var webSocket = new WebSocket('wss://{{=rabbit_mq_config["address"]}}:{{=rabbit_mq_config["port"]}}/ws');
@@ -212,7 +325,8 @@ function connectToRabbit(){
 function newTask(taskName){
   $.get("{{=URL('scenarios', 'put_check')}}", {
     taskName: taskName,
-    userName: "{{=scenario_info["username"]}}"
+    userName: "{{=scenario_info["username"]}}",
+    scenarioName: "{{=scenario_info["scenario_name"]}}"
   }, function(data){
   });
 }
@@ -232,11 +346,11 @@ function pollResults(queueName){
 }
 
 function processResult(result){
-      if (result.icingacmd_type == "PROCESS_HOST_CHECK_RESULT"){
+      if (result.type == "HOST_RESULT"){
         updateHostStatus(result.hostname, result.severity_code, result.output )
       }
-      if (result.icingacmd_type == "PROCESS_SERVICE_CHECK_RESULT"){
-        updateCheckStatus(result.name, result.severity_code, result.output )
+      if (result.type == "CHECK_RESULT"){
+        updateCheckStatus(result.name, result.severity_code, result.output, result.check.attachments )
       }
 }
 $(document).ready(function(){
@@ -250,8 +364,9 @@ $(document).ready(function(){
   allCheckNames.push("{{=check.monitutor_checks.name}}");
   {{pass}}
   {{pass}}
-  getAllCheckStatus(allCheckNames)
+  getAllCheckStatus(allCheckNames);
   $("#loadingState").text("Establishing websocket connection...")
+  $(".panel.milestone").show();
   connectToRabbit();
 });
 

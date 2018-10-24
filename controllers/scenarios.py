@@ -11,273 +11,19 @@ def view_available_scenarios():
         user_id = request.args(0, cast=str)
     else:
         user_id = auth.user_id
-
-    scenarios = tutordb((tutordb.monitutor_scenarios.hidden == False) &
-                        (tutordb.monitutor_scenarios.initiated == True)).select()
-    return dict(scenarios=scenarios, user_id=user_id)
-
-
-@auth.requires_login()
-def init_scenario():
-    """Triggers scenario initiation for a given senario-user tuple"""
-    scenario_id = request.vars.scenarioid
     if auth.has_membership("admin"):
-        username = request.vars.username
+        scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
     else:
-        username = session.auth.user.username
-
-    new_task = initializer.queue_task('api_init_scenario', group_name="init", pargs=[username, scenario_id])
-
-    user = tutordb(tutordb.auth_user.username == username).select()
-
-    tutordb.scenario_user.update_or_insert((tutordb.scenario_user.scenario_id == scenario_id) &
-                                           (tutordb.scenario_user.user_id == user[0].id),
-                                            scenario_id=scenario_id,
-                                            user_id=user[0].id,
-                                            status="initiating")
-    tutordb.commit()
-    return json.dumps({"progress": 20, "newTask": new_task.id})
-
-
-@auth.requires_login()
-def delete_scenario():
-    """Triggers scenario deletion for a given scenario-user tuple"""
-    scenario_id = request.vars.scenarioId
-    if auth.has_membership("admin"):
-        user_id = request.vars.userId
-    else:
-        user_id = auth.user_id
-
-    user = tutordb.auth_user[user_id]
-
-    new_task = initializer.queue_task('drop_user_scenario', group_name="init", pargs=[user.username, scenario_id])
-
-    tutordb.scenario_user.update_or_insert((tutordb.scenario_user.scenario_id == scenario_id) &
-                                           (tutordb.scenario_user.user_id == user_id),
-                                            scenario_id=scenario_id,
-                                            user_id=user_id,
-                                            status="")
-    tutordb.commit()
-    return json.dumps({"progress": 20, "newTask": new_task.id})
-
-
-@auth.requires_login()
-def update_task_status():
-    """Asks the Web2py database for the status of a given task to display it as a progress bar"""
-    error = "None"
-    task_id = request.vars.taskId
-    task_info = initializer.task_status(int(task_id), output=True)
-    if task_info is not None:
-        status = task_info.scheduler_task.status
-    else:
-        status = "UNKNOWN TaskID: " + task_id
-        error  = "Couldn't find task"
-
-    if status == "QUEUED":
-        progress = 40
-    elif status == "ASSIGNED":
-        progress = 60
-    elif status == "RUNNING":
-        progress = 80
-    elif status == "COMPLETED":
-        progress = 100
-    else:
-        progress = 0
-        error = "STATUS: "+status
-
-    return json.dumps({"progress": progress, "error": error})
-
-
-@auth.requires_login()
-def queue_task():
-    """Queues a check for the MoniTunnel application to execute"""
-    scenario_id = request.vars.scenarioid
-    check_milestone_id = request.vars.checkMilestoneId
-    if auth.has_membership("admin"):
-        username = request.vars.username
-    else:
-        username = session.auth.user.username
-
-    prio = 20
-    if auth.has_membership("admin"):
-        prio = 50
-
-    checks = tutordb((tutordb.monitutor_check_milestone.check_milestone_id == check_milestone_id) &
-                            (tutordb.monitutor_checks.check_id == tutordb.monitutor_check_milestone.check_id)).select()
-    tutordb_check = checks[0].monitutor_checks.name
-    check_name = username + "_" + tutordb_check
-
-    checkdata = tutordb((tutordb_check == tutordb.monitutor_checks.name) &
-                        (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id) &
-                        (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id) &
-                        (tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
-                        (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
-                        (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-                        (tutordb.monitutor_types.name == "source")).select()
-
-    if len(checkdata) is 1:
-        parameters = checkdata[0].monitutor_checks.params
-        parameters = parameters.split()
-        parameterSnippets = []
-        for parameter in parameters:
-            if parameter[0] == "$":
-                # parameter might look like: $DEST.community or $SOURCE.ip4_address
-                system_type = parameter.split(".")
-                attribute = None
-                if len(system_type) is 2:
-                    attribute = system_type[1].strip(".")
-                system_type = system_type[0].strip("$").lower()
-                system = tutordb((tutordb.monitutor_targets.check_id == checkdata[0].monitutor_checks.check_id) &
-                                  (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
-                                  (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-                                  (tutordb.monitutor_types.name == system_type)
-                                  ).select()
-                if len(system):
-                    system = system.first()
-                    # check if the system was customized
-                    user_system = tutordb((system.monitutor_targets.system_id ==
-                                            tutordb.monitutor_user_system.system_id) &
-                                            (username == tutordb.auth_user.username) &
-                                            (tutordb.auth_user.id == tutordb.monitutor_user_system.user_id)).select()
-                    if len(user_system):
-                        user_system = user_system.first()
-                        system.monitutor_systems.hostname = user_system.monitutor_user_system.hostname
-                        system.monitutor_systems.ip4_address = user_system.monitutor_user_system.ip4_address
-                        system.monitutor_systems.ip6_address = user_system.monitutor_user_system.ip6_address
-                    if attribute is None:
-                        parameter = system.monitutor_systems.hostname
-                    if attribute == "ip4_address":
-                        parameter = str(system.monitutor_systems.ip4_address)
-                    elif attribute == "ip6_address":
-                        parameter = str(system.monitutor_systems.ip6_address)
-                    elif attribute == "hostname":
-                        parameter = system.monitutor_systems.hostname
-                    else:
-                        # in this case the attribute is a custom attribute
-                        custom_attributes = tutordb((tutordb.monitutor_customvar_system.name == attribute) &
-                                                   (tutordb.monitutor_customvar_system.system_id ==
-                                                    system.monitutor_systems.system_id)).select()
-                        if len(custom_attributes):
-                            parameter = custom_attributes.value
-                        else:
-                            # Fallback to hostname in case the attribute was not found
-                            parameter = system.monitutor_systems.hostname
-            parameterSnippets.append(parameter)
-        parameters = " ".join(parameterSnippets)
-
-        import datetime
-        system_name = checkdata[0].monitutor_systems.hostname
-        interpreter_path = checkdata[0].monitutor_interpreters.path
-        program_name = checkdata[0].monitutor_programs.name
-        new_task = tutordb.monitutor_check_tasks.insert(interpreter_path=interpreter_path,
-                                             username=username,
-                                             hostname=system_name,
-                                             prio=prio,
-                                             status="NEW",
-                                             timestamp=datetime.datetime.now(),
-                                             check_name=tutordb_check,
-                                             parameters=parameters,
-                                             program_name=program_name)
-
-        return json.dumps(dict(newTask=new_task, checkName=check_name))
-    return False
-
-
-
-@auth.requires_login()
-def update_task():
-    """Queries Icinga-DB for service status when the scheduler task is finished"""
-    task_id = request.vars.taskId
-
-    if task_id is not None:
-        task = tutordb.monitutor_check_tasks[task_id]
-        status = task.status
-    else:
-        status = "DONE"
-
-    if status == "DONE" or status == "ERROR":
-        icinga_servicestatus = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.object_id) &
-                                  (db.icinga_objects.name1 == (task.username + "_" + task.hostname)) &
-                                  (db.icinga_objects.name2 == (task.username + "_" + task.check_name))).select()
-
-        current_state = icinga_servicestatus[0].icinga_servicestatus.current_state
-        output = icinga_servicestatus[0].icinga_servicestatus.output
-    else:
-        current_state = 3
-        output = "No result"
-
-    return json.dumps(dict(currentState=current_state, output=output, status=status))
-
-
-@auth.requires_login()
-def update_host():
-    """Queries Icinga-DB for the status of a given host"""
-    hostid = request.vars.hostId[1:]  # Strip H character from ID
-    host = db.icinga_hoststatus[hostid]
-    return json.dumps(dict(output=host.output, state=host.current_state))
-
-
-
-@auth.requires_login()
-def view_milestones():
-    """Displays each milestone and host for a given scenario-user tuple"""
-
-    if len(request.args):
-        scenario_id = request.args(0, cast=int)
-    else:
-        redirect(URL('default','index'))
-        scenario_id = None
-    if len(request.args) > 1:
-        username = request.args(1, cast=str)
-    else:
-        username = None
-
-    if not auth.has_membership("admin") or username is None:
-        username = session.auth.user.username
-    scenario = tutordb.monitutor_scenarios[scenario_id]
-    scenario_info = {"description": scenario.description,
-                     "display_name": scenario.display_name,
-                     "scenario_id": scenario_id,
-                     "goal": scenario.goal}
-
-    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
-                          tutordb.monitutor_milestone_scenario.milestone_id) &
-                         (tutordb.monitutor_milestone_scenario.scenario_id ==
-                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
-
-    scenario_info["milestones"] = milestones
-
-    data = tutordb((tutordb.monitutor_scenario_data.scenario_id == scenario_id) &
-                   (tutordb.monitutor_scenario_data.data_id == tutordb.monitutor_data.data_id)).select()
-    if len(data):
-        scenario_info["data"] = data
-
-    hosts = db((db.icinga_hoststatus.host_object_id == db.icinga_customvariables.object_id) &
-               (db.icinga_hosts.host_object_id == db.icinga_customvariables.object_id) &
-               (db.icinga_customvariables.varname == "owner") &
-               (db.icinga_customvariables.varvalue == username) &
-               (db.icinga_objects.object_id == db.icinga_hoststatus.host_object_id) &
-               (db.icinga_objects.is_active == "1")).select()
-
-    checks = {}
-    for milestone in milestones:
-        check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id ==
-                                  milestone.monitutor_milestones.milestone_id) &
-                                  (tutordb.monitutor_check_milestone.check_id ==
-                                  tutordb.monitutor_checks.check_id) &
-                                  (tutordb.monitutor_systems.system_id ==
-                                   tutordb.monitutor_targets.system_id) &
-                                  (tutordb.monitutor_checks.check_id ==
-                                   tutordb.monitutor_targets.check_id)).select(orderby=
-                                                                            tutordb.monitutor_check_milestone.sequence_nr)
-        checks[milestone.monitutor_milestones.milestone_id] = check_milestone
-
-    scenario_info["checks"] = checks
-    user_s = tutordb((tutordb.scenario_user.user_id == tutordb.auth_user.id) &
-                     (tutordb.auth_user.username == username) &
-                     (tutordb.scenario_user.scenario_id == scenario_id)).select()
-
-    return dict(scenarioinfo=scenario_info, username=username, hosts=hosts, args=request.args, user_s=user_s)
+        scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
+    passed = dict()
+    for scenario in scenarios:
+        passed_rows = tutordb((tutordb.scenario_user.scenario_id==scenario.scenario_id)
+                               &(user_id == tutordb.scenario_user.user_id)).select()
+        if passed_rows:
+            passed[scenario.name] = passed_rows[0].passed
+        else:
+            passed[scenario.name] = False
+    return dict(scenarios=scenarios, user_id=user_id, passed=passed)
 
 
 @auth.requires_login()
@@ -369,29 +115,19 @@ def edit_systems():
 
 @auth.requires_membership("admin")
 def toggle_scenario_done():
+    username = request.vars.username
     user_id = request.vars.userId
+    if user_id is None and username is not None:
+        user_id = tutordb(tutordb.auth_user.username == username).select().first().id
     scenario_id = request.vars.scenarioId
     scenario_user = tutordb((tutordb.scenario_user.user_id == user_id) &
                             (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
-    scenario_user["passed"] = not scenario_user["passed"]
-    scenario_user.update_record()
-
-
-def get_history():
-    if auth.has_membership("admin"):
-        user_id = request.vars.userId;
+    if scenario_user is None:
+        tutordb.scenario_user.insert(scenario_id=scenario_id, user_id=user_id, passed=True)
     else:
-        user_id = auth.user_id
-    scenario_id = request.vars.scenarioId
-    object_id = request.vars.objectId
-    user_scenario = tutordb((tutordb.scenario_user.scenario_id == scenario_id)&
-            (tutordb.scenario_user.user_id == user_id)).select().first()
-    history = db((db.icinga_statehistory.object_id == object_id)&
-            (db.icinga_statehistory.state_time > user_scenario.initiation_time)).select(
-                    db.icinga_statehistory.output,
-                    db.icinga_statehistory.state,
-                    orderby=~db.icinga_statehistory.state_time)
-    return json.dumps({"history": history.as_list()})
+        scenario_user["passed"] = not scenario_user["passed"]
+        scenario_user.update_record()
+
 
 @auth.requires_login()
 def progress():
@@ -403,8 +139,6 @@ def progress():
         scenario_id = None
     if len(request.args) > 1:
         username = request.args(1, cast=str)
-    else:
-        username = None
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
     rabbit_mq_address = app_conf.take("monitutor_env.rabbit_mq_external_address")
@@ -432,6 +166,8 @@ def progress():
                           tutordb.monitutor_milestone_scenario.milestone_id) &
                          (tutordb.monitutor_milestone_scenario.scenario_id ==
                           scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+    data = tutordb((tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id) &
+                    (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select()
 
     checks = dict()
     for milestone in milestones:
@@ -449,54 +185,75 @@ def progress():
     scenario_info = {"description": scenario.description,
                      "display_name": scenario.display_name,
                      "scenario_id": scenario_id,
+                     "scenario_name": scenario.name,
                      "goal": scenario.goal,
                      "milestones": milestones,
                      "checks": checks,
                      "hosts": hosts,
                      "username": username}
-    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config)
+    return dict(scenario_info=scenario_info, rabbit_mq_config=rabbit_mq_config, data=data)
 
 
 @auth.requires_login()
 def get_host_status():
-    """Queries Icinga-DB for the status of a given host"""
+    """Get current status of a given host"""
     hostname = request.vars.hostName
-    host  = db((db.icinga_hoststatus.host_object_id == db.icinga_objects.id) &
-               (db.icinga_objects.name1 == hostname)) \
-               .select(db.icinga_hoststatus.output, db.icinga_hoststatus.current_state) \
-               .first()
-    return json.dumps(dict(output=host.output, state=host.current_state, hostName=hostname))
+    username = request.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    host = resultdb.host_status(username=username, hostname=hostname)
+    if host:
+        hoststate = host[0]["value"]["severity"]
+        output = host[0]["value"]["output"]
+    else:
+        hoststate = 3
+        output = "Disconnected"
+    return json.dumps(dict(output=output, state=hoststate, hostName=hostname))
 
 @auth.requires_login()
 def get_service_status():
-    """Queries Icinga-DB for the status of a given service"""
-    servicename = request.vars.checkName
-    service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
-                 (db.icinga_objects.name2 == servicename)) \
-                 .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
-                 .first()
-    return json.dumps(dict(output=service.output, state=service.current_state, checkName=servicename))
+    """Get status of a given service"""
+    check_name = request.vars.checkName
+    username = requset.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    check_result = resultdb.check_results(username=username, check_name=check_name)
+    if check_result:
+        checkstate = check_result[0]["value"]["severity"]
+        output = check_result[0]["value"]["output"]
+    else:
+        checkstate = 3
+        output = "Unknown"
+    return json.dumps(dict(output=output, state=checkstate, checkName=check_name))
 
 @auth.requires_login()
 def get_services_status():
-    """Queries Icinga-DB for the status of a given service"""
-    servicenames = json.loads(request.vars.checkNames)
+    checknames = json.loads(request.vars.checkNames)
     username = request.vars.userName
-    if not auth.has_membership("admin") or username is None:
+    if not auth.has_membership("admin"):
         username = session.auth.user.username
     status = list()
-    for servicename in servicenames:
-        service = db((db.icinga_servicestatus.service_object_id == db.icinga_objects.id) &
-                (db.icinga_objects.name2 == username+"_"+servicename)) \
-                     .select(db.icinga_servicestatus.output, db.icinga_servicestatus.current_state) \
-                     .first()
-        status.append(dict(output=service.output, state=service.current_state, checkName=servicename))
+    for row in resultdb.check_results(username=username, check_name=checknames):
+        status.append(dict(output=row["value"]["output"],
+                           state=row["value"]["severity"],
+                           checkName=row["key"][1],
+                           attachments=row["value"]["attachments"],
+                           hostname=row["value"]["hostname"]))
     return json.dumps(status)
+
+@auth.requires_login()
+def get_successful_checks():
+    scenario_name = request.vars.scenarioName
+    username = request.vars.userName
+    if not auth.has_membership("admin"):
+        username = session.auth.user.username
+    return json.dumps(resultdb.successful_checks(scenario_name, username))
 
 @auth.requires_login()
 def put_check():
     check_name = request.vars.taskName
     username = request.vars.userName
+    scenario_name = request.vars.scenarioName
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
     check_host_program = tutordb((tutordb.monitutor_checks.name == check_name) &
@@ -515,12 +272,23 @@ def put_check():
             cache=(cache.ram, 360)).first()
     check = tutordb(tutordb.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
             cache=(cache.ram, 3600)).first()
+    attachments = tutordb(tutordb.monitutor_attachments.check_id == check.check_id).select(cache=(cache.ram, 360))
     check = { "name": check.name,
               "program": check_host_program.monitutor_programs.name,
               "params": __substitute_vars(check.params,
                                           check.check_id,
                                           username),
-              "interpreter_path": check_host_program.monitutor_interpreters.path}
+              "interpreter_path": check_host_program.monitutor_interpreters.path,
+              "scenario_name": scenario_name}
+    if attachments:
+        check["attachments"] = []
+        for attachment in attachments:
+            check_attachment = {"name": attachment.name, "producer": attachment.producer}
+            if attachment.filter:
+                check_attachment["filter"] = attachment.filter
+            if attachment.requires_status:
+                check_attachment["requires_status"] = attachment.requires_status
+            check["attachments"].append(check_attachment)
     topic = username+"."+check_host_program.monitutor_systems.name
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
@@ -596,6 +364,10 @@ def __generate_random_string(length):
 
 @auth.requires_login()
 def create_rabbit_user():
+    username = request.vars.username
+    if username is None or not auth.has_membership("admin"):
+        username = session.auth.user.username
+    scenario_name = request.vars.scenarioName
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_management_port = app_conf.take("monitutor_env.rabbit_mq_management_port")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
@@ -625,7 +397,7 @@ def create_rabbit_user():
                     "x-expires": 120000 # 2 min
                     }
                   }
-    queue_name =  session.auth.user.username+"-"+__generate_random_string(6)
+    queue_name =  username+"-"+__generate_random_string(6)
     request_url = rabbit_mq_url + \
                  '/queues/%2F/' + \
                  queue_name
@@ -636,7 +408,7 @@ def create_rabbit_user():
     if answer.status_code > 299:
         return json.dumps({"status": "ERROR creating queue"})
 
-    data = {"routing_key": session.auth.user.username+".*"}
+    data = {"routing_key": username+".*"}
     request_url = rabbit_mq_url+'/bindings/%2F/e/'+result_exchange+'/q/'+queue_name
     answer = requests.post(request_url,
                  headers=headers,
@@ -683,4 +455,14 @@ def poll_results():
         else:
             results.append(result)
             channel.basic_ack(method.delivery_tag)
+    connection.close()
     return json.dumps(dict(results=results))
+
+@auth.requires_login()
+def get_attachment():
+    username = request.vars.userName
+    if not auth.has_membership("admin") or username is None:
+        username = session.auth.user.username
+    attachment = request.vars.attachment
+    check = request.vars.check
+    return json.dumps(dict(result=resultdb.get_attachment(username, check, attachment)))

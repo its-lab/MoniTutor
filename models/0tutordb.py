@@ -13,8 +13,7 @@ auth = Auth(tutordb)
 
 auth.settings.extra_fields['auth_user']= [
         Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16]),
-        Field('image', type='upload', uploadfield='image_data'),
-        Field('image_data', type='blob')
+        Field('image', type='upload')
         ]
 
 auth.define_tables(username=True)
@@ -34,8 +33,7 @@ tutordb.define_table('monitutor_scenarios',
 
 tutordb.define_table('monitutor_data',
     Field('data_id', type='id'),
-    Field('data', type='upload', required=True, uploadfield='data_data'),
-    Field('data_data', type='blob'),
+    Field('data', type='upload', required=True),
     Field('description', type='text'),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True))
@@ -85,9 +83,18 @@ tutordb.define_table('monitutor_checks',
     Field('name', type='string', required=True, requires=[IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]),
     Field('display_name', type='string', required=True),
     Field('params', type='string'),
-    Field('program_id', 'reference monitutor_programs', required=True, 
+    Field('program_id', 'reference monitutor_programs', required=True,
           requires=IS_IN_DB(tutordb, tutordb.monitutor_programs, '%(name)s')),
     Field('hint', type="text"))
+
+tutordb.define_table('monitutor_attachments',
+    Field('attachment_id', type='id'),
+    Field('name', type='string', required=True),
+    Field('producer', type='text', required=True),
+    Field('filter', type='text'),
+    Field('requires_status', type='integer'),
+    Field('check_id', 'reference monitutor_checks', required=True,
+          requires=IS_IN_DB(tutordb, tutordb.monitutor_checks, '%(name)s')))
 
 tutordb.define_table('monitutor_check_milestone',
     Field('check_milestone_id', type='id'),
@@ -130,22 +137,7 @@ tutordb.define_table('scenario_user',
     Field('scenario_user_id', type="id"),
     Field('scenario_id', 'reference monitutor_scenarios', required=True),
     Field('user_id', 'reference auth_user', required=True),
-    Field('status', type='string', required=True),
-    Field('progress', type="integer", requires=IS_INT_IN_RANGE(minimum=0, maximum=100), default="0"),
-    Field('initiation_time', type="datetime", required=False),
     Field('passed', type="boolean", required=False, default=False))
-
-tutordb.define_table('monitutor_check_tasks',
-    Field('check_tasks_id', type="id"),
-    Field('interpreter_path', type="string"),
-    Field('username', type="string"),
-    Field('hostname', type="string"),
-    Field('prio', type="integer"),
-    Field('status', type="string"),
-    Field('timestamp', type="datetime"),
-    Field('check_name', type="string"),
-    Field('parameters', type="string"),
-    Field('program_name', type="string"))
 
 tutordb.define_table('monitutor_customvars',
     Field('customvar_id', type="id", required=True),

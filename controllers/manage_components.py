@@ -1,5 +1,5 @@
 from os import path
-
+import json
 
 @auth.requires_membership('admin')
 def add_data():
@@ -17,6 +17,12 @@ def view_data():
     available_data = tutordb(tutordb.monitutor_data).select()
     return dict(available_data=available_data)
 
+@auth.requires_membership('admin')
+def delete_data():
+    data_id = request.vars.dataId
+    tutordb(tutordb.monitutor_scenario_data.data_id == data_id).delete()
+    tutordb(tutordb.monitutor_data.data_id == data_id).delete()
+    return json.dumps(dict(data_id=data_id))
 
 @auth.requires_membership('admin')
 def attach_data():
@@ -400,19 +406,9 @@ def add_customvar():
         redirect(URL(args=system_id))
     return dict(customvar_form=customvar_form)
 
-
-
 @auth.requires_membership('admin')
 def delete_system():
     system_id = request.vars.systemId
     tutordb(tutordb.monitutor_targets.system_id == system_id).delete()
     tutordb(tutordb.monitutor_systems.system_id == system_id).delete()
     return json.dumps(dict(system_id=system_id))
-
-
-@auth.requires_membership('admin')
-def delete_data():
-    data_id = request.vars.dataId
-    tutordb(tutordb.monitutor_scenario_data.data_id == data_id).delete()
-    tutordb(tutordb.monitutor_data.data_id == data_id).delete()
-    return json.dumps(dict(data_id=data_id))

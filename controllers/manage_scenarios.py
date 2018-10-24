@@ -3,7 +3,6 @@ import json
 @auth.requires_membership('admin')
 def view_scenarios():
     """Displays all Scenarios and global scenario information"""
-
     orphan_milestones = tutordb((tutordb.monitutor_milestone_scenario.milestone_id == None)).select(
         tutordb.monitutor_milestone_scenario.ALL,
         tutordb.monitutor_milestones.ALL,
@@ -12,17 +11,26 @@ def view_scenarios():
 
         )
     orphan_milestone_count = len(orphan_milestones)
-
     orphan_checks = tutordb(tutordb.monitutor_check_milestone.check_id == None).select(
         tutordb.monitutor_check_milestone.ALL, tutordb.monitutor_checks.ALL,
         left=tutordb.monitutor_check_milestone.on(tutordb.monitutor_check_milestone.check_id ==
                                              tutordb.monitutor_checks.check_id)
         )
     orphan_check_count = len(orphan_checks)
-
+    without_source = tutordb((tutordb.monitutor_targets.type_id == None) &
+                             (tutordb.monitutor_checks.check_id == tutordb.monitutor_check_milestone.check_id) &
+                             (tutordb.monitutor_check_milestone.milestone_id == tutordb.monitutor_milestones.milestone_id) &
+                             (tutordb.monitutor_milestones.milestone_id == tutordb.monitutor_milestone_scenario.milestone_id)
+            ).select(
+            tutordb.monitutor_targets.ALL,
+            tutordb.monitutor_checks.ALL,
+            tutordb.monitutor_milestones.milestone_id,
+            tutordb.monitutor_milestone_scenario.scenario_id,
+            left=tutordb.monitutor_targets.on(tutordb.monitutor_checks.check_id ==
+                                              tutordb.monitutor_targets.check_id))
+    without_source_count = len(without_source)
     scenarios = tutordb(tutordb.monitutor_scenarios).select()
     form = SQLFORM(tutordb.monitutor_scenarios)
-    form.vars.initiated = False
     form.vars.hidden = True
     if form.accepts(request, session):
         session.flash = 'Record inserted.'
@@ -32,41 +40,9 @@ def view_scenarios():
                 orphan_milestones=orphan_milestones,
                 orphan_milestone_count=orphan_milestone_count,
                 orphan_check_count=orphan_check_count,
-                orphan_checks=orphan_checks)
-
-
-@auth.requires_membership('admin')
-def init_scenario():
-    scenario_id = request.vars.scenarioId
-    task_id = initializer.queue_task('init_scenario', group_name="init", pargs=[scenario_id])
-    return json.dumps({"taskId": task_id.id, "progress": 20})
-
-
-@auth.requires_membership('admin')
-def update_task_status():
-    """Queries tutordb for task status. When finished, it returns the status of the corresponding service"""
-    task_id = request.vars.taskId
-    task_info = initializer.task_status(int(task_id), output=True)
-    if task_info is not None:
-        status = task_info.scheduler_task.status
-        error = None
-    else:
-        status = "UNKNOWN TaskID: " + task_id
-        error  = "Couldn't find task"
-    if status == "QUEUED":
-        progress = 40
-    elif status == "ASSIGNED":
-        progress = 60
-    elif status == "RUNNING":
-        progress = 80
-    elif status == "COMPLETED":
-        progress = 100
-    else:
-        progress = 0
-        error = "STATUS: " + status
-
-    return json.dumps({"progress": progress, "error": error})
-
+                orphan_checks=orphan_checks,
+                without_source=without_source,
+                without_source_count=without_source_count)
 
 @auth.requires_membership('admin')
 def edit_scenario():
@@ -484,6 +460,11 @@ def edit_check():
         scenario_id = None
         milestone_id = None
 
+    attachment_form = SQLFORM(tutordb.monitutor_attachments,
+        showid=False,
+        formstyle="divs",
+        fields=["name", "producer","filter", "requires_status"])
+    attachment_form.vars.check_id = check_id
     form = SQLFORM(tutordb.monitutor_checks,
                    check_id,
                    showid=False,
@@ -492,8 +473,10 @@ def edit_check():
     if form.accepts(request, session):
         tutordb(tutordb.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
         response.flash = 'form accepted'
-
-    return dict(form=form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
+    if attachment_form.accepts(request, session):
+        response.flash = 'form accepted'
+        tutordb(tutordb.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
+    return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
 
 @auth.requires_membership('admin')
@@ -561,6 +544,39 @@ def view_target():
     return dict(targets=targets)
 
 
+@auth.requires_membership('admin')
+def view_attachment():
+    """Displays all information of a target"""
+    if len(request.args):
+        check_id = request.args(0, cast=int)
+    else:
+        check_id = None
+    attachments = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_attachments.check_id) &
+                          (tutordb.monitutor_checks.check_id == check_id)).select()
+    return dict(attachments=attachments)
+
+@auth.requires_membership('admin')
+def edit_attachment():
+    if len(request.args):
+        attachment_id = request.args(0, cast=int)
+    else:
+        attachment_id = None
+    form = SQLFORM(tutordb.monitutor_attachments,
+        attachment_id,
+        showid=False,
+        formstyle="divs",
+        fields=["name", "producer","filter", "requires_status"])
+    if form.accepts(request, session):
+        response.flash = 'form accepted'
+    return dict(form=form)
+
+@auth.requires_membership("admin")
+def delete_attachment():
+    """Removes a system from a check by deleting the target"""
+    attachment_id = request.vars.attachmentId
+    tutordb(tutordb.monitutor_attachments.attachment_id == attachment_id).delete()
+    return json.dumps(dict(attachment_id=attachment_id))
+
 @auth.requires_membership("admin")
 def delete_target():
     """Removes a system from a check by deleting the target"""
@@ -580,18 +596,6 @@ def delete_scenario():
     return json.dumps(dict(scenario_id=scenario_id))
 
 @auth.requires_membership("admin")
-def erase_scenario():
-    scenario_id = request.vars.scenarioId
-    for user in tutordb(tutordb.auth_user).select():
-        initializer.queue_task('drop_user_scenario', group_name="init", pargs=[user.username, scenario_id])
-        tutordb.scenario_user.update_or_insert((tutordb.scenario_user.scenario_id == scenario_id) &
-                                           (tutordb.scenario_user.user_id == user.id),
-                                            scenario_id=scenario_id,
-                                            user_id=user.id,
-                                            status="")
-    return json.dumps(dict(scenario_id=scenario_id))
-
-@auth.requires_membership("admin")
 def get_scenario():
     """Returns a json dict that exports a given scenario"""
     if len(request.args):
@@ -607,7 +611,6 @@ def get_scenario():
     scenario["description"] = scenario_table.description
     scenario["goal"] = scenario_table.goal
     scenario["hidden"] = True
-    scenario["initiated"] = False
     milestone_refs = []
     milestone_ref_table = tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).select()
     for milestone_ref_row in milestone_ref_table:
@@ -696,7 +699,6 @@ def upload_scenario():
             existing_scenario.display_name = scenario["display_name"]
             existing_scenario.goal = scenario["goal"]
             existing_scenario.description = scenario["description"]
-            existing_scenario.initiated = False
             existing_scenario.hidden = True
             existing_scenario.update_record()
             scenario_id = existing_scenario.scenario_id
@@ -706,7 +708,6 @@ def upload_scenario():
                                                       goal=scenario["goal"],
                                                       description=scenario["description"],
                                                       uuid=scenario["uuid"],
-                                                      initiated=False,
                                                       hidden=True)
         for milestone_ref in scenario["milestone_refs"]:
             milestone = milestone_ref["milestone"]

@@ -1,26 +1,42 @@
 <div class="row">
-    {{for row in available_data:}}
-        <div id="{{=row.data_id}}-show" class="col-md-6">
-                 <div class="panel panel-default">
-                     <div class="panel-heading">
-                         <a href="{{=URL('default','download', args=row.data)}}" >
-                            <i class='fa fa-download' style="float: right;"></i>
-                         </a>
-                         <h3 class="panel-title">
-                            {{=row.display_name}}
-                         </h3>
-                     </div>
-                     <div class="panel-body">
-                         <b>Name:</b>
-                            <br>
-                                {{=row.name}}
-                            <br>
-                         <b>Description:</b>
-                            <br>
-                                {{=row.description}}
-                            </br>
-                     </div>
-                 </div>
-             </div>
-    {{pass}}
+  {{for row in available_data:}}
+  <div id="{{=row.data_id}}-show" class="col-md-6 data-row">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="{{=URL('default','download', args=row.data)}}" >
+          <i class='fa fa-download' style="float: right;"></i>
+        </a>
+        <a class="button data-delete-button">
+          <i class='fa fa-trash' style="float: right; margin-right: 10px;" data-dataid="{{=row.data_id}}"></i>
+        </a>
+        <h3 class="panel-title">
+          {{=row.display_name}}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <b>Name:</b>
+        <br>
+        {{=row.name}}
+        <br>
+        <b>Description:</b>
+        <br>
+        {{=row.description}}
+        </br>
+      </div>
+    </div>
+  </div>
+  {{pass}}
 </div>
+<script>
+  (function(){
+    $(".data-delete-button").click(function(handler){
+      var dataId = $(handler.target).data("dataid");
+      $.get("{{=URL("manage_components", "delete_data")}}", {
+        dataId: dataId
+      }, function(data){
+        $("#"+dataId+"-show").remove();
+      });
+    });
+  })();
+</script>
+
