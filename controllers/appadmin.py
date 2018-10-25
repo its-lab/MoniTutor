@@ -550,7 +550,7 @@ def table_template(table):
     rows.append(TR(TD(FONT(table, _face=face_bold, _color=bgcolor),
                            _colspan=3, _cellpadding=cellpadding,
                            _align="center", _bgcolor=color)))
-    for row in tutordb[table]:
+    for row in db[table]:
         rows.append(TR(TD(FONT(row.name, _color=color, _face=face_bold),
                               _align="left", _cellpadding=cellpadding,
                               _border=border),
@@ -569,9 +569,9 @@ def bg_graph_model():
     graph = pgv.AGraph(layout='dot',  directed=True,  strict=False,  rankdir='LR')
 
     subgraphs = dict()
-    for tablename in tutordb.tables:
-        if hasattr(tutordb[tablename],'_meta_graphmodel'):
-            meta_graphmodel = tutordb[tablename]._meta_graphmodel
+    for tablename in db.tables:
+        if hasattr(db[tablename],'_meta_graphmodel'):
+            meta_graphmodel = db[tablename]._meta_graphmodel
         else:
             meta_graphmodel = dict(group=request.application, color='#ECECEC')
 
@@ -591,8 +591,8 @@ def bg_graph_model():
                     label=subgraphs[key]['meta']['group'])
 
 
-    for tablename in tutordb.tables:
-        for field in tutordb[tablename]:
+    for tablename in db.tables:
+        for field in db[tablename]:
             f_type = field.type
             if isinstance(f_type,str) and (
                 f_type.startswith('reference') or

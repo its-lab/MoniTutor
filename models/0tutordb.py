@@ -5,11 +5,11 @@ DATABASE_NAME = app_conf.take("monitutor_env.database_name")
 DATABASE_USER = app_conf.take("monitutor_env.database_user")
 DATABASE_PASSWORD = app_conf.take("monitutor_env.database_password")
 DATABASE_HOST = app_conf.take("monitutor_env.database_host")
-tutordb = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@" + DATABASE_HOST + "/" + DATABASE_NAME)
+db = DAL("postgres://" + DATABASE_USER + ":" + DATABASE_PASSWORD + "@" + DATABASE_HOST + "/" + DATABASE_NAME)
 
 from gluon.tools import Auth
 
-auth = Auth(tutordb)
+auth = Auth(db)
 
 auth.settings.extra_fields['auth_user']= [
         Field('hmac_secret', length=512, default=lambda:str(uuid.uuid4()).replace("-","")[:16]),
@@ -18,147 +18,101 @@ auth.settings.extra_fields['auth_user']= [
 
 auth.define_tables(username=True)
 
-if not tutordb.auth_group[1]:
-    tutordb.auth_group.insert(role="admin")
+if not db.auth_group[1]:
+    db.auth_group.insert(role="admin")
 
-tutordb.define_table('monitutor_scenarios',
+db.define_table('monitutor_scenarios',
     Field('scenario_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
-    Field('name', type='string', requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True),
+    Field('name', type='string', required=True),
     Field('description', type='text', required=True),
     Field('goal', type='text'),
-    Field('hidden', type='boolean', default=True),
-    Field('initiated', type='boolean', default=True))
+    Field('hidden', type='boolean', default=True))
 
-tutordb.define_table('monitutor_data',
+db.define_table('monitutor_data',
     Field('data_id', type='id'),
     Field('data', type='upload', required=True),
     Field('description', type='text'),
-    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True))
+    Field('name', type='string', required=True))
 
-tutordb.define_table('monitutor_scenario_data',
+db.define_table('monitutor_scenario_data',
     Field('scenario_data_id', type='id'),
     Field('scenario_id', 'reference monitutor_scenarios', required=True),
     Field('data_id', 'reference monitutor_data', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_data, '%(name)s')))
+          requires=IS_IN_DB(db, db.monitutor_data, '%(name)s')))
 
-tutordb.define_table('monitutor_milestones',
+db.define_table('monitutor_milestones',
     Field('milestone_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
-    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True),
-    Field('description', type='string'))
-
-tutordb.define_table('monitutor_milestone_scenario',
-    Field('milestone_scenario_id', type='id'),
-    Field('milestone_id', 'reference monitutor_milestones', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_milestones, '%(name)s')),
+    Field('name', type='string', required=True),
+    Field('description', type='string'),
+    Field('order', type='integer'),
+    Field('hidden', type='boolean', default=False),
     Field('scenario_id', 'reference monitutor_scenarios', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_scenarios, '%(name)s')),
-    Field('sequence_nr', type='integer'),
-    Field('dependency', 'reference monitutor_milestone_scenario',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_scenarios, '%(name)s')),
-    Field('hidden', type="boolean", default=False))
+          requires=IS_IN_DB(db, db.monitutor_scenarios, '%(name)s')))
 
-tutordb.define_table('monitutor_interpreters',
+db.define_table('monitutor_interpreters',
     Field('interpreter_id', type='id'),
-    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True),
+    Field('name', type='string', required=True),
     Field('path', type='string', required=True))
 
-tutordb.define_table('monitutor_programs',
+db.define_table('monitutor_programs',
     Field('program_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type='string', required=True),
     Field('code', type='text', required=True, requires=IS_LENGTH(655360)),
     Field('interpreter_id', 'reference monitutor_interpreters', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_interpreters, '%(name)s')))
+          requires=IS_IN_DB(db, db.monitutor_interpreters, '%(name)s')))
 
-tutordb.define_table('monitutor_checks',
+db.define_table('monitutor_systems',
+    Field('system_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
+    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
+    Field('display_name', type='string', required=True),
+    Field('description', type='string'))
+
+db.define_table('monitutor_checks',
     Field('check_id', type='id'),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
-    Field('name', type='string', required=True, requires=[IS_ALPHANUMERIC(), IS_NOT_IN_DB(tutordb,"monitutor_checks.name")]),
+    Field('name', type='string', required=True, requires=[IS_ALPHANUMERIC(), IS_NOT_IN_DB(db,"monitutor_checks.name")]),
     Field('display_name', type='string', required=True),
     Field('params', type='string'),
+    Field('hidden', type='boolean', default=False),
+    Field('order', type='integer'),
     Field('program_id', 'reference monitutor_programs', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_programs, '%(name)s')),
+          requires=IS_IN_DB(db, db.monitutor_programs, '%(name)s')),
+    Field('source_id', 'reference monitutor_systems', required=True,
+          requires=IS_IN_DB(db, db.monitutor_systems, '%(name)s')),
+    Field('dest_id', 'reference monitutor_systems',
+          requires=IS_IN_DB(db, db.monitutor_systems, '%(name)s')),
+    Field('milestone_id', 'reference monitutor_milestones', required=True,
+          requires=IS_IN_DB(db, db.monitutor_milestones, '%(name)s')),
     Field('hint', type="text"))
 
-tutordb.define_table('monitutor_attachments',
+db.define_table('monitutor_attachments',
     Field('attachment_id', type='id'),
     Field('name', type='string', required=True),
     Field('producer', type='text', required=True),
     Field('filter', type='text'),
     Field('requires_status', type='integer'),
     Field('check_id', 'reference monitutor_checks', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_checks, '%(name)s')))
+          requires=IS_IN_DB(db, db.monitutor_checks, '%(name)s')))
 
-tutordb.define_table('monitutor_check_milestone',
-    Field('check_milestone_id', type='id'),
-    Field('check_id', 'reference monitutor_checks', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_checks, '%(name)s')),
-    Field('milestone_id', 'reference monitutor_milestones', required=True,
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_milestones, '%(name)s')),
-    Field('flag_invis', type='integer', default=0),
-    Field('sequence_nr', type='integer'))
-
-tutordb.define_table('monitutor_systems',
-    Field('system_id', type='id'),
-    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
-    Field('hostname', type='string', required=True),
-    Field('ip4_address', type='blob'),
-    Field('ip6_address', type='blob'),
-    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True),
-    Field('description', type='string'))
-
-tutordb.define_table('monitutor_types',
-    Field('type_id', type='id'),
-    Field('name', type='string', required=True, requires=IS_ALPHANUMERIC()),
-    Field('display_name', type='string', required=True))
-
-if not tutordb(tutordb.monitutor_types.name == "source").select():
-    tutordb.monitutor_types.insert(name="source", display_name="Source")
-    tutordb.monitutor_types.insert(name="dest", display_name="Destination")
-
-tutordb.define_table('monitutor_targets',
-    Field('target_id', type='id'),
-    Field('system_id', 'reference monitutor_systems',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_systems, '%(name)s')),
-    Field('check_id', 'reference monitutor_checks',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_checks, '%(name)s')),
-    Field('type_id', 'reference monitutor_types',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_types, '%(name)s')))
-
-tutordb.define_table('scenario_user',
+db.define_table('scenario_user',
     Field('scenario_user_id', type="id"),
     Field('scenario_id', 'reference monitutor_scenarios', required=True),
     Field('user_id', 'reference auth_user', required=True),
     Field('passed', type="boolean", required=False, default=False))
 
-tutordb.define_table('monitutor_customvars',
+db.define_table('monitutor_customvars',
     Field('customvar_id', type="id", required=True),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type="string", required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type="string", required=True),
-    Field('value', type="string"))
-
-tutordb.define_table('monitutor_customvar_system', tutordb.monitutor_customvars,
+    Field('value', type="string"),
     Field('system_id', 'reference monitutor_systems',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_systems, '%(name)s')))
+          requires=IS_IN_DB(db, db.monitutor_systems, '%(name)s')))
 
-tutordb.define_table('monitutor_user_system',
-    Field('user_system_id', type="id"),
-    Field('system_id', 'reference monitutor_systems',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_systems, '%(name)s')),
-    Field('user_id', 'reference auth_user'),
-    Field('hostname', type='string'),
-    Field('ip4_address', type='blob'),
-    Field('ip6_address', type='blob'))
-
-tutordb.define_table('monitutor_customvar_user_system', tutordb.monitutor_customvars,
-    Field('system_id', 'reference monitutor_user_system',
-          requires=IS_IN_DB(tutordb, tutordb.monitutor_user_system, '%(name)s')))
+db.define_table('monitutor_user_customvars', db.monitutor_customvars,
+    Field('user_id', 'reference auth_user', required=True))
