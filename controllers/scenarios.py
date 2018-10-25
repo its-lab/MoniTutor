@@ -12,13 +12,13 @@ def view_available_scenarios():
     else:
         user_id = auth.user_id
     if auth.has_membership("admin"):
-        scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
+        scenarios = db().select(db.monitutor_scenarios.ALL)
     else:
-        scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
+        scenarios = db(db.monitutor_scenarios.hidden == False).select()
     passed = dict()
     for scenario in scenarios:
-        passed_rows = tutordb((tutordb.scenario_user.scenario_id==scenario.scenario_id)
-                               &(user_id == tutordb.scenario_user.user_id)).select()
+        passed_rows = db((db.scenario_user.scenario_id==scenario.scenario_id)
+                          &(user_id == db.scenario_user.user_id)).select()
         if passed_rows:
             passed[scenario.name] = passed_rows[0].passed
         else:
@@ -36,14 +36,14 @@ def edit_system():
     else:
         user_id = auth.user_id
         system_id = request.args(0, cast=str)
-    system = tutordb((tutordb.monitutor_user_system.user_id == user_id)&
-                     (tutordb.monitutor_user_system.system_id == system_id)).select()
+    system = db((db.monitutor_user_system.user_id == user_id)&
+                     (db.monitutor_user_system.system_id == system_id)).select()
     if len(system):
         system = system.first()
     else:
-        system = tutordb.monitutor_systems[system_id]
+        system = db.monitutor_systems[system_id]
 
-    user_system_form = SQLFORM(tutordb.monitutor_user_system, fields=["hostname"])
+    user_system_form = SQLFORM(db.monitutor_user_system, fields=["hostname"])
     ipv4_field  = LABEL('Ipv4 Address: '), INPUT(_name='ipv4',
             value=system.ip4_address, requires=IS_IPV4())
     ipv6_field  = LABEL('Ipv6 Address: '), INPUT(_name='ipv6',
@@ -54,9 +54,9 @@ def edit_system():
     user_system_form[0].insert(-1, ipv6_field)
 
     if user_system_form.validate():
-        system = tutordb((tutordb.monitutor_user_system.user_id ==
+        system = db((db.monitutor_user_system.user_id ==
             user_id)&
-                (tutordb.monitutor_user_system.system_id ==
+                (db.monitutor_user_system.system_id ==
                     system_id)).select()
         if len(system):
             system = system.first()
@@ -65,7 +65,7 @@ def edit_system():
             system.ip6_address = user_system_form.vars.ipv6
             system.update_record()
         else:
-            tutordb.monitutor_user_system.update_or_insert(
+            db.monitutor_user_system.update_or_insert(
                     system_id = system_id,
                     user_id = user_id,
                     hostname = user_system_form.vars.hostname,
@@ -88,27 +88,27 @@ def edit_systems():
         user_id = auth.user_id
 
     if scenario_id > 0:
-        scenario_systems = tutordb((tutordb.monitutor_milestone_scenario.scenario_id
+        scenario_systems = db((db.monitutor_milestone_scenario.scenario_id
                                 == scenario_id)&
-                               (tutordb.monitutor_checks.check_id ==
-                                tutordb.monitutor_check_milestone.check_id)&
-                               (tutordb.monitutor_targets.check_id ==
-                                tutordb.monitutor_checks.check_id)&
-                               (tutordb.monitutor_targets.check_id ==
-                                   tutordb.monitutor_checks.check_id)&
-                               (tutordb.monitutor_systems.system_id ==
-                                   tutordb.monitutor_targets.system_id)).select(
-                                           tutordb.monitutor_systems.display_name,
-                                           tutordb.monitutor_systems.description,
-                                           tutordb.monitutor_systems.system_id,
+                               (db.monitutor_checks.check_id ==
+                                db.monitutor_check_milestone.check_id)&
+                               (db.monitutor_targets.check_id ==
+                                db.monitutor_checks.check_id)&
+                               (db.monitutor_targets.check_id ==
+                                   db.monitutor_checks.check_id)&
+                               (db.monitutor_systems.system_id ==
+                                   db.monitutor_targets.system_id)).select(
+                                           db.monitutor_systems.display_name,
+                                           db.monitutor_systems.description,
+                                           db.monitutor_systems.system_id,
                                            distinct=True)
     else:
-        scenario_systems = tutordb(
-                               (tutordb.monitutor_systems.system_id ==
-                                   tutordb.monitutor_targets.system_id)).select(
-                                           tutordb.monitutor_systems.display_name,
-                                           tutordb.monitutor_systems.description,
-                                           tutordb.monitutor_systems.system_id,
+        scenario_systems = db(
+                               (db.monitutor_systems.system_id ==
+                                   db.monitutor_targets.system_id)).select(
+                                           db.monitutor_systems.display_name,
+                                           db.monitutor_systems.description,
+                                           db.monitutor_systems.system_id,
                                            distinct=True)
     return dict(scenario_systems = scenario_systems, user_id = user_id)
 
@@ -118,12 +118,12 @@ def toggle_scenario_done():
     username = request.vars.username
     user_id = request.vars.userId
     if user_id is None and username is not None:
-        user_id = tutordb(tutordb.auth_user.username == username).select().first().id
+        user_id = db(db.auth_user.username == username).select().first().id
     scenario_id = request.vars.scenarioId
-    scenario_user = tutordb((tutordb.scenario_user.user_id == user_id) &
-                            (tutordb.scenario_user.scenario_id == scenario_id)).select().first()
+    scenario_user = db((db.scenario_user.user_id == user_id) &
+                            (db.scenario_user.scenario_id == scenario_id)).select().first()
     if scenario_user is None:
-        tutordb.scenario_user.insert(scenario_id=scenario_id, user_id=user_id, passed=True)
+        db.scenario_user.insert(scenario_id=scenario_id, user_id=user_id, passed=True)
     else:
         scenario_user["passed"] = not scenario_user["passed"]
         scenario_user.update_record()
@@ -144,43 +144,43 @@ def progress():
     rabbit_mq_address = app_conf.take("monitutor_env.rabbit_mq_external_address")
     rabbit_mq_port = app_conf.take("monitutor_env.rabbit_mq_websocket_port")
     rabbit_mq_config = {"address": rabbit_mq_address, "port": rabbit_mq_port}
-    scenario = tutordb.monitutor_scenarios[scenario_id]
+    scenario = db.monitutor_scenarios[scenario_id]
 
-    hosts = tutordb((scenario_id == tutordb.monitutor_milestone_scenario.scenario_id) &
-                     (tutordb.monitutor_milestone_scenario.milestone_id ==
-                         tutordb.monitutor_milestones.milestone_id) &
-                     (tutordb.monitutor_check_milestone.milestone_id ==
-                         tutordb.monitutor_milestones.milestone_id) &
-                     (tutordb.monitutor_check_milestone.check_id ==
-                         tutordb.monitutor_checks.check_id) &
-                     (tutordb.monitutor_systems.system_id ==
-                         tutordb.monitutor_targets.system_id) &
-                     (tutordb.monitutor_checks.check_id ==
-                         tutordb.monitutor_targets.check_id)).select(
-                                 tutordb.monitutor_systems.system_id,
-                                 tutordb.monitutor_systems.display_name,
-                                 tutordb.monitutor_systems.name,
+    hosts = db((scenario_id == db.monitutor_milestone_scenario.scenario_id) &
+                     (db.monitutor_milestone_scenario.milestone_id ==
+                         db.monitutor_milestones.milestone_id) &
+                     (db.monitutor_check_milestone.milestone_id ==
+                         db.monitutor_milestones.milestone_id) &
+                     (db.monitutor_check_milestone.check_id ==
+                         db.monitutor_checks.check_id) &
+                     (db.monitutor_systems.system_id ==
+                         db.monitutor_targets.system_id) &
+                     (db.monitutor_checks.check_id ==
+                         db.monitutor_targets.check_id)).select(
+                                 db.monitutor_systems.system_id,
+                                 db.monitutor_systems.display_name,
+                                 db.monitutor_systems.name,
                                  distinct=True)
 
-    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
-                          tutordb.monitutor_milestone_scenario.milestone_id) &
-                         (tutordb.monitutor_milestone_scenario.scenario_id ==
-                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
-    data = tutordb((tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id) &
-                    (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select()
+    milestones = db((db.monitutor_milestones.milestone_id ==
+                          db.monitutor_milestone_scenario.milestone_id) &
+                         (db.monitutor_milestone_scenario.scenario_id ==
+                          scenario_id)).select(orderby=db.monitutor_milestone_scenario.sequence_nr)
+    data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
+                    (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
 
     checks = dict()
     for milestone in milestones:
-        check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id ==
+        check_milestone = db((db.monitutor_check_milestone.milestone_id ==
                                   milestone.monitutor_milestones.milestone_id) &
-                                  (tutordb.monitutor_check_milestone.check_id ==
-                                  tutordb.monitutor_checks.check_id) &
-                                  (tutordb.monitutor_systems.system_id ==
-                                   tutordb.monitutor_targets.system_id) &
-                                  (tutordb.monitutor_targets.type_id == 1) & # 1 = source
-                                  (tutordb.monitutor_checks.check_id ==
-                                   tutordb.monitutor_targets.check_id)).select(orderby=
-                                                                            tutordb.monitutor_check_milestone.sequence_nr)
+                                  (db.monitutor_check_milestone.check_id ==
+                                  db.monitutor_checks.check_id) &
+                                  (db.monitutor_systems.system_id ==
+                                   db.monitutor_targets.system_id) &
+                                  (db.monitutor_targets.type_id == 1) & # 1 = source
+                                  (db.monitutor_checks.check_id ==
+                                   db.monitutor_targets.check_id)).select(orderby=
+                                                                            db.monitutor_check_milestone.sequence_nr)
         checks[milestone.monitutor_milestones.milestone_id] = check_milestone
     scenario_info = {"description": scenario.description,
                      "display_name": scenario.display_name,
@@ -256,23 +256,23 @@ def put_check():
     scenario_name = request.vars.scenarioName
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
-    check_host_program = tutordb((tutordb.monitutor_checks.name == check_name) &
-        (tutordb.monitutor_targets.check_id == tutordb.monitutor_checks.check_id) &
-        (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-        (tutordb.monitutor_types.name == "source") &
-        (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
-        (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id ) &
-        (tutordb.monitutor_programs.interpreter_id == tutordb.monitutor_interpreters.interpreter_id)).select(
-            tutordb.monitutor_checks.name,
-            tutordb.monitutor_checks.params,
-            tutordb.monitutor_checks.check_id,
-            tutordb.monitutor_programs.name,
-            tutordb.monitutor_interpreters.path,
-            tutordb.monitutor_systems.name,
+    check_host_program = db((db.monitutor_checks.name == check_name) &
+        (db.monitutor_targets.check_id == db.monitutor_checks.check_id) &
+        (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
+        (db.monitutor_types.name == "source") &
+        (db.monitutor_targets.system_id == db.monitutor_systems.system_id) &
+        (db.monitutor_checks.program_id == db.monitutor_programs.program_id ) &
+        (db.monitutor_programs.interpreter_id == db.monitutor_interpreters.interpreter_id)).select(
+            db.monitutor_checks.name,
+            db.monitutor_checks.params,
+            db.monitutor_checks.check_id,
+            db.monitutor_programs.name,
+            db.monitutor_interpreters.path,
+            db.monitutor_systems.name,
             cache=(cache.ram, 360)).first()
-    check = tutordb(tutordb.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
+    check = db(db.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
             cache=(cache.ram, 3600)).first()
-    attachments = tutordb(tutordb.monitutor_attachments.check_id == check.check_id).select(cache=(cache.ram, 360))
+    attachments = db(db.monitutor_attachments.check_id == check.check_id).select(cache=(cache.ram, 360))
     check = { "name": check.name,
               "program": check_host_program.monitutor_programs.name,
               "params": __substitute_vars(check.params,
@@ -324,16 +324,16 @@ def __get_variable_value(variable, check_id, username):
     attribute = None
     if len(system_type) is 2:
         attribute = ''.join(variable.split("."))[1:]
-    system = tutordb((tutordb.monitutor_targets.check_id == check_id) &
-                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id) &
-                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-                      (tutordb.monitutor_types.name == system_type)
-                      ).select(tutordb.monitutor_systems.ALL, cache=(cache.ram, 360), cacheable=True).first()
+    system = db((db.monitutor_targets.check_id == check_id) &
+                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id) &
+                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
+                      (db.monitutor_types.name == system_type)
+                      ).select(db.monitutor_systems.ALL, cache=(cache.ram, 360), cacheable=True).first()
     # check if the system was customized
-    user_system = tutordb((system.system_id ==
-                           tutordb.monitutor_user_system.system_id) &
-                          (username == tutordb.auth_user.username) &
-                          (tutordb.auth_user.id == tutordb.monitutor_user_system.user_id)
+    user_system = db((system.system_id ==
+                           db.monitutor_user_system.system_id) &
+                          (username == db.auth_user.username) &
+                          (db.auth_user.id == db.monitutor_user_system.user_id)
                          ).select(cache=(cache.ram, 360), cacheable=True)
     if len(user_system):
         user_system = user_system.first()
@@ -348,8 +348,8 @@ def __get_variable_value(variable, check_id, username):
         parameter = str(system.ip6_address)
     else:
         # in this case the attribute is a custom attribute
-        custom_attributes = tutordb((tutordb.monitutor_customvar_system.name == attribute) &
-                                    (tutordb.monitutor_customvar_system.system_id ==
+        custom_attributes = db((db.monitutor_customvar_system.name == attribute) &
+                                    (db.monitutor_customvar_system.system_id ==
                                      system.system_id)
                                     ).select(cache=(cache.ram, 360), cacheable=True)
         if len(custom_attributes):

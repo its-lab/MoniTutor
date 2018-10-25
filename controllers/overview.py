@@ -1,11 +1,11 @@
 @auth.requires_membership("admin")
 def view_scenarios():
     """Display available scenarios"""
-    count = tutordb.monitutor_scenarios.scenario_id.count()
+    count = db.monitutor_scenarios.scenario_id.count()
     if auth.has_membership("admin"):
-        scenarios = tutordb().select(tutordb.monitutor_scenarios.ALL)
+        scenarios = db().select(db.monitutor_scenarios.ALL)
     else:
-        scenarios = tutordb(tutordb.monitutor_scenarios.hidden == False).select()
+        scenarios = db(db.monitutor_scenarios.hidden == False).select()
     active_students = dict()
     for scenario in scenarios:
         active_students[scenario.name] = len(resultdb.active_students(scenario.name))
@@ -17,24 +17,24 @@ def view_progress():
     if len(request.args) is 0:
         redirect(URL('default','index'))
     scenario_id = request.args(0, cast=int)
-    scenario = tutordb.monitutor_scenarios[scenario_id]
+    scenario = db.monitutor_scenarios[scenario_id]
     active_students = resultdb.active_students(scenario.name)
-    checks = tutordb((tutordb.monitutor_milestone_scenario.scenario_id == scenario_id) &
-                     (tutordb.monitutor_milestone_scenario.milestone_id ==
-                      tutordb.monitutor_milestones.milestone_id) &
-                     (tutordb.monitutor_milestones.milestone_id ==
-                      tutordb.monitutor_check_milestone.milestone_id) &
-                     (tutordb.monitutor_check_milestone.check_id ==
-                      tutordb.monitutor_checks.check_id) &
-                     (tutordb.monitutor_check_milestone.flag_invis == False) &
-                     (tutordb.monitutor_milestone_scenario.hidden == False)
+    checks = db((db.monitutor_milestone_scenario.scenario_id == scenario_id) &
+                     (db.monitutor_milestone_scenario.milestone_id ==
+                      db.monitutor_milestones.milestone_id) &
+                     (db.monitutor_milestones.milestone_id ==
+                      db.monitutor_check_milestone.milestone_id) &
+                     (db.monitutor_check_milestone.check_id ==
+                      db.monitutor_checks.check_id) &
+                     (db.monitutor_check_milestone.flag_invis == False) &
+                     (db.monitutor_milestone_scenario.hidden == False)
                      ).select()
     check_amount = len(checks)
     student_progress = dict()
     for student in active_students:
         student_progress[student] = {"successful_check_amount": resultdb.successful_checks_count(scenario.name, student)}
-    passed_students = tutordb((tutordb.scenario_user.user_id == tutordb.auth_user.id)
-                               &(tutordb.scenario_user.passed == True)).select()
+    passed_students = db((db.scenario_user.user_id == db.auth_user.id)
+                               &(db.scenario_user.passed == True)).select()
     for student in passed_students:
         if student.auth_user.username not in student_progress:
             student_progress[student.auth_user.username] = {"successful_check_amount": 0}

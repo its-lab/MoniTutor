@@ -3,34 +3,34 @@ import json
 @auth.requires_membership('admin')
 def view_scenarios():
     """Displays all Scenarios and global scenario information"""
-    orphan_milestones = tutordb((tutordb.monitutor_milestone_scenario.milestone_id == None)).select(
-        tutordb.monitutor_milestone_scenario.ALL,
-        tutordb.monitutor_milestones.ALL,
-        left=[tutordb.monitutor_milestone_scenario.on(tutordb.monitutor_milestone_scenario.milestone_id ==
-                                                      tutordb.monitutor_milestones.milestone_id)]
+    orphan_milestones = db((db.monitutor_milestone_scenario.milestone_id == None)).select(
+        db.monitutor_milestone_scenario.ALL,
+        db.monitutor_milestones.ALL,
+        left=[db.monitutor_milestone_scenario.on(db.monitutor_milestone_scenario.milestone_id ==
+                                                      db.monitutor_milestones.milestone_id)]
 
         )
     orphan_milestone_count = len(orphan_milestones)
-    orphan_checks = tutordb(tutordb.monitutor_check_milestone.check_id == None).select(
-        tutordb.monitutor_check_milestone.ALL, tutordb.monitutor_checks.ALL,
-        left=tutordb.monitutor_check_milestone.on(tutordb.monitutor_check_milestone.check_id ==
-                                             tutordb.monitutor_checks.check_id)
+    orphan_checks = db(db.monitutor_check_milestone.check_id == None).select(
+        db.monitutor_check_milestone.ALL, db.monitutor_checks.ALL,
+        left=db.monitutor_check_milestone.on(db.monitutor_check_milestone.check_id ==
+                                             db.monitutor_checks.check_id)
         )
     orphan_check_count = len(orphan_checks)
-    without_source = tutordb((tutordb.monitutor_targets.type_id == None) &
-                             (tutordb.monitutor_checks.check_id == tutordb.monitutor_check_milestone.check_id) &
-                             (tutordb.monitutor_check_milestone.milestone_id == tutordb.monitutor_milestones.milestone_id) &
-                             (tutordb.monitutor_milestones.milestone_id == tutordb.monitutor_milestone_scenario.milestone_id)
+    without_source = db((db.monitutor_targets.type_id == None) &
+                             (db.monitutor_checks.check_id == db.monitutor_check_milestone.check_id) &
+                             (db.monitutor_check_milestone.milestone_id == db.monitutor_milestones.milestone_id) &
+                             (db.monitutor_milestones.milestone_id == db.monitutor_milestone_scenario.milestone_id)
             ).select(
-            tutordb.monitutor_targets.ALL,
-            tutordb.monitutor_checks.ALL,
-            tutordb.monitutor_milestones.milestone_id,
-            tutordb.monitutor_milestone_scenario.scenario_id,
-            left=tutordb.monitutor_targets.on(tutordb.monitutor_checks.check_id ==
-                                              tutordb.monitutor_targets.check_id))
+            db.monitutor_targets.ALL,
+            db.monitutor_checks.ALL,
+            db.monitutor_milestones.milestone_id,
+            db.monitutor_milestone_scenario.scenario_id,
+            left=db.monitutor_targets.on(db.monitutor_checks.check_id ==
+                                              db.monitutor_targets.check_id))
     without_source_count = len(without_source)
-    scenarios = tutordb(tutordb.monitutor_scenarios).select()
-    form = SQLFORM(tutordb.monitutor_scenarios)
+    scenarios = db(db.monitutor_scenarios).select()
+    form = SQLFORM(db.monitutor_scenarios)
     form.vars.hidden = True
     if form.accepts(request, session):
         session.flash = 'Record inserted.'
@@ -48,10 +48,10 @@ def view_scenarios():
 def edit_scenario():
     """Displays a form to edit a given scenario"""
     scenario_id = request.args(0) or redirect(URL('index'))
-    form=SQLFORM(tutordb.monitutor_scenarios, tutordb.monitutor_scenarios(scenario_id))
+    form=SQLFORM(db.monitutor_scenarios, db.monitutor_scenarios(scenario_id))
     if form.accepts(request, session):
         form.process()
-        return dict(form=SQLFORM(tutordb.monitutor_scenarios, tutordb.monitutor_scenarios(scenario_id)))
+        return dict(form=SQLFORM(db.monitutor_scenarios, db.monitutor_scenarios(scenario_id)))
     return dict(form=form)
 
 
@@ -59,14 +59,14 @@ def edit_scenario():
 def hide_scenario():
     """Sets the value of a given Scenarios hidden field to True"""
     scenario_id = request.vars.scenarioId
-    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=True)
+    db(db.monitutor_scenarios.scenario_id == scenario_id).update(hidden=True)
     return json.dumps({"scenarioId": scenario_id})
 
 @auth.requires_membership('admin')
 def show_scenario():
     """Sets the value of a given Scenarios hidden field to False"""
     scenario_id = request.vars.scenarioId
-    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).update(hidden=False)
+    db(db.monitutor_scenarios.scenario_id == scenario_id).update(hidden=False)
     return json.dumps({"scenarioId": scenario_id})
 
 
@@ -78,19 +78,19 @@ def view_scenario():
     else:
         redirect(URL(''))
         scenario_id = None
-    scenario_data_query = (tutordb.monitutor_scenarios.scenario_id == scenario_id)
-    scenario = tutordb(scenario_data_query).select(tutordb.monitutor_scenarios.ALL,
-                                                   tutordb.monitutor_scenario_data.ALL,
-                                                   left=tutordb.monitutor_scenario_data.on(
-            tutordb.monitutor_scenarios.scenario_id == tutordb.monitutor_scenario_data.scenario_id))
+    scenario_data_query = (db.monitutor_scenarios.scenario_id == scenario_id)
+    scenario = db(scenario_data_query).select(db.monitutor_scenarios.ALL,
+                                                   db.monitutor_scenario_data.ALL,
+                                                   left=db.monitutor_scenario_data.on(
+            db.monitutor_scenarios.scenario_id == db.monitutor_scenario_data.scenario_id))
 
-    data = tutordb((tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id) &
-                   (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select()
+    data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
+                   (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
 
-    milestones = tutordb((tutordb.monitutor_milestones.milestone_id ==
-                          tutordb.monitutor_milestone_scenario.milestone_id) &
-                         (tutordb.monitutor_milestone_scenario.scenario_id ==
-                          scenario_id)).select(orderby=tutordb.monitutor_milestone_scenario.sequence_nr)
+    milestones = db((db.monitutor_milestones.milestone_id ==
+                          db.monitutor_milestone_scenario.milestone_id) &
+                         (db.monitutor_milestone_scenario.scenario_id ==
+                          scenario_id)).select(orderby=db.monitutor_milestone_scenario.sequence_nr)
 
     return dict(scenario=scenario, data=data, milestones=milestones)
 
@@ -105,14 +105,14 @@ def view_milestone():
         redirect(URL(''))
         milestone_id = None
         scenario_id = None
-    scenario = tutordb.monitutor_scenarios[scenario_id]
-    milestone = tutordb.monitutor_milestones[milestone_id]
-    check_milestone = tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
-                              (tutordb.monitutor_check_milestone.check_id == tutordb.monitutor_checks.check_id) &
-                              (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id) &
-                              (tutordb.monitutor_programs.interpreter_id ==
-                               tutordb.monitutor_interpreters.interpreter_id)).select(
-        orderby=tutordb.monitutor_check_milestone.sequence_nr)
+    scenario = db.monitutor_scenarios[scenario_id]
+    milestone = db.monitutor_milestones[milestone_id]
+    check_milestone = db((db.monitutor_check_milestone.milestone_id == milestone_id) &
+                              (db.monitutor_check_milestone.check_id == db.monitutor_checks.check_id) &
+                              (db.monitutor_checks.program_id == db.monitutor_programs.program_id) &
+                              (db.monitutor_programs.interpreter_id ==
+                               db.monitutor_interpreters.interpreter_id)).select(
+        orderby=db.monitutor_check_milestone.sequence_nr)
     return dict(milestone=milestone,
                 checks=check_milestone,
                 scenarioid=scenario_id,
@@ -128,21 +128,21 @@ def add_check():
     else:
         redirect(URL('default', 'index'))
         milestone_id = None
-    form = SQLFORM(tutordb.monitutor_checks)
-    systems = tutordb(tutordb.monitutor_systems).select()
-    for type_row in tutordb(tutordb.monitutor_types).select():
+    form = SQLFORM(db.monitutor_checks)
+    systems = db(db.monitutor_systems).select()
+    for type_row in db(db.monitutor_types).select():
         field = INPUT(_name=type_row.name, _type='radio')
         form[0].insert(-1, field)
 
     if form.validate():
 
-        newid = tutordb.monitutor_checks.insert(name=form.vars.name,
+        newid = db.monitutor_checks.insert(name=form.vars.name,
                                             display_name=form.vars.display_name,
                                             program_id=form.vars.program_id,
                                             params=form.vars.params,
                                             hint=form.vars.hint)
 
-        tutordb.monitutor_check_milestone.insert(check_id=newid,
+        db.monitutor_check_milestone.insert(check_id=newid,
                                                  milestone_id=milestone_id,
                                                  flag_invis=0,
                                                  sequence_nr=0)
@@ -151,19 +151,19 @@ def add_check():
         for system in systems:
             systemids.append(system.system_id)
         if form.vars.source is not "" and int(form.vars.source) in systemids:
-            type_id = tutordb(tutordb.monitutor_types.name == "source").select().first()
+            type_id = db(db.monitutor_types.name == "source").select().first()
             type_id = type_id.type_id
-            tutordb.monitutor_targets.insert(check_id = newid,
+            db.monitutor_targets.insert(check_id = newid,
                                              system_id = form.vars.source,
                                              type_id = type_id)
         if form.vars.dest is not "" and int(form.vars.dest) in systemids:
-            type_id = tutordb(tutordb.monitutor_types.name == "dest").select().first()
+            type_id = db(db.monitutor_types.name == "dest").select().first()
             type_id = type_id.type_id
-            tutordb.monitutor_targets.insert(check_id = newid,
+            db.monitutor_targets.insert(check_id = newid,
                                              system_id = form.vars.dest,
                                              type_id = type_id)
         response.flash = "Form accepted. Added check "+form.vars.display_name+"."
-    return dict(form=form, systems=systems, types=tutordb(tutordb.monitutor_types).select())
+    return dict(form=form, systems=systems, types=db(db.monitutor_types).select())
 
 
 @auth.requires_membership('admin')
@@ -174,7 +174,7 @@ def add_existing_check():
     else:
         redirect(URL('default','index'))
         milestone_id = None
-    checks = tutordb(tutordb.monitutor_checks).select(orderby=tutordb.monitutor_checks.display_name)
+    checks = db(db.monitutor_checks).select(orderby=db.monitutor_checks.display_name)
     input_list = DIV()
     for check in checks:
         input_field = DIV(
@@ -201,7 +201,7 @@ def add_existing_check():
 
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb.monitutor_check_milestone.insert(check_id=form.vars.add,
+        db.monitutor_check_milestone.insert(check_id=form.vars.add,
                                                  milestone_id=milestone_id,
                                                  flag_invis=False,
                                                  sequence_nr=0)
@@ -216,7 +216,7 @@ def edit_milestone_form():
     else:
         redirect(URL('default','index'))
         milestone_id = None
-    current_milestone = tutordb.monitutor_milestones[milestone_id]
+    current_milestone = db.monitutor_milestones[milestone_id]
     form = FORM(
         DIV(
             SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
@@ -246,7 +246,7 @@ def edit_milestone_form():
     )
     if form.accepts(request, session):
         response.flash = "form accepted"
-        tutordb(tutordb.monitutor_milestones.milestone_id == milestone_id).validate_and_update(name=form.vars.name,
+        db(db.monitutor_milestones.milestone_id == milestone_id).validate_and_update(name=form.vars.name,
                                             display_name=form.vars.display_name,
                                             description=form.vars.description)
 
@@ -259,7 +259,7 @@ def remove_check():
     milestone_id = request.args(0, cast=int)
     check_milestone_id = request.args(1, cast=int)
     scenario_id = request.args(2, cast=int)
-    del tutordb.monitutor_check_milestone[check_milestone_id]
+    del db.monitutor_check_milestone[check_milestone_id]
 
     if scenario_id:
         redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
@@ -272,7 +272,7 @@ def hide_check():
     check_milestone_id = request.args(1, cast=int)
     invis = request.args(2, cast=int)
     scenario_id = request.args(3, cast=int)
-    tutordb.monitutor_check_milestone[check_milestone_id] = dict(flag_invis=invis)
+    db.monitutor_check_milestone[check_milestone_id] = dict(flag_invis=invis)
 
     if scenario_id:
         redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
@@ -286,12 +286,12 @@ def lower_check():
     lower = request.args(2, cast=int)
     scenario_id = request.args(3, cast=int)
 
-    row = tutordb.monitutor_check_milestone[check_milestone_id]
+    row = db.monitutor_check_milestone[check_milestone_id]
     sequence = row.sequence_nr
     if lower == 1:
-        tutordb.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence-1)
+        db.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence-1)
     else:
-        tutordb.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence+1)
+        db.monitutor_check_milestone[check_milestone_id] = dict(sequence_nr=sequence+1)
 
     if scenario_id:
         redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
@@ -302,7 +302,7 @@ def remove_milestone():
     """Removes the reference between a given scenario and a milestone"""
     milestone_scenario_id = request.args(0, cast=int)
     scenario_id = request.args(1, cast=int)
-    del tutordb.monitutor_milestone_scenario[milestone_scenario_id]
+    del db.monitutor_milestone_scenario[milestone_scenario_id]
     if scenario_id:
         redirect(URL('manage_scenarios', 'view_scenario.html', args=[scenario_id]))
 
@@ -313,7 +313,7 @@ def hide_milestone():
     milestone_scenario_id = request.args(0, cast=int)
     invis = request.args(1, cast=int)
     scenario_id = request.args(2, cast=int)
-    tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(hidden=invis)
+    db.monitutor_milestone_scenario[milestone_scenario_id] = dict(hidden=invis)
     if scenario_id:
         redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
 
@@ -325,12 +325,12 @@ def lower_milestone():
     lower = request.args(1, cast=int)
     scenario_id = request.args(2, cast=int)
 
-    row = tutordb.monitutor_milestone_scenario[milestone_scenario_id]
+    row = db.monitutor_milestone_scenario[milestone_scenario_id]
     sequence = row.sequence_nr
     if lower == 1:
-        tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence-1)
+        db.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence-1)
     else:
-        tutordb.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence+1)
+        db.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence+1)
     if scenario_id:
         redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
 
@@ -338,8 +338,8 @@ def lower_milestone():
 @auth.requires_membership('admin')
 def delete_milestone():
     milestone_id = request.vars.milestoneId
-    milestonerefs = tutordb(tutordb.monitutor_check_milestone.milestone_id == milestone_id)
-    milestone = tutordb(tutordb.monitutor_milestones.milestone_id == milestone_id)
+    milestonerefs = db(db.monitutor_check_milestone.milestone_id == milestone_id)
+    milestone = db(db.monitutor_milestones.milestone_id == milestone_id)
     milestonerefs.delete()
     milestone.delete()
     return json.dumps({milestone_id: True})
@@ -348,8 +348,8 @@ def delete_milestone():
 @auth.requires_membership('admin')
 def delete_check():
     check_id = request.vars.checkId
-    check = tutordb(tutordb.monitutor_checks.check_id == check_id)
-    targets = tutordb(tutordb.monitutor_targets.check_id == check_id)
+    check = db(db.monitutor_checks.check_id == check_id)
+    targets = db(db.monitutor_targets.check_id == check_id)
     targets.delete()
     check.delete()
     return json.dumps({check_id: True})
@@ -364,9 +364,9 @@ def add_milestone():
         scenario_id = None
         redirect(URL('default','index'))
 
-    scenario_milestone = tutordb((tutordb.monitutor_milestone_scenario.milestone_id ==
-                                  tutordb.monitutor_milestones.milestone_id) &
-                                 (tutordb.monitutor_milestone_scenario.scenario_id == scenario_id)).select()
+    scenario_milestone = db((db.monitutor_milestone_scenario.milestone_id ==
+                                  db.monitutor_milestones.milestone_id) &
+                                 (db.monitutor_milestone_scenario.scenario_id == scenario_id)).select()
 
     options = OPTION("No dependency", _value=None, _selected="selected")
     for row in scenario_milestone:
@@ -389,16 +389,16 @@ def add_milestone():
 
     if form.accepts(request, session):
         response.flash = "form accepted"
-        newid = tutordb.monitutor_milestones.insert(name=form.vars.name,
+        newid = db.monitutor_milestones.insert(name=form.vars.name,
                                             display_name=form.vars.display_name,
                                             description=form.vars.description)
         if scenario_id is not None:
             if form.vars.dependency is None:
-                tutordb.monitutor_milestone_scenario.insert(milestone_id=long(newid),
+                db.monitutor_milestone_scenario.insert(milestone_id=long(newid),
                                                         scenario_id=long(scenario_id),
                                                         sequence_nr=int(0))
             else:
-                tutordb.monitutor_milestone_scenario.insert(milestone_id=long(newid),
+                db.monitutor_milestone_scenario.insert(milestone_id=long(newid),
                                                         scenario_id=long(scenario_id),
                                                         sequence_nr=int(0),
                                                         dependency=form.vars.dependency)
@@ -413,7 +413,7 @@ def add_milestone_ref():
     else:
         redirect(URL('default','index'))
         scenario_id = None
-    milestones = tutordb(tutordb.monitutor_milestones).select()
+    milestones = db(db.monitutor_milestones).select()
     input_list = DIV()
     for milestone in milestones:
         input_field = DIV(
@@ -436,7 +436,7 @@ def add_milestone_ref():
     )
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb.monitutor_milestone_scenario.insert(milestone_id=form.vars.add,
+        db.monitutor_milestone_scenario.insert(milestone_id=form.vars.add,
                                     scenario_id=scenario_id,
                                     hidden=False,
                                     sequence_nr=0)
@@ -460,22 +460,22 @@ def edit_check():
         scenario_id = None
         milestone_id = None
 
-    attachment_form = SQLFORM(tutordb.monitutor_attachments,
+    attachment_form = SQLFORM(db.monitutor_attachments,
         showid=False,
         formstyle="divs",
         fields=["name", "producer","filter", "requires_status"])
     attachment_form.vars.check_id = check_id
-    form = SQLFORM(tutordb.monitutor_checks,
+    form = SQLFORM(db.monitutor_checks,
                    check_id,
                    showid=False,
                    formstyle="divs",
                    fields=["name", "display_name", "program_id","params", "hint"])
     if form.accepts(request, session):
-        tutordb(tutordb.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
+        db(db.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
         response.flash = 'form accepted'
     if attachment_form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb(tutordb.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
+        db(db.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
     return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
 
@@ -487,18 +487,18 @@ def add_target():
     else:
         redirect(URL('default','index'))
         check_id = None
-    targets = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
-                      (tutordb.monitutor_targets.check_id == check_id) &
-                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)).select()
-    check = tutordb(tutordb.monitutor_checks.check_id == check_id).select()
+    targets = db((db.monitutor_checks.check_id == db.monitutor_targets.check_id) &
+                      (db.monitutor_targets.check_id == check_id) &
+                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
+                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id)).select()
+    check = db(db.monitutor_checks.check_id == check_id).select()
     type_options = OPTION(" ")
-    types = tutordb(tutordb.monitutor_types).select()
+    types = db(db.monitutor_types).select()
     for type in types:
         type_options += OPTION(XML(type.display_name),
                           _value=type.type_id)
     sys_option = OPTION(" ")
-    syss = tutordb(tutordb.monitutor_systems).select()
+    syss = db(db.monitutor_systems).select()
     for sys in syss:
         sys_option += OPTION(XML(sys.display_name),
                           _value=sys.system_id)
@@ -513,14 +513,14 @@ def add_target():
         _id="newtarget"
     )
     if new_target.accepts(request, session):
-        validate_db = tutordb((tutordb.monitutor_targets.check_id == check_id) &
-                              (tutordb.monitutor_targets.system_id == new_target.vars.system) &
-                              (tutordb.monitutor_targets.type_id == new_target.vars.type)
+        validate_db = db((db.monitutor_targets.check_id == check_id) &
+                              (db.monitutor_targets.system_id == new_target.vars.system) &
+                              (db.monitutor_targets.type_id == new_target.vars.type)
                               ).select()
         if len(validate_db):
             response.flash = "duplicate entry!"
         else:
-            tutordb.monitutor_targets.insert(
+            db.monitutor_targets.insert(
                                     check_id=check_id,
                                     system_id=new_target.vars.system,
                                     type_id=new_target.vars.type,
@@ -537,10 +537,10 @@ def view_target():
         check_id = request.args(0, cast=int)
     else:
         check_id = None
-    targets = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_targets.check_id) &
-                      (tutordb.monitutor_targets.check_id == check_id) &
-                      (tutordb.monitutor_targets.type_id == tutordb.monitutor_types.type_id) &
-                      (tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)).select()
+    targets = db((db.monitutor_checks.check_id == db.monitutor_targets.check_id) &
+                      (db.monitutor_targets.check_id == check_id) &
+                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
+                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id)).select()
     return dict(targets=targets)
 
 
@@ -551,8 +551,8 @@ def view_attachment():
         check_id = request.args(0, cast=int)
     else:
         check_id = None
-    attachments = tutordb((tutordb.monitutor_checks.check_id == tutordb.monitutor_attachments.check_id) &
-                          (tutordb.monitutor_checks.check_id == check_id)).select()
+    attachments = db((db.monitutor_checks.check_id == db.monitutor_attachments.check_id) &
+                          (db.monitutor_checks.check_id == check_id)).select()
     return dict(attachments=attachments)
 
 @auth.requires_membership('admin')
@@ -561,7 +561,7 @@ def edit_attachment():
         attachment_id = request.args(0, cast=int)
     else:
         attachment_id = None
-    form = SQLFORM(tutordb.monitutor_attachments,
+    form = SQLFORM(db.monitutor_attachments,
         attachment_id,
         showid=False,
         formstyle="divs",
@@ -574,14 +574,14 @@ def edit_attachment():
 def delete_attachment():
     """Removes a system from a check by deleting the target"""
     attachment_id = request.vars.attachmentId
-    tutordb(tutordb.monitutor_attachments.attachment_id == attachment_id).delete()
+    db(db.monitutor_attachments.attachment_id == attachment_id).delete()
     return json.dumps(dict(attachment_id=attachment_id))
 
 @auth.requires_membership("admin")
 def delete_target():
     """Removes a system from a check by deleting the target"""
     target_id = request.vars.targetId
-    tutordb(tutordb.monitutor_targets.target_id == target_id).delete()
+    db(db.monitutor_targets.target_id == target_id).delete()
     return json.dumps(dict(target_id=target_id))
 
 
@@ -589,10 +589,10 @@ def delete_target():
 def delete_scenario():
     """Deletes a given Scenario and all its references"""
     scenario_id = request.vars.scenarioId
-    tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).delete()
-    tutordb(tutordb.monitutor_scenario_data.scenario_id == scenario_id).delete()
-    tutordb(tutordb.scenario_user.scenario_id == scenario_id).delete()
-    tutordb(tutordb.monitutor_scenarios.scenario_id == scenario_id).delete()
+    db(db.monitutor_milestone_scenario.scenario_id == scenario_id).delete()
+    db(db.monitutor_scenario_data.scenario_id == scenario_id).delete()
+    db(db.scenario_user.scenario_id == scenario_id).delete()
+    db(db.monitutor_scenarios.scenario_id == scenario_id).delete()
     return json.dumps(dict(scenario_id=scenario_id))
 
 @auth.requires_membership("admin")
@@ -603,7 +603,7 @@ def get_scenario():
     else:
         scenario_id = 0
         redirect(URL("default","index"))
-    scenario_table = tutordb.monitutor_scenarios[scenario_id]
+    scenario_table = db.monitutor_scenarios[scenario_id]
     scenario = {}
     scenario["name"] = scenario_table.name
     scenario["uuid"] = scenario_table.uuid
@@ -612,25 +612,25 @@ def get_scenario():
     scenario["goal"] = scenario_table.goal
     scenario["hidden"] = True
     milestone_refs = []
-    milestone_ref_table = tutordb(tutordb.monitutor_milestone_scenario.scenario_id == scenario_id).select()
+    milestone_ref_table = db(db.monitutor_milestone_scenario.scenario_id == scenario_id).select()
     for milestone_ref_row in milestone_ref_table:
         milestone_ref = dict()
         milestone_ref["hidden"] = milestone_ref_row.hidden
         milestone_ref["sequence_nr"] = milestone_ref_row.sequence_nr
         milestone_ref["dependency"] = milestone_ref_row.dependency
-        milestone_row = tutordb.monitutor_milestones[milestone_ref_row.milestone_id]
+        milestone_row = db.monitutor_milestones[milestone_ref_row.milestone_id]
         milestone = dict()
         milestone["name"] = milestone_row.name
         milestone["uuid"] = milestone_row.uuid
         milestone["display_name"] = milestone_row.display_name
         milestone["description"] = milestone_row.description
         check_refs = []
-        check_ref_table = tutordb(tutordb.monitutor_check_milestone.milestone_id == milestone_ref_row.milestone_id).select()
+        check_ref_table = db(db.monitutor_check_milestone.milestone_id == milestone_ref_row.milestone_id).select()
         for check_ref_row in check_ref_table:
             check_ref = dict()
             check_ref["flag_invis"] = check_ref_row.flag_invis
             check_ref["sequence_nr"] = check_ref_row.sequence_nr
-            check_row = tutordb.monitutor_checks[check_ref_row.check_id]
+            check_row = db.monitutor_checks[check_ref_row.check_id]
             check = dict()
             check["name"] = check_row.name
             check["uuid"] = check_row.uuid
@@ -638,20 +638,20 @@ def get_scenario():
             check["params"] = check_row.params
             check["hint"] = check_row.hint
             targets = []
-            target_table = tutordb(tutordb.monitutor_targets.check_id == check_row.check_id).select()
+            target_table = db(db.monitutor_targets.check_id == check_row.check_id).select()
             for target_row in target_table:
                 target = dict()
-                type_row = tutordb.monitutor_types[target_row.type_id]
+                type_row = db.monitutor_types[target_row.type_id]
                 target["type"] = {"name": type_row.name, "display_name": type_row.display_name}
                 system = dict()
-                system_row = tutordb.monitutor_systems[target_row.system_id]
+                system_row = db.monitutor_systems[target_row.system_id]
                 system["name"] = system_row.name
                 system["uuid"] = system_row.uuid
                 system["display_name"] = system_row.display_name
                 system["hostname"] = system_row.hostname
                 system["description"] = system_row.description
                 customvars = []
-                customvar_table = tutordb(tutordb.monitutor_customvar_system.system_id == system_row.system_id).select()
+                customvar_table = db(db.monitutor_customvar_system.system_id == system_row.system_id).select()
                 for customvar_row in customvar_table:
                     customvar = {
                         "name": customvar_row.name,
@@ -664,13 +664,13 @@ def get_scenario():
                 target["system"] = system
                 targets.append(target)
             check["targets"] = targets
-            program_row = tutordb.monitutor_programs[check_row.program_id]
+            program_row = db.monitutor_programs[check_row.program_id]
             program = dict()
             program["name"] = program_row.name
             program["uuid"] = program_row.uuid
             program["display_name"] = program_row.display_name
             program["code"] = program_row.code
-            interpreter_row = tutordb.monitutor_interpreters[program_row.interpreter_id]
+            interpreter_row = db.monitutor_interpreters[program_row.interpreter_id]
             program["interpreter"] = {
                 "name": interpreter_row.name,
                 "display_name": interpreter_row.display_name,
@@ -692,7 +692,7 @@ def upload_scenario():
                   INPUT(_type="submit", _form="form2"), _id="form2")
     if form2.accepts(request, session):
         scenario = json.loads(form2.vars.scenariofile.value)
-        existing_scenario = tutordb(tutordb.monitutor_scenarios.uuid == scenario["uuid"]).select()
+        existing_scenario = db(db.monitutor_scenarios.uuid == scenario["uuid"]).select()
         if(len(existing_scenario)):
             existing_scenario = existing_scenario.first()
             existing_scenario.name = scenario["name"]
@@ -703,7 +703,7 @@ def upload_scenario():
             existing_scenario.update_record()
             scenario_id = existing_scenario.scenario_id
         else:
-            scenario_id = tutordb.monitutor_scenarios.insert(name=scenario["name"],
+            scenario_id = db.monitutor_scenarios.insert(name=scenario["name"],
                                                       display_name=scenario["display_name"],
                                                       goal=scenario["goal"],
                                                       description=scenario["description"],
@@ -711,7 +711,7 @@ def upload_scenario():
                                                       hidden=True)
         for milestone_ref in scenario["milestone_refs"]:
             milestone = milestone_ref["milestone"]
-            existing_milestone = tutordb(tutordb.monitutor_milestones.uuid == milestone["uuid"]).select()
+            existing_milestone = db(db.monitutor_milestones.uuid == milestone["uuid"]).select()
             if(len(existing_milestone)):
                 existing_milestone = existing_milestone.first()
                 existing_milestone.name = milestone["name"]
@@ -720,13 +720,13 @@ def upload_scenario():
                 existing_milestone.update_record()
                 milestone_id = existing_milestone.milestone_id
             else:
-                milestone_id = tutordb.monitutor_milestones.insert(name=milestone["name"],
+                milestone_id = db.monitutor_milestones.insert(name=milestone["name"],
                                                                    description = milestone["description"],
                                                                    display_name = milestone["display_name"],
                                                                    uuid = milestone["uuid"])
-            if len(tutordb((tutordb.monitutor_milestone_scenario.milestone_id == milestone_id)&
-                           (tutordb.monitutor_milestone_scenario.scenario_id == scenario_id)).select()) < 1:
-                tutordb.monitutor_milestone_scenario.insert(milestone_id=milestone_id,
+            if len(db((db.monitutor_milestone_scenario.milestone_id == milestone_id)&
+                           (db.monitutor_milestone_scenario.scenario_id == scenario_id)).select()) < 1:
+                db.monitutor_milestone_scenario.insert(milestone_id=milestone_id,
                                                             scenario_id=scenario_id,
                                                             sequence_nr=milestone_ref["sequence_nr"],
                                                             dependency=milestone_ref["dependency"],
@@ -735,11 +735,11 @@ def upload_scenario():
                 check = check_ref["check"]
                 program = check["program"]
                 interpreter = program["interpreter"]
-                tutordb.monitutor_interpreters.update_or_insert(name=interpreter["name"],
+                db.monitutor_interpreters.update_or_insert(name=interpreter["name"],
                                                display_name=interpreter["display_name"],
                                                path=interpreter["path"])
-                interpreter_id = tutordb.monitutor_interpreters(name=interpreter["name"]).interpreter_id
-                existing_program = tutordb(tutordb.monitutor_programs.uuid == program["uuid"]).select()
+                interpreter_id = db.monitutor_interpreters(name=interpreter["name"]).interpreter_id
+                existing_program = db(db.monitutor_programs.uuid == program["uuid"]).select()
                 if(len(existing_program)):
                     existing_program = existing_program.first()
                     existing_program.code = program["code"]
@@ -749,12 +749,12 @@ def upload_scenario():
                     existing_program.update_record()
                     program_id = existing_program.program_id
                 else:
-                    program_id = tutordb.monitutor_programs.insert(name = program["name"],
+                    program_id = db.monitutor_programs.insert(name = program["name"],
                                                                    display_name = program["display_name"],
                                                                    code = program["code"],
                                                                    interpreter_id = interpreter_id,
                                                                    uuid = program["uuid"])
-                existing_check = tutordb(tutordb.monitutor_checks.uuid == check["uuid"]).select()
+                existing_check = db(db.monitutor_checks.uuid == check["uuid"]).select()
                 if len(existing_check):
                     existing_check = existing_check.first()
                     existing_check.name = check["name"]
@@ -765,7 +765,7 @@ def upload_scenario():
                     existing_check.update_record()
                     check_id = existing_check.check_id
                 else:
-                    check_id = tutordb.monitutor_checks.insert(name = check["name"],
+                    check_id = db.monitutor_checks.insert(name = check["name"],
                                                                display_name = check["display_name"],
                                                                hint = check["hint"],
                                                                params = check["params"],
@@ -774,7 +774,7 @@ def upload_scenario():
                 for target in check["targets"]:
                     system = target["system"]
                     type_var = target["type"]
-                    existing_system = tutordb(tutordb.monitutor_systems.uuid == system["uuid"]).select()
+                    existing_system = db(db.monitutor_systems.uuid == system["uuid"]).select()
                     if len(existing_system):
                         existing_system = existing_system.first()
                         existing_system.name = system["name"]
@@ -784,23 +784,23 @@ def upload_scenario():
                         existing_system.update_record()
                         system_id = existing_system.system_id
                     else:
-                        system_id = tutordb.monitutor_systems.insert(name = system["name"],
+                        system_id = db.monitutor_systems.insert(name = system["name"],
                                                                       display_name = system["display_name"],
                                                                       hostname = system["hostname"],
                                                                       description = system["description"],
                                                                       uuid = system["uuid"])
-                    tutordb.monitutor_types.update_or_insert(name=type_var["name"],
+                    db.monitutor_types.update_or_insert(name=type_var["name"],
                                                              display_name=type_var["display_name"])
-                    type_id = tutordb(tutordb.monitutor_types.name ==
+                    type_id = db(db.monitutor_types.name ==
                             type_var["name"]).select().first().type_id
-                    if len(tutordb((tutordb.monitutor_targets.type_id == type_id) &
-                                   (tutordb.monitutor_targets.check_id == check_id) &
-                                   (tutordb.monitutor_targets.system_id == system_id)).select()) < 1:
-                        tutordb.monitutor_targets.insert(type_id = type_id,
+                    if len(db((db.monitutor_targets.type_id == type_id) &
+                                   (db.monitutor_targets.check_id == check_id) &
+                                   (db.monitutor_targets.system_id == system_id)).select()) < 1:
+                        db.monitutor_targets.insert(type_id = type_id,
                                                          system_id = system_id,
                                                          check_id = check_id)
                     for customvar in system["customvars"]:
-                        existing_customvars=tutordb(tutordb.monitutor_customvar_system.uuid==customvar["uuid"]).select()
+                        existing_customvars=db(db.monitutor_customvar_system.uuid==customvar["uuid"]).select()
                         if len(existing_customvars):
                             existing_customvars = existing_customvars.first()
                             existing_customvars.name = customvar["name"]
@@ -809,21 +809,21 @@ def upload_scenario():
                             existing_customvars.system_id = system_id
                             existing_customvars.update_record()
                         else:
-                            tutordb.monitutor_customvar_system.insert(name = customvar["name"],
+                            db.monitutor_customvar_system.insert(name = customvar["name"],
                                                                       display_name = customvar["display_name"],
                                                                       value = customvar["value"],
                                                                       system_id = system_id,
                                                                       uuid = customvar["uuid"])
-                    if len(tutordb((tutordb.monitutor_targets.system_id == system_id)&
-                           (tutordb.monitutor_targets.check_id == check_id)&
-                           (tutordb.monitutor_targets.type_id ==
+                    if len(db((db.monitutor_targets.system_id == system_id)&
+                           (db.monitutor_targets.check_id == check_id)&
+                           (db.monitutor_targets.type_id ==
                                type_id)).select())<1:
-                        tutordb.monitutor_targets.insert(system_id = system_id,
+                        db.monitutor_targets.insert(system_id = system_id,
                                                          check_id = check_id,
                                                          type_id = type_id)
-                if len(tutordb((tutordb.monitutor_check_milestone.milestone_id == milestone_id) &
-                               (tutordb.monitutor_check_milestone.check_id == check_id)).select()) < 1:
-                    tutordb.monitutor_check_milestone.insert(check_id = check_id,
+                if len(db((db.monitutor_check_milestone.milestone_id == milestone_id) &
+                               (db.monitutor_check_milestone.check_id == check_id)).select()) < 1:
+                    db.monitutor_check_milestone.insert(check_id = check_id,
                                                              milestone_id = milestone_id,
                                                              flag_invis = check_ref["flag_invis"],
                                                              sequence_nr = check_ref["sequence_nr"])

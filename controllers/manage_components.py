@@ -4,7 +4,7 @@ import json
 @auth.requires_membership('admin')
 def add_data():
     """Displays a form to upload Data"""
-    add_data_form = SQLFORM(tutordb.monitutor_data)
+    add_data_form = SQLFORM(db.monitutor_data)
     if add_data_form.process().accepted:
         session.flash = 'Record inserted.'
         redirect(URL())
@@ -14,14 +14,14 @@ def add_data():
 @auth.requires_membership('admin')
 def view_data():
     """Displays available data"""
-    available_data = tutordb(tutordb.monitutor_data).select()
+    available_data = db(db.monitutor_data).select()
     return dict(available_data=available_data)
 
 @auth.requires_membership('admin')
 def delete_data():
     data_id = request.vars.dataId
-    tutordb(tutordb.monitutor_scenario_data.data_id == data_id).delete()
-    tutordb(tutordb.monitutor_data.data_id == data_id).delete()
+    db(db.monitutor_scenario_data.data_id == data_id).delete()
+    db(db.monitutor_data.data_id == data_id).delete()
     return json.dumps(dict(data_id=data_id))
 
 @auth.requires_membership('admin')
@@ -32,17 +32,17 @@ def attach_data():
     else:
         redirect(URL(''))
 
-    scenario_query = (tutordb.monitutor_scenarios.scenario_id == scenario_id)
-    scenario = tutordb(scenario_query).select()
+    scenario_query = (db.monitutor_scenarios.scenario_id == scenario_id)
+    scenario = db(scenario_query).select()
 
-    available_data = tutordb().select(
-        tutordb.monitutor_scenario_data.ALL, tutordb.monitutor_data.ALL,
-        left=tutordb.monitutor_data.on(
-            tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id)
+    available_data = db().select(
+        db.monitutor_scenario_data.ALL, db.monitutor_data.ALL,
+        left=db.monitutor_data.on(
+            db.monitutor_data.data_id == db.monitutor_scenario_data.data_id)
     )
-    assigned = tutordb((tutordb.monitutor_scenario_data.data_id == tutordb.monitutor_data.data_id)
-                        & (tutordb.monitutor_scenario_data.scenario_id == scenario_id)).select(
-                        tutordb.monitutor_data.ALL, tutordb.monitutor_scenario_data.ALL)
+    assigned = db((db.monitutor_scenario_data.data_id == db.monitutor_data.data_id)
+                        & (db.monitutor_scenario_data.scenario_id == scenario_id)).select(
+                        db.monitutor_data.ALL, db.monitutor_scenario_data.ALL)
 
     inputlist = DIV()
     already_assigned = []
@@ -60,7 +60,7 @@ def attach_data():
         inputlist += inputfield
         already_assigned.append(row.monitutor_data.data_id)
 
-    for row in tutordb(tutordb.monitutor_data).select():
+    for row in db(db.monitutor_data).select():
         if row.data_id not in already_assigned:
             inputfield=DIV(
                     DIV(
@@ -87,10 +87,10 @@ def attach_data():
     if form.accepts(request, session):
         response.flash = "form accepted"
 
-        ids_to_be_removed = tutordb((tutordb.monitutor_scenario_data.scenario_data_id != None) & (tutordb.monitutor_scenario_data.scenario_id == scenario_id) ).select(
-        tutordb.monitutor_scenario_data.ALL, tutordb.monitutor_data.ALL,
-        left=tutordb.monitutor_scenario_data.on(
-            tutordb.monitutor_data.data_id == tutordb.monitutor_scenario_data.data_id)
+        ids_to_be_removed = db((db.monitutor_scenario_data.scenario_data_id != None) & (db.monitutor_scenario_data.scenario_id == scenario_id) ).select(
+        db.monitutor_scenario_data.ALL, db.monitutor_data.ALL,
+        left=db.monitutor_scenario_data.on(
+            db.monitutor_data.data_id == db.monitutor_scenario_data.data_id)
         )
 
         if form.vars.add is None:
@@ -101,11 +101,11 @@ def attach_data():
         for row in ids_to_be_removed:
             if str(row.monitutor_scenario_data.scenario_data_id) not in form.vars.remove:
                 # Delete relation
-                del tutordb.monitutor_scenario_data[row.monitutor_scenario_data.scenario_data_id]
+                del db.monitutor_scenario_data[row.monitutor_scenario_data.scenario_data_id]
 
         for newentry in form.vars.add:
             # Add relation
-            tutordb.monitutor_scenario_data.insert(scenario_id=scenario_id, data_id=long(newentry))
+            db.monitutor_scenario_data.insert(scenario_id=scenario_id, data_id=long(newentry))
 
         redirect(URL(args=scenario_id))
 
@@ -115,18 +115,18 @@ def attach_data():
 @auth.requires_membership('admin')
 def view_components():
     """Displays an overview over all configured components and possible issues"""
-    data = tutordb(tutordb.monitutor_data).select()
-    interpreter = tutordb(tutordb.monitutor_interpreters).select()
-    programs = tutordb(tutordb.monitutor_programs).select(orderby=tutordb.monitutor_programs.id)
-    unused_systems = tutordb(tutordb.monitutor_targets.target_id == None).select(
-        tutordb.monitutor_systems.ALL,
-        tutordb.monitutor_targets.ALL,
-        left=tutordb.monitutor_targets.on(tutordb.monitutor_targets.system_id == tutordb.monitutor_systems.system_id)
+    data = db(db.monitutor_data).select()
+    interpreter = db(db.monitutor_interpreters).select()
+    programs = db(db.monitutor_programs).select(orderby=db.monitutor_programs.id)
+    unused_systems = db(db.monitutor_targets.target_id == None).select(
+        db.monitutor_systems.ALL,
+        db.monitutor_targets.ALL,
+        left=db.monitutor_targets.on(db.monitutor_targets.system_id == db.monitutor_systems.system_id)
     )
-    unused_programs = tutordb(tutordb.monitutor_checks.check_id == None).select(
-        tutordb.monitutor_programs.ALL,
-        tutordb.monitutor_checks.ALL,
-        left=tutordb.monitutor_checks.on(tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id)
+    unused_programs = db(db.monitutor_checks.check_id == None).select(
+        db.monitutor_programs.ALL,
+        db.monitutor_checks.ALL,
+        left=db.monitutor_checks.on(db.monitutor_checks.program_id == db.monitutor_programs.program_id)
     )
     broken_files = {}
     for file in data:
@@ -139,7 +139,7 @@ def view_components():
 @auth.requires_membership('admin')
 def add_interp():
     """Form to add an interpreter"""
-    form2=SQLFORM(tutordb.monitutor_interpreters)
+    form2=SQLFORM(db.monitutor_interpreters)
     if form2.process().accepted:
         session.flash = 'Record inserted.'
         redirect(URL())
@@ -149,17 +149,17 @@ def add_interp():
 @auth.requires_membership('admin')
 def view_interp():
     """Displays all configured interpreters"""
-    interpreters = tutordb(tutordb.monitutor_interpreters).select()
+    interpreters = db(db.monitutor_interpreters).select()
     return dict(interpreters=interpreters)
 
 
 @auth.requires_membership('admin')
 def view_systems():
     """Displays all configured Systems"""
-    systems = tutordb(tutordb.monitutor_systems).select()
+    systems = db(db.monitutor_systems).select()
     system_customvars = {}
     for system in systems:
-        customvars = tutordb(tutordb.monitutor_customvar_system.system_id == system.system_id).select()
+        customvars = db(db.monitutor_customvar_system.system_id == system.system_id).select()
         if len(customvars):
             var_list = []
             for customvar in customvars:
@@ -176,8 +176,8 @@ def view_system():
     else:
         redirect(URL('default','index'))
         system_id = None
-    system = tutordb.monitutor_systems[system_id]
-    system_customvars = tutordb(tutordb.monitutor_customvar_system.system_id == system_id).select()
+    system = db.monitutor_systems[system_id]
+    system_customvars = db(db.monitutor_customvar_system.system_id == system_id).select()
 
     return dict(system=system, system_customvars=system_customvars)
 
@@ -192,7 +192,7 @@ def edit_system():
     else:
         redirect(URL(''))
         system_id = None
-    system = tutordb.monitutor_systems[system_id]
+    system = db.monitutor_systems[system_id]
 
     form = FORM(
         DIV(
@@ -221,7 +221,7 @@ def edit_system():
     )
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb(tutordb.monitutor_systems.system_id == system_id).validate_and_update(name=form.vars.name,
+        db(db.monitutor_systems.system_id == system_id).validate_and_update(name=form.vars.name,
                                     display_name=form.vars.display_name,
                                     hostname=form.vars.hostname,
                                     ip4_address=form.vars.ip4_address,
@@ -241,7 +241,7 @@ def edit_customvar():
 
     else:
         customvar_id = None
-    customvar = tutordb.monitutor_customvar_system[customvar_id]
+    customvar = db.monitutor_customvar_system[customvar_id]
     form = FORM(
         DIV(
             DIV(
@@ -267,7 +267,7 @@ def edit_customvar():
     )
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb(tutordb.monitutor_customvar_system.id ==
+        db(db.monitutor_customvar_system.id ==
                 customvar_id).validate_and_update(name=form.vars.name,
                                                   display_name=form.vars.display_name,
                                                   value=form.vars.value)
@@ -279,7 +279,7 @@ def edit_customvar():
 @auth.requires_membership('admin')
 def view_programs():
     """Displays all available programs"""
-    programs = tutordb(tutordb.monitutor_programs).select(orderby=tutordb.monitutor_programs.id)
+    programs = db(db.monitutor_programs).select(orderby=db.monitutor_programs.id)
     return dict(programs=programs)
 
 
@@ -291,7 +291,7 @@ def view_program():
     else:
         redirect(URL('index'))
         program_id = None
-    program = tutordb.monitutor_programs[program_id]
+    program = db.monitutor_programs[program_id]
     form = FORM(
         XML('<b>Edit code:</b>'), BR(),
         DIV(
@@ -307,7 +307,7 @@ def view_program():
     )
     if form.accepts(request, session):
         response.flash = "form accepted"
-        tutordb(tutordb.monitutor_programs.program_id == program_id).validate_and_update(
+        db(db.monitutor_programs.program_id == program_id).validate_and_update(
                 code=form.vars.code
             )
         redirect(URL(args=[program_id]))
@@ -318,8 +318,8 @@ def view_program():
 @auth.requires_membership('admin')
 def add_program():
     """Adds a program to the program table"""
-    form = SQLFORM(tutordb.monitutor_programs)
-    interpreters = tutordb(tutordb.monitutor_interpreters).select()
+    form = SQLFORM(db.monitutor_programs)
+    interpreters = db(db.monitutor_interpreters).select()
     if form.process().accepted:
         session.flash = 'Record inserted.'
         redirect(URL())
@@ -332,7 +332,7 @@ def add_program():
 @auth.requires_membership('admin')
 def add_system():
     """Form to add a system to the system table"""
-    systems = tutordb(tutordb.monitutor_systems).select()
+    systems = db(db.monitutor_systems).select()
     form = FORM(
         DIV(
           SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
@@ -359,7 +359,7 @@ def add_system():
 
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb.monitutor_systems.insert(name=form.vars.name,
+        db.monitutor_systems.insert(name=form.vars.name,
                                     display_name=form.vars.display_name,
                                     hostname=form.vars.hostname,
                                     ip4_address=form.vars.ip4_address,
@@ -399,7 +399,7 @@ def add_customvar():
     )
     if customvar_form.accepts(request, session):
         response.flash = 'form accepted'
-        tutordb.monitutor_customvar_system.insert(name=customvar_form.vars.varname,
+        db.monitutor_customvar_system.insert(name=customvar_form.vars.varname,
                                     display_name=customvar_form.vars.display_varname,
                                     value=customvar_form.vars.value,
                                     system_id=customvar_form.vars.system_id)
@@ -409,6 +409,6 @@ def add_customvar():
 @auth.requires_membership('admin')
 def delete_system():
     system_id = request.vars.systemId
-    tutordb(tutordb.monitutor_targets.system_id == system_id).delete()
-    tutordb(tutordb.monitutor_systems.system_id == system_id).delete()
+    db(db.monitutor_targets.system_id == system_id).delete()
+    db(db.monitutor_systems.system_id == system_id).delete()
     return json.dumps(dict(system_id=system_id))

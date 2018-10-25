@@ -66,7 +66,7 @@ def edit_user():
     else:
         user_id = auth.user_id
 
-    edit_user_form = SQLFORM(tutordb.auth_user, user_id, upload=URL('download'))
+    edit_user_form = SQLFORM(db.auth_user, user_id, upload=URL('download'))
     if edit_user_form.process().accepted:
         response.flash = 'form accepted'
     elif edit_user_form.errors:
