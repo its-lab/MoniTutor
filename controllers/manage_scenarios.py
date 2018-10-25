@@ -3,57 +3,25 @@ import json
 @auth.requires_membership('admin')
 def view_scenarios():
     """Displays all Scenarios and global scenario information"""
-    orphan_milestones = db((db.monitutor_milestone_scenario.milestone_id == None)).select(
-        db.monitutor_milestone_scenario.ALL,
-        db.monitutor_milestones.ALL,
-        left=[db.monitutor_milestone_scenario.on(db.monitutor_milestone_scenario.milestone_id ==
-                                                      db.monitutor_milestones.milestone_id)]
-
-        )
-    orphan_milestone_count = len(orphan_milestones)
-    orphan_checks = db(db.monitutor_check_milestone.check_id == None).select(
-        db.monitutor_check_milestone.ALL, db.monitutor_checks.ALL,
-        left=db.monitutor_check_milestone.on(db.monitutor_check_milestone.check_id ==
-                                             db.monitutor_checks.check_id)
-        )
-    orphan_check_count = len(orphan_checks)
-    without_source = db((db.monitutor_targets.type_id == None) &
-                             (db.monitutor_checks.check_id == db.monitutor_check_milestone.check_id) &
-                             (db.monitutor_check_milestone.milestone_id == db.monitutor_milestones.milestone_id) &
-                             (db.monitutor_milestones.milestone_id == db.monitutor_milestone_scenario.milestone_id)
-            ).select(
-            db.monitutor_targets.ALL,
-            db.monitutor_checks.ALL,
-            db.monitutor_milestones.milestone_id,
-            db.monitutor_milestone_scenario.scenario_id,
-            left=db.monitutor_targets.on(db.monitutor_checks.check_id ==
-                                              db.monitutor_targets.check_id))
-    without_source_count = len(without_source)
     scenarios = db(db.monitutor_scenarios).select()
-    form = SQLFORM(db.monitutor_scenarios)
-    form.vars.hidden = True
-    if form.accepts(request, session):
+    new_scenario_form = SQLFORM(db.monitutor_scenarios)
+    new_scenario_form.vars.hidden = True
+    if new_scenario_form.accepts(request, session):
         session.flash = 'Record inserted.'
-        redirect(URL())
-    return dict(scenarios=scenarios,
-                form=form,
-                orphan_milestones=orphan_milestones,
-                orphan_milestone_count=orphan_milestone_count,
-                orphan_check_count=orphan_check_count,
-                orphan_checks=orphan_checks,
-                without_source=without_source,
-                without_source_count=without_source_count)
+        redirect(URL("manage_scenarios", "view_scenarios"))
+    return dict(scenarios=scenarios, new_scenario_form=new_scenario_form)
 
 @auth.requires_membership('admin')
 def edit_scenario():
     """Displays a form to edit a given scenario"""
     scenario_id = request.args(0) or redirect(URL('index'))
-    form=SQLFORM(db.monitutor_scenarios, db.monitutor_scenarios(scenario_id))
-    if form.accepts(request, session):
-        form.process()
+    edit_scenario_form = SQLFORM(db.monitutor_scenarios,
+                                 db.monitutor_scenarios(scenario_id))
+    if edit_scenario_form.accepts(request, session):
+        session.flash = 'Scenario updated'
+        edit_scenario_form.process()
         return dict(form=SQLFORM(db.monitutor_scenarios, db.monitutor_scenarios(scenario_id)))
-    return dict(form=form)
-
+    return dict(form=edit_scenario_form)
 
 @auth.requires_membership('admin')
 def hide_scenario():
@@ -69,31 +37,24 @@ def show_scenario():
     db(db.monitutor_scenarios.scenario_id == scenario_id).update(hidden=False)
     return json.dumps({"scenarioId": scenario_id})
 
-
 @auth.requires_membership('admin')
 def view_scenario():
     """Displays an overview over the scenario, its attached data and the associated milestones."""
     if len(request.args):
         scenario_id = request.args(0, cast=int)
     else:
-        redirect(URL(''))
-        scenario_id = None
+        redirect(URL('manage_scenarios', 'view_scenarios'))
     scenario_data_query = (db.monitutor_scenarios.scenario_id == scenario_id)
-    scenario = db(scenario_data_query).select(db.monitutor_scenarios.ALL,
-                                                   db.monitutor_scenario_data.ALL,
-                                                   left=db.monitutor_scenario_data.on(
+    scenario = db(scenario_data_query).select(
+        db.monitutor_scenarios.ALL,
+        db.monitutor_scenario_data.ALL,
+        left = db.monitutor_scenario_data.on(
             db.monitutor_scenarios.scenario_id == db.monitutor_scenario_data.scenario_id))
-
     data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
-                   (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
-
-    milestones = db((db.monitutor_milestones.milestone_id ==
-                          db.monitutor_milestone_scenario.milestone_id) &
-                         (db.monitutor_milestone_scenario.scenario_id ==
-                          scenario_id)).select(orderby=db.monitutor_milestone_scenario.sequence_nr)
-
+              (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
+    milestones = db((db.monitutor_milestones.scenario_id == scenario_id).select(
+        orderby=db.monitutor_milestone_scenario.sequence_nr)
     return dict(scenario=scenario, data=data, milestones=milestones)
-
 
 @auth.requires_membership('admin')
 def view_milestone():
@@ -102,19 +63,12 @@ def view_milestone():
         milestone_id = request.args(0, cast=int)
         scenario_id = request.args(1, cast=int)
     else:
-        redirect(URL(''))
-        milestone_id = None
-        scenario_id = None
+        redirect(URL('manage_scenarios', 'view_scenarios'))
     scenario = db.monitutor_scenarios[scenario_id]
     milestone = db.monitutor_milestones[milestone_id]
-    check_milestone = db((db.monitutor_check_milestone.milestone_id == milestone_id) &
-                              (db.monitutor_check_milestone.check_id == db.monitutor_checks.check_id) &
-                              (db.monitutor_checks.program_id == db.monitutor_programs.program_id) &
-                              (db.monitutor_programs.interpreter_id ==
-                               db.monitutor_interpreters.interpreter_id)).select(
-        orderby=db.monitutor_check_milestone.sequence_nr)
+    checks = __db_get_checks(milestone_id = milestone_id)
     return dict(milestone=milestone,
-                checks=check_milestone,
+                checks=checks,
                 scenarioid=scenario_id,
                 milestoneid=milestone_id,
                 scenario=scenario)
@@ -128,42 +82,12 @@ def add_check():
     else:
         redirect(URL('default', 'index'))
         milestone_id = None
-    form = SQLFORM(db.monitutor_checks)
-    systems = db(db.monitutor_systems).select()
-    for type_row in db(db.monitutor_types).select():
-        field = INPUT(_name=type_row.name, _type='radio')
-        form[0].insert(-1, field)
-
-    if form.validate():
-
-        newid = db.monitutor_checks.insert(name=form.vars.name,
-                                            display_name=form.vars.display_name,
-                                            program_id=form.vars.program_id,
-                                            params=form.vars.params,
-                                            hint=form.vars.hint)
-
-        db.monitutor_check_milestone.insert(check_id=newid,
-                                                 milestone_id=milestone_id,
-                                                 flag_invis=0,
-                                                 sequence_nr=0)
-        ## TODO: dynamic types
-        systemids = []
-        for system in systems:
-            systemids.append(system.system_id)
-        if form.vars.source is not "" and int(form.vars.source) in systemids:
-            type_id = db(db.monitutor_types.name == "source").select().first()
-            type_id = type_id.type_id
-            db.monitutor_targets.insert(check_id = newid,
-                                             system_id = form.vars.source,
-                                             type_id = type_id)
-        if form.vars.dest is not "" and int(form.vars.dest) in systemids:
-            type_id = db(db.monitutor_types.name == "dest").select().first()
-            type_id = type_id.type_id
-            db.monitutor_targets.insert(check_id = newid,
-                                             system_id = form.vars.dest,
-                                             type_id = type_id)
-        response.flash = "Form accepted. Added check "+form.vars.display_name+"."
-    return dict(form=form, systems=systems, types=db(db.monitutor_types).select())
+    add_check_form = SQLFORM(db.monitutor_checks)
+    add_check_form.vars.milestone_id = milestone_id
+    add_check_form.vars.hidden = False
+    if add_check_form.accepts(request, session):
+        response.flash = "Form accepted. Added check "+form.vars.diplay_name+"."
+    return dict(form=add_check_form)
 
 
 @auth.requires_membership('admin')
@@ -173,39 +97,24 @@ def add_existing_check():
         milestone_id = request.args(0, cast=int)
     else:
         redirect(URL('default','index'))
-        milestone_id = None
-    checks = db(db.monitutor_checks).select(orderby=db.monitutor_checks.display_name)
-    input_list = DIV()
-    for check in checks:
-        input_field = DIV(
-                        DIV(
-                            SPAN(
-                                INPUT(_type='radio', _name="add", _value=check.check_id)
-                                , _class="input-group-addon"
-                            ),
-                            DIV(
-                                str(check.display_name[:33]), _class="form-control"
-                            ),
-                            _class="input-group"
-                        ),
-                        _class="col-lg-4", _style="margin-bottom: 5px"
-        )
-        input_list += input_field
-    form = FORM(
-        FIELDSET(
-            input_list
-            ), BR(),
-            INPUT(_type='submit'),
-        _action="#"
-        )
-
-    if form.accepts(request, session):
-        response.flash = 'form accepted'
-        db.monitutor_check_milestone.insert(check_id=form.vars.add,
-                                                 milestone_id=milestone_id,
-                                                 flag_invis=False,
-                                                 sequence_nr=0)
-    return dict(form=form)
+    check_form = SQLFORM.factory(
+        Field('name',
+              type='string',
+              requires=[IS_ALPHANUMERIC(),
+                        IS_NOT_IN_DB(db,"monitutor_checks.name")]),
+        Field('check', 'reference monitutor_checks',
+              requires=IS_IN_DB(db, db.monitutor_checks, '%(name)s')))
+    if check_form.validates(request, session):
+        check = db.monitutor.checks[check_form.vars.check]
+        db.monitutor_checks.insert(name=check_form.vars.name,
+                                   milestone_id=milestone_id,
+                                   display_name=check.display_name,
+                                   params=check.params,
+                                   program_id=check.program_id,
+                                   source_id=check.source_id,
+                                   dest_id=check.dest_id,
+                                   hint=check.hint)
+    return dict(form=check_form)
 
 
 @auth.requires_membership('admin')
