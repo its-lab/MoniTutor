@@ -4,78 +4,78 @@
   <li><a href="{{=URL('default','index')}}">Home</a></li>
   <li class="active">Student overview</li>
 </ol>
-    <div class="panel panel-default">
-            <div class="panel-heading">
-                    <h3 class="panel-title">Scenarios</h3>
-            </div>
-            <div class="list-group-item" >
-                <table class="table table-responsive table-striped">
-                    <tr>
-                        <td>
-                        </td>
-                        <td>
-                            Scenario name
-                        </td>
-                        <td>
-                            Active students
-                        </td>
-                    </tr>
-                {{counter = 1}}
-                {{for scenario in scenarios:}}
-                    {{if scenario.hidden == False:}}
-                    <tr>
-                        <td>{{=counter}}.</td>
-                        <td>
-                            <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
-                                {{=scenario.display_name}}
-                            </a>
-                        </td>
-                        <td>
-                          {{=active_students[scenario.name]}}
-                        </td>
-                    </tr>
-                    {{counter += 1}}
-                    {{pass}}
-                {{pass}}
-                </table>
-            </div>
-        </div>
-        {{if auth.has_membership("admin"):}}
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                    <h3 class="panel-title">Invisible Scenarios</h3>
-            </div>
-            <div class="list-group-item" >
-                <table class="table table-responsive table-striped">
-                <tr>
-                    <td>
-                    </td>
-                    <td>
-                        Scenario name
-                    </td>
-                    <td>
-                        Active students
-                    </td>
-                </tr>
-                {{counter = 1}}
-                {{for scenario in scenarios:}}
-                    {{if scenario.hidden == True:}}
-                    <tr>
-                        <td>{{=counter}}.</td>
-                        <td>
-                            <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
-                                {{=scenario.display_name}}
-                            </a>
-                        </td>
-                        <td>
-                          {{=active_students[scenario.name]}}
-                        </td>
-                    </tr>
-                    {{counter += 1}}
-                    {{pass}}
-                {{pass}}
-                </table>
-            </div>
-        </div>
-        {{pass}}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Scenarios</h3>
+  </div>
+  <div class="list-group-item" >
+    <table class="table table-responsive table-striped">
+      <tr>
+        <td>
+        </td>
+    <td>
+      Scenario name
+    </td>
+    <td>
+      Active students
+    </td>
+      </tr>
+      {{counter = 1}}
+      {{for scenario in scenarios:}}
+      {{if scenario.hidden == False:}}
+      <tr>
+        <td>{{=counter}}.</td>
+        <td>
+          <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
+            {{=scenario.display_name}}
+          </a>
+        </td>
+        <td>
+          {{=active_students[scenario.name]}}
+        </td>
+      </tr>
+      {{counter += 1}}
+      {{pass}}
+      {{pass}}
+    </table>
+  </div>
+</div>
+{{if auth.has_membership("admin"):}}
+<div class="panel panel-default">
+  <div class="panel-heading">
+    <h3 class="panel-title">Invisible Scenarios</h3>
+  </div>
+  <div class="list-group-item" >
+    <table class="table table-responsive table-striped">
+      <tr>
+        <td>
+        </td>
+    <td>
+      Scenario name
+    </td>
+    <td>
+      Active students
+    </td>
+      </tr>
+      {{counter = 1}}
+      {{for scenario in scenarios:}}
+      {{if scenario.hidden == True:}}
+      <tr>
+        <td>{{=counter}}.</td>
+        <td>
+          <a href="{{=URL('overview', 'view_progress', args=[scenario.scenario_id])}}">
+            {{=scenario.name}}
+          </a>
+        </td>
+        <td>
+          {{=active_students[scenario.name]}}
+        </td>
+      </tr>
+      {{counter += 1}}
+      {{pass}}
+      {{pass}}
+    </table>
+  </div>
+</div>
+{{pass}}
 </div>

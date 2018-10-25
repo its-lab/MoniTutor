@@ -1,55 +1,55 @@
 {{extend 'layout.html'}}
 <div class="container">
-<ol class="breadcrumb">
-  <li><a href="{{=URL('default','index')}}">Home</a></li>
-  <li><a href="{{=URL('overview','view_scenarios')}}">Scenario Overview</a></li>
-  <li class="active">Students</li>
-</ol>
-    {{for student in student_progress:}}
-    <div class="panel panel-default">
-        <div class="panel-heading">
-          <div class="panel-title">
-              <button id="{{=student}}-toggle" class="togglePassed" href="#"><i class="fa fa-check"></i></button>
-              {{if "passed" in student_progress[student]:}}
-                <i id="{{=student}}-star" class="fa fa-star"></i>
-              {{else:}}
-                <i id="{{=student}}-star" class="fa fa-star-o"></i>
-              {{pass}}
-              <a href="{{=URL('scenarios','progress', args=[scenario_id, student])}}">
-                {{=student}}
-              </a>
-            </div>
-        </div>
-        <div class="list-group-item">
-            <div class="progress">
-              <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{=student_progress[student]["successful_check_amount"]}}" aria-valuemin="0" aria-valuemax="{{=check_amount}}" style="width: {{=((student_progress[student]["successful_check_amount"]*100)/check_amount)}}%;">
-                <span class="sr-only">{{=student_progress[student]}}/{{=check_amount}}</span>
-              </div>
-            </div>
-        </div>
+  <ol class="breadcrumb">
+    <li><a href="{{=URL('default','index')}}">Home</a></li>
+    <li><a href="{{=URL('overview','view_scenarios')}}">Scenario Overview</a></li>
+    <li class="active">Students</li>
+  </ol>
+  {{for student in student_progress:}}
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <div class="panel-title">
+        <button id="{{=student}}-toggle" class="togglePassed" href="#"><i class="fa fa-check"></i></button>
+        {{if "passed" in student_progress[student]:}}
+        <i id="{{=student}}-star" class="fa fa-star"></i>
+        {{else:}}
+        <i id="{{=student}}-star" class="fa fa-star-o"></i>
+        {{pass}}
+        <a href="{{=URL('scenarios','progress', args=[scenario_id, student])}}">
+          {{=student}}
+        </a>
+      </div>
     </div>
-    <br>
-    {{pass}}
+    <div class="list-group-item">
+      <div class="progress">
+        <div class="progress-bar progress-bar-striped active" role="progressbar" aria-valuenow="{{=student_progress[student]["successful_check_amount"]}}" aria-valuemin="0" aria-valuemax="{{=check_amount}}" style="width: {{=((student_progress[student]["successful_check_amount"]*100)/check_amount)}}%;">
+          <span class="sr-only">{{=student_progress[student]}}/{{=check_amount}}</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  {{pass}}
 </div>
 <script>
-     $(document).ready(function() {
-        $(".togglePassed").on("click", {}, togglePassed);
-        function togglePassed(event){
-            var username = String(this.id).slice(0,-7);
-            var scenarioId = "{{=scenario_id}}"
-            $.get("{{=URL("scenarios", "toggle_scenario_done")}}",
-                {
-                    scenarioId: scenarioId,
-                    username: username
-            }).done(function(){
-                var starElementId = "#"+username+"-star";
-                if ($(starElementId).hasClass("fa-star")){
-                    $(starElementId).removeClass("fa-star").addClass("fa-star-o");
-                }
-                else{
-                    $(starElementId).removeClass("fa-star-o").addClass("fa-star");
-                }
-            });
-        }
-    });
+  $(document).ready(function() {
+    $(".togglePassed").on("click", {}, togglePassed);
+    function togglePassed(event){
+      var username = String(this.id).slice(0,-7);
+      var scenarioId = "{{=scenario_id}}"
+      $.get("{{=URL("scenarios", "toggle_scenario_done")}}",
+        {
+          scenarioId: scenarioId,
+          username: username
+        }).done(function(){
+          var starElementId = "#"+username+"-star";
+          if ($(starElementId).hasClass("fa-star")){
+            $(starElementId).removeClass("fa-star").addClass("fa-star-o");
+          }
+          else{
+            $(starElementId).removeClass("fa-star-o").addClass("fa-star");
+          }
+        });
+    }
+  });
 </script>

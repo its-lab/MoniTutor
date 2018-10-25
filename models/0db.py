@@ -116,3 +116,22 @@ db.define_table('monitutor_customvars',
 
 db.define_table('monitutor_user_customvars', db.monitutor_customvars,
     Field('user_id', 'reference auth_user', required=True))
+
+def __db_get_checks(scenario_id):
+    checks = db((db.monitutor_scenarios.scenario_id == scenario_id) &
+                (db.monitutor_milestones.scenario_id ==
+                 db.monitutor_scenarios.scenario_id) &
+                (db.monitutor_checks.milestone_id ==
+                 db.monitutor_milestones.milestone_id)).select()
+    return checks
+
+def __db_get_visible_checks(scenario_id):
+    checks = db((db.monitutor_scenarios.scenario_id == scenario_id) &
+                (db.monitutor_milestones.scenario_id ==
+                 db.monitutor_scenarios.scenario_id) &
+                (db.monitutor_checks.milestone_id ==
+                 db.monitutor_milestones.milestone_id) &
+                (db.monitutor_milestones.hidden == False) &
+                (db.monitutor_checks.hidden == False)).select()
+    return checks
+

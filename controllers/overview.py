@@ -19,20 +19,14 @@ def view_progress():
     scenario_id = request.args(0, cast=int)
     scenario = db.monitutor_scenarios[scenario_id]
     active_students = resultdb.active_students(scenario.name)
-    checks = db((db.monitutor_milestone_scenario.scenario_id == scenario_id) &
-                     (db.monitutor_milestone_scenario.milestone_id ==
-                      db.monitutor_milestones.milestone_id) &
-                     (db.monitutor_milestones.milestone_id ==
-                      db.monitutor_check_milestone.milestone_id) &
-                     (db.monitutor_check_milestone.check_id ==
-                      db.monitutor_checks.check_id) &
-                     (db.monitutor_check_milestone.flag_invis == False) &
-                     (db.monitutor_milestone_scenario.hidden == False)
-                     ).select()
+    checks = __db_get_visible_checks(scenario_id)
     check_amount = len(checks)
     student_progress = dict()
     for student in active_students:
-        student_progress[student] = {"successful_check_amount": resultdb.successful_checks_count(scenario.name, student)}
+        student_progress[student] = {
+            "successful_check_amount": resultdb.successful_checks_count(
+                scenario.name, student)
+            }
     passed_students = db((db.scenario_user.user_id == db.auth_user.id)
                                &(db.scenario_user.passed == True)).select()
     for student in passed_students:
