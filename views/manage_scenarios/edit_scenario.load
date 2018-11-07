@@ -4,10 +4,6 @@
         <input class="form-control" type="text" name="name" value="{{=form.record["name"]}}"></input>
     </div>
     <br>
-    <div class="input-group">
-        <span class="input-group-addon"style="width: 100px; text-align: left">Display Name</span>
-        <input class="form-control" type="text" name="display_name" value="{{=form.record["display_name"]}}"></input>
-    </div>
     <br>
     <b>Description:</b>
     <textarea class="form-control" type="text" name="description">{{=form.record["description"]}}</textarea>

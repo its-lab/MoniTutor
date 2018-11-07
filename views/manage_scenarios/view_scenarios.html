@@ -1,197 +1,172 @@
 <style xmlns="http://www.w3.org/1999/html">
-    tr.hover-whitesmoke:hover {background-color: whitesmoke;}
+  tr.hover-whitesmoke:hover {background-color: whitesmoke;}
 </style>
-
 {{extend 'layout.html'}}
 <script>
  $(document).ready(function() {
-     $(".fa.fa-edit").on("click", {}, onClickShow);
-     $("#orphan-milestones").on("click",{}, onClickShow);
-     $("#orphan-checks").on("click",{}, onClickShow);
-     $("#without-source").on("click",{}, onClickShow);
-     $(".btn").on("click", {}, onClickShow);
-     $(".delete-milestone").on("click", {}, onClickDeleteMilestone);
-     $(".delete-check").on("click", {}, onClickDeleteCheck);
-     $(".delete-scenario").on("click", {}, onClickDeleteScenario);
-
-     function onClickDeleteScenario( event ) {
-         var confirm = window.confirm("Are you sure you want to delete the Scenario?");
-         var scenarioId = String(this.id).slice(0,-7);
-         if (!confirm) {
-             return;
+   $(".fa.fa-edit").on("click", {}, onClickShow);
+   $(".btn").on("click", {}, onClickShow);
+   $(".delete-scenario").on("click", {}, onClickDeleteScenario);
+   $(".showScenarioButton").on("click", {}, showScenario);
+   $(".hideScenarioButton").on("click", {}, hideScenario);
+   function onClickDeleteScenario( event ) {
+     var confirm = window.confirm("Are you sure you want to delete the Scenario?");
+     var scenarioId = String(this.id).slice(0,-7);
+     if (!confirm) {
+       return;
+     }
+     $.get("{{=URL("manage_scenarios", "delete_scenario")}}",
+       {
+         scenarioId: scenarioId
+       },
+       function (data, status) {
+         if (status == "success") {
+           $("#"+ String(scenarioId) + "-tr").remove();
          }
-         $.get("{{=URL("manage_scenarios", "delete_scenario")}}",
-                    {
-                        scenarioId: scenarioId
-                    },
-                 function (data, status) {
-                     if (status == "success") {
-                            $("#"+ String(scenarioId) + "-tr").remove();
-                        }
-                    });
+       });
+   }
+
+   function onClickShow( event ){
+     var elment = "#"+String(this.id) + "-hide";
+     $(elment).toggle("medium", function(){});
+   }
+
+   function onClickDeleteScenario( event ) {
+     var confirm = window.confirm("Are you sure you want to delete the Scenario?");
+     var scenarioId = String(this.id).slice(0,-7);
+     if (!confirm) {
+       return;
      }
+     $.get("{{=URL("manage_scenarios", "delete_scenario")}}",
+       {
+         scenarioId: scenarioId
+       },
+       function (data, status) {
+         if (status == "success") {
+           $("#"+ String(scenarioId) + "-tr").remove();
+         }
+       });
+   }
+   function onClickShow( event ){
+     var elment = "#"+String(this.id) + "-hide";
+     $(elment).toggle("medium", function(){});
+   }
 
-     function onClickShow( event ){
-         var elment = "#"+String(this.id) + "-hide";
-         $(elment).toggle("medium", function(){});
-     }
+   function hideScenario( event ){
+     var scenarioId = String(this.id).slice(0,-5);
+     $.get("{{=URL("manage_scenarios", "hide_scenario")}}",
+       {
+         scenarioId: scenarioId
+       },
+       function (data, status) {
+         location.reload();
+       });
+   }
 
-     function onClickDeleteMilestone(event){
-         var milestone = this.id;
-         col = "#" + milestone +"-col";
-         $.get("{{=URL("manage_scenarios", "delete_milestone")}}",
-                    {
-                        milestoneId: milestone
-                    },
-                 function (data, status) {
-                     if (status == "success") {
-                            $(col).remove();
-                        }
-                    });
+   function showScenario( event ){
+     var scenarioId = String(this.id).slice(0,-5);
+     $.get("{{=URL("manage_scenarios", "show_scenario")}}",
+       {
+         scenarioId: scenarioId
+       },
+       function (data, status) {
+         location.reload();
+       });
+   }
 
-     }
-
-     function onClickDeleteCheck(event){
-         var check = this.id;
-         col = "#" + check + "-col";
-         $.get("{{=URL("manage_scenarios", "delete_check")}}",
-                    {
-                        checkId: check
-                    },
-                 function (data, status) {
-                     if (status == "success") {
-                            $(col).remove();
-                        }
-                    });
-
-     }
  });
 </script>
 <div id="top" class="container">
-    <ol class="breadcrumb">
-      <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
-      <li class="active">Scenario overview</li>
-    </ol>
-    <div class="jumbotron" style="text-align: left">
-        <h2>Scenario overview</h2>
-        <br>
-        <div class="row">
-            <div class="col-sm-6">
-                <p><i class="fa fa-tachometer"></i> Defined scenarios: {{=len(scenarios)}}</p>
-                <p><i class="fa fa-users"></i> Registered users: {{=len(tutordb(tutordb.auth_user).select())}}</p>
-                <div id="orphan-checks">
-                  <p>
-                  {{if orphan_check_count:}}
-                    <i class="fa fa-bolt" style="color: red"></i>
-                  {{else:}}
-                    <i class="fa fa-leaf" style="color: green"></i>
-                  {{pass}}
-                  Orphan checks: {{=orphan_check_count}}
-                  </p>
-                </div>
-            </div>
-            <div class="col-sm-6">
-              <p><i class="fa fa-eye"></i> Visible scenarios: {{=len(tutordb(tutordb.monitutor_scenarios.hidden == False).select())}}</p>
-              <div id="orphan-milestones">
-                <p>
-                {{if orphan_milestone_count:}}
-                  <i class="fa fa-bolt" style="color: red"></i>
-                {{else:}}
-                  <i class="fa fa-leaf" style="color: green"></i>
-                {{pass}}
-                Orphan Milestones: {{=orphan_milestone_count}}
-                </p>
-              </div>
-              <div id="without-source">
-                <p>
-                {{if without_source_count:}}
-                  <i class="fa fa-bolt" style="color: red"></i>
-                {{else:}}
-                  <i class="fa fa-leaf" style="color: green"></i>
-                {{pass}}
-                Checks without source: {{=without_source_count}}
-                </p>
-              </div>
-            </div>
-        </div>
+  <ol class="breadcrumb">
+    <li><a class="btn-block" href="{{=URL('default','index')}}">Home</a></li>
+    <li class="active">Scenario overview</li>
+  </ol>
+  <div class="jumbotron" style="text-align: left">
+    <h2>Scenario overview</h2>
+    <br>
+    <div class="row">
+      <div class="col-sm-6">
+        <p><i class="fa fa-tachometer"></i> Defined scenarios: {{=len(scenarios)}}</p>
+        <p><i class="fa fa-users"></i> Registered users: {{=len(db(db.auth_user).select())}}</p>
+      </div>
+      <div class="col-sm-6">
+        <p><i class="fa fa-eye"></i> Visible scenarios: {{=len(db(db.monitutor_scenarios.hidden == False).select())}}</p>
+      </div>
     </div>
-    {{if orphan_milestone_count:}}
-    <div id="orphan-milestones-hide" class="jumbotron" hidden="True">
-        <h2>Orphan milestones</h2><br>
-        <div class="row">
-            {{for orphan_milestone in orphan_milestones:}}
-                <div id="{{=orphan_milestone.monitutor_milestones.milestone_id}}-col" class="col-sm-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            {{=orphan_milestone.monitutor_milestones.display_name}}
-                            <i
-                                id="{{=orphan_milestone.monitutor_milestones.milestone_id}}"
-                                class=" fa fa-trash delete-milestone" style="float: right;"></i>
-                        </div>
-                        <div class="panel-body">
-                            {{=orphan_milestone.monitutor_milestones.description}}
-                                <hr>
-                            <h5><b>Checks:</b></h5>
-                        </div>
-                        <ul class="list-group">
-                            {{for check in tutordb((tutordb.monitutor_check_milestone.milestone_id ==
-                                                   orphan_milestone.monitutor_milestones.milestone_id) &
-                                                   (tutordb.monitutor_check_milestone.check_id ==
-                                                   tutordb.monitutor_checks.check_id)).select():}}
-                            <li class="list-group-item">{{=check.monitutor_checks.display_name}}</li>
-                            {{pass}}
-                        </ul>
-                    </div>
-                </div>
-
-            {{pass}}
-        </div>
-    </div>
-    {{pass}}
-    {{if orphan_check_count:}}
-    <div id="orphan-checks-hide" class="jumbotron" hidden="False">
-        <h2>Orphan checks</h2><br>
-        <div class="row">
-            {{for orphan_check in orphan_checks:}}
-                <div id="{{=orphan_check.monitutor_checks.check_id}}-col" class="col-sm-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                            {{=orphan_check.monitutor_checks.display_name}}
-                            <i id="{{=orphan_check.monitutor_checks.check_id}}"
-                                class="fa fa-trash delete-check" style="float: right;"></i>
-                        </div>
-                        <div class="panel-body">
-                            {{=orphan_check.monitutor_checks.name}}
-                                <hr>
-                            <h5><b>Parameters:</b></h5>
-                            {{=orphan_check.monitutor_checks.params}}
-                        </div>
-                    </div>
-                </div>
-            {{pass}}
-        </div>
-    </div>
-    {{pass}}
-    {{if without_source_count:}}
-    <div id="without-source-hide" class="jumbotron" hidden="False">
-        <h2>Checks without source</h2><br>
-        <div class="row">
-            {{for check in without_source:}}
-                <div id="{{=check.monitutor_targets.target_id}}-col" class="col-sm-6">
-                    <div class="panel panel-default">
-                        <div class="panel-heading">
-                          <a href="{{=URL("manage_scenarios", "edit_check", args=[check.monitutor_checks.check_id,
-                                                                                  check.monitutor_milestone_scenario.scenario_id,
-                                                                                  check.monitutor_milestones.milestone_id])}}">
-                            {{=check.monitutor_checks.display_name}}</a>
-                        </div>
-                        </div>
-                    </div>
-                </div>
-            {{pass}}
-        </div>
-    </div>
-    {{pass}}
+  </div>
 </div>
-            {{=LOAD('manage_scenarios','view_scenarios.load', ajax=True)}}
-
+<script>
+ $(document).ready(function() {
+ });
+</script>
+<table class="table">
+  {{counter=1}}
+  {{for scenario in scenarios:}}
+  <tr class="hover-whitesmoke" id="{{=scenario.scenario_id}}-tr">
+    <td class="col-sm-2">
+      <a href="{{=URL('manage_scenarios', 'view_scenario.html', args=scenario.scenario_id)}}">
+        {{=scenario.name}}
+      </a>
+    </td>
+    <td class="col-sm-7">
+      {{=scenario.description}}
+      <div id="{{=scenario.scenario_id}}-hide" hidden="False">
+        <br>
+        {{=LOAD('manage_scenarios','edit_scenario.load',ajax=True, args=scenario.scenario_id)}}
+      </div>
+    </td>
+    <td class="col-sm-3">
+      <div class="btn-group" role="group" aria-label="scenario action">
+        <button type="button" class="btn btn-default" id="{{=scenario.scenario_id}}">
+          <i class="fa fa-edit"></i> Edit
+        </button>
+        {{if scenario.hidden is True:}}
+        <button type="button" class="btn btn-default showScenarioButton" id="{{=scenario.scenario_id}}-show">
+          <i class="fa fa-eye"></i> Show
+        </button>
+        {{else:}}
+        <button type="button" class="btn btn-default hideScenarioButton" id="{{=scenario.scenario_id}}-hide">
+          <i class="fa fa-eye-slash"></i> Hide
+        </button>
+        {{pass}}
+        <button type="button" class="btn btn-default" href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}"
+             download="{{=scenario.name}}.json">
+          <i class="fa fa-download export-scenario"></i> Export
+        </button>
+        <button type="button" class="btn btn-danger delete-scenario" id="{{=scenario.scenario_id}}-sc-del">
+          <i class="fa fa-trash"></i> Delete
+        </button>
+      </div>
+    </td>
+  </tr>
+  {{pass}}
+</table>
+<br>
+<h3>
+  <div id="new" class="btn btn-default">
+    <i class="fa fa-plus"></i><b>Add Scenario</b>
+  </div>
+</h3>
+<div id="new-hide" hidden="True" style="margin-top:10px">
+  {{=new_scenario_form.custom.begin}}
+  <div class="input-group">
+    <span class="input-group-addon" style="width: 100px; text-align: left">Name</span>
+    <input class="form-control" type="text" name="name"></input>
+  </div>
+  <br>
+  <br>
+  <b>Description:</b>
+  <textarea class="form-control" type="text" name="description"></textarea>
+  <br>
+  <b>Goal</b>
+  <textarea class="form-control" type="text" name="goal"></textarea>
+  <br>
+  {{=new_scenario_form.custom.submit}}
+  {{=new_scenario_form.custom.end}}
+  <h3>
+    <a href="{{=URL("manage_scenarios","upload_scenario.html")}}" id="import"
+                                                                  class="btn btn-default">
+      <i class="fa fa-plus"></i>
+      <b>Import Scenario</b>
+    </a>
+  </h3>
