@@ -52,7 +52,7 @@ def view_scenario():
             db.monitutor_scenarios.scenario_id == db.monitutor_scenario_data.scenario_id))
     data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
               (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
-    milestones = db((db.monitutor_milestones.scenario_id == scenario_id).select(
+    milestones = db(db.monitutor_milestones.scenario_id == scenario_id).select(
         orderby=db.monitutor_milestone_scenario.sequence_nr)
     return dict(scenario=scenario, data=data, milestones=milestones)
 

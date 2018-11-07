@@ -140,7 +140,7 @@ def __db_get_visible_checks(scenario_id=None, milestone_id=None):
     elif milestone_id is not None:
         checks = db((db.monitutor_checks.milestone_id == milestone_id) &
                     (db.monitutor_checks.hidden == False)).select(
-                        orderby=db.monitutor_checks.order))
+                        orderby=db.monitutor_checks.order)
         return checks
     return None
 
