@@ -38,7 +38,7 @@ def download():
     allows downloading of uploaded files
     http://..../[app]/default/download/[filename]
     """
-    return response.download(request, tutordb)
+    return response.download(request, db)
 
 @cache.action()
 def export():
