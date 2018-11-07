@@ -53,7 +53,7 @@ def attach_data():
                             INPUT(_type='checkbox', _name="remove", _value=row.monitutor_scenario_data.scenario_data_id, _checked=True)
                     , _class="input-group-addon"),
                     DIV(
-                        str(row.monitutor_data.display_name)
+                        str(row.monitutor_data.name)
                         , _class="form-control")
                 , _class="input-group")
             , _class="col-lg-4", _style="margin-bottom: 5px")
@@ -68,7 +68,7 @@ def attach_data():
                             INPUT(_type='checkbox', _name="add",  _value=row.data_id,)
                         , _class="input-group-addon"),
                         DIV(
-                            str(row.display_name)
+                            str(row.name)
                             , _class="form-control")
                     , _class="input-group")
                 , _class="col-lg-4", _style="margin-bottom: 5px")
@@ -83,32 +83,25 @@ def attach_data():
     )
     ids_to_be_removed = None
     remove = []
-
     if form.accepts(request, session):
         response.flash = "form accepted"
-
         ids_to_be_removed = db((db.monitutor_scenario_data.scenario_data_id != None) & (db.monitutor_scenario_data.scenario_id == scenario_id) ).select(
         db.monitutor_scenario_data.ALL, db.monitutor_data.ALL,
         left=db.monitutor_scenario_data.on(
             db.monitutor_data.data_id == db.monitutor_scenario_data.data_id)
         )
-
         if form.vars.add is None:
             form.vars.add = []
         if form.vars.remove is None:
             form.vars.remove = []
-
         for row in ids_to_be_removed:
             if str(row.monitutor_scenario_data.scenario_data_id) not in form.vars.remove:
                 # Delete relation
                 del db.monitutor_scenario_data[row.monitutor_scenario_data.scenario_data_id]
-
         for newentry in form.vars.add:
             # Add relation
             db.monitutor_scenario_data.insert(scenario_id=scenario_id, data_id=long(newentry))
-
         redirect(URL(args=scenario_id))
-
     return dict(available_data=available_data, form=form, scenario=scenario, ids_to_be_removed=remove)
 
 

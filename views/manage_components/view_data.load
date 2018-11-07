@@ -10,14 +10,10 @@
           <i class='fa fa-trash' style="float: right; margin-right: 10px;" data-dataid="{{=row.data_id}}"></i>
         </a>
         <h3 class="panel-title">
-          {{=row.display_name}}
+          {{=row.name}}
         </h3>
       </div>
       <div class="panel-body">
-        <b>Name:</b>
-        <br>
-        {{=row.name}}
-        <br>
         <b>Description:</b>
         <br>
         {{=row.description}}

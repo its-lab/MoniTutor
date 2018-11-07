@@ -173,35 +173,47 @@
             </div>
         </div>
     {{pass}}
+        {{for row in data:}}
+        <div class="list-group-item">
+          <i id="{{=row.monitutor_data.data_id}}-info"
+             class='fa fa-info-circle' style="float: right" ></i>
+          {{=row.monitutor_data.name}}
+        </div>
+        <!-- Script to toggle the Edit Form! One for each entry-->
+        <script type="text/javascript">
+          $( "#{{=row.monitutor_data.data_id}}-info" ).click(function() {
+            $( "#{{=row.monitutor_data.data_id}}-show" ).toggle( "medium", function(){});
+          }
+          );
+        </script>
+        {{pass}}
+      </div>
+    </div>
+  </div>
+  {{pass}}
 </div>
-
-
 <hr>
 <div class="row">
-    {{for row in data:}}
-         <div id="{{=row.monitutor_data.data_id}}-show" class="col-md-4" hidden="False">
-             <div class="panel panel-default">
-                 <div class="panel-heading">
-                     <a href="{{=URL('default','download', args=row.monitutor_data.data)}}" >
-                        <i class='fa fa-download' style="float: right;"></i>
-                     </a>
-                     <h3 class="panel-title">
-                        {{=row.monitutor_data.display_name}}
-                     </h3>
-                 </div>
-                 <div class="panel-body">
-                     <b>Name:</b>
-                        <br>
-                            {{=row.monitutor_data.name}}
-                        <br>
-                     <b>Description:</b>
-                        <br>
-                            {{=row.monitutor_data.description}}
-                        </br>
-                 </div>
-             </div>
-         </div>
-     {{pass}}
+  {{for row in data:}}
+  <div id="{{=row.monitutor_data.data_id}}-show" class="col-md-4" hidden="False">
+    <div class="panel panel-default">
+      <div class="panel-heading">
+        <a href="{{=URL('default','download', args=row.monitutor_data.data)}}" >
+          <i class='fa fa-download' style="float: right;"></i>
+        </a>
+        <h3 class="panel-title">
+          {{=row.monitutor_data.name}}
+        </h3>
+      </div>
+      <div class="panel-body">
+        <b>Description:</b>
+        <br>
+        {{=row.monitutor_data.description}}
+        </br>
+      </div>
+    </div>
+  </div>
+  {{pass}}
 </div>
 
 
