@@ -1,1 +1,20 @@
-{{=addscenario_form}}
+{{=new_milestone_form.custom.begin}}
+  <div class="input-group">
+    <span class="input-group-addon" style="width: 100px; text-align: left">Name</span>
+    <input class="form-control" type="text" name="name" placeholder="Milestone name"></input>
+  </div>
+  <br>
+  <div class="input-group">
+    <span class="input-group-addon" style="width: 100px; text-align: left">Order</span>
+    <input class="form-control" type="text" name="order" value="{{=new_milestone_form.vars.order}}"></input>
+  </div>
+  <br>
+  <b>Description:</b>
+  <textarea class="form-control" type="text" name="description" placeholder="Milestone description"></textarea>
+  <br>
+  <input value="{{=new_milestone_form.vars.scenario_id}}" type="hidden" name="scenario_id" />
+  <input value="{{=new_milestone_form.vars.hidden}}" type="hidden" name="hidden" />
+  <input value="{{=new_milestone_form.vars.uuid}}" type="hidden" name="uuid" />
+{{=new_milestone_form.custom.submit}}
+{{=new_milestone_form.custom.end}}
+

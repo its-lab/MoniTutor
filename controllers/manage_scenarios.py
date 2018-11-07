@@ -45,15 +45,11 @@ def view_scenario():
     else:
         redirect(URL('manage_scenarios', 'view_scenarios'))
     scenario_data_query = (db.monitutor_scenarios.scenario_id == scenario_id)
-    scenario = db(scenario_data_query).select(
-        db.monitutor_scenarios.ALL,
-        db.monitutor_scenario_data.ALL,
-        left = db.monitutor_scenario_data.on(
-            db.monitutor_scenarios.scenario_id == db.monitutor_scenario_data.scenario_id))
+    scenario = db.monitutor_scenarios[scenario_id]
     data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
               (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
     milestones = db(db.monitutor_milestones.scenario_id == scenario_id).select(
-        orderby=db.monitutor_milestone_scenario.sequence_nr)
+                    orderby=db.monitutor_milestones.order)
     return dict(scenario=scenario, data=data, milestones=milestones)
 
 @auth.requires_membership('admin')
@@ -219,27 +215,27 @@ def remove_milestone():
 @auth.requires_membership('admin')
 def hide_milestone():
     """Hides a milestone so it can only be seen by an administrator"""
-    milestone_scenario_id = request.args(0, cast=int)
-    invis = request.args(1, cast=int)
-    scenario_id = request.args(2, cast=int)
-    db.monitutor_milestone_scenario[milestone_scenario_id] = dict(hidden=invis)
+    milestone_id = request.args(0, cast=int)
+    hidden = request.args(1, cast=int)
+    db.monitutor_milestones[milestone_id] = dict(hidden=hidden)
     if scenario_id:
-        redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
+        redirect(URL('manage_scenarios', 'view_scenario.html',
+                     args=[db.monitutor_milestones[milestone_id].scenario_id]))
 
 
 @auth.requires_membership('admin')
 def lower_milestone():
     """Lowers the milestone milestone prio to change order"""
-    milestone_scenario_id = request.args(0, cast=int)
+    milestone_id = request.args(0, cast=int)
     lower = request.args(1, cast=int)
-    scenario_id = request.args(2, cast=int)
+    scenario_id = db.monitutor_milestones[milestone_id].scenario_id
 
-    row = db.monitutor_milestone_scenario[milestone_scenario_id]
-    sequence = row.sequence_nr
+    milestone = db.monitutor_milestones[milestone_id]
+    order = milestone.order
     if lower == 1:
-        db.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence-1)
+        db.monitutor_milestones[milestone_id] = dict(order=order-1)
     else:
-        db.monitutor_milestone_scenario[milestone_scenario_id] = dict(sequence_nr=sequence+1)
+        db.monitutor_milestones[milestone_id] = dict(order=order+1)
     if scenario_id:
         redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
 
@@ -271,86 +267,13 @@ def add_milestone():
         scenario_id = request.args(0, cast=int)
     else:
         scenario_id = None
-        redirect(URL('default','index'))
-
-    scenario_milestone = db((db.monitutor_milestone_scenario.milestone_id ==
-                                  db.monitutor_milestones.milestone_id) &
-                                 (db.monitutor_milestone_scenario.scenario_id == scenario_id)).select()
-
-    options = OPTION("No dependency", _value=None, _selected="selected")
-    for row in scenario_milestone:
-        options += OPTION(XML(row.monitutor_milestones.display_name),
-                          _value=row.monitutor_milestone_scenario.milestone_scenario_id)
-    form = FORM(
-        DIV(
-          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="name", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
-        DIV(
-          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        XML('<b>Description:</b>'),BR(),
-        DIV(
-          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-          TEXTAREA(_name="description", _form='form',  _class="form-control"), _class="input-group"),BR(),
-        INPUT(_type='submit'),
-        _id="form"
-    )
-
-    if form.accepts(request, session):
-        response.flash = "form accepted"
-        newid = db.monitutor_milestones.insert(name=form.vars.name,
-                                            display_name=form.vars.display_name,
-                                            description=form.vars.description)
-        if scenario_id is not None:
-            if form.vars.dependency is None:
-                db.monitutor_milestone_scenario.insert(milestone_id=long(newid),
-                                                        scenario_id=long(scenario_id),
-                                                        sequence_nr=int(0))
-            else:
-                db.monitutor_milestone_scenario.insert(milestone_id=long(newid),
-                                                        scenario_id=long(scenario_id),
-                                                        sequence_nr=int(0),
-                                                        dependency=form.vars.dependency)
-    return dict(addscenario_form=form)
-
-
-@auth.requires_membership('admin')
-def add_milestone_ref():
-    """Adds an existing Milestone to the scenario by adding a reference"""
-    if len(request.args):
-        scenario_id = request.args(0, cast=int)
-    else:
-        redirect(URL('default','index'))
-        scenario_id = None
-    milestones = db(db.monitutor_milestones).select()
-    input_list = DIV()
-    for milestone in milestones:
-        input_field = DIV(
-                DIV(
-                    SPAN(
-                            INPUT(_type='radio', _name="add", _value=milestone.milestone_id)
-                    , _class="input-group-addon"),
-                    DIV(
-                        str(milestone.display_name[:33])
-                        , _class="form-control")
-                , _class="input-group")
-            , _class="col-lg-4", _style="margin-bottom: 5px")
-        input_list += input_field
-    form = FORM(
-        FIELDSET(
-            input_list
-        ), BR(),
-        INPUT(_type='submit'),
-        _action="#"
-    )
-    if form.accepts(request, session):
-        response.flash = 'form accepted'
-        db.monitutor_milestone_scenario.insert(milestone_id=form.vars.add,
-                                    scenario_id=scenario_id,
-                                    hidden=False,
-                                    sequence_nr=0)
-    return dict(form=form)
-
+    new_milestone_form = SQLFORM(db.monitutor_milestones)
+    if new_milestone_form.accepts(request, session):
+        session.flash = 'Milestone inserted.'
+    new_milestone_form.vars.hidden = False
+    new_milestone_form.vars.order = 0
+    new_milestone_form.vars.scenario_id = scenario_id
+    return dict(new_milestone_form=new_milestone_form)
 
 @auth.requires_membership('admin')
 def edit_check():

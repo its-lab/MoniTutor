@@ -1,178 +1,109 @@
 {{extend 'layout.html'}}
-
-
 <script>
-    $(document).ready(function() {
-        $("#edit").click(function () {
-            $("#Form1").toggle("medium", function () {
-            });
-        });
-        $( "#new_milestone" ).click(function() {
-            $( "#add_milestone" ).toggle( "medium", function() {
-            });
-        });
-        $( "#new_milestone_ref" ).click(function() {
-            $( "#add_milestone_ref" ).toggle( "medium", function() {
-            });
-        });
+  $(document).ready(function() {
+    $("#edit").click(function () {
+      $("#Form1").toggle("medium", function () {
+      });
     });
+    $( "#new_milestone" ).click(function() {
+      $( "#add_milestone" ).toggle( "medium", function() {
+      });
+    });
+    $( "#new_milestone_ref" ).click(function() {
+      $( "#add_milestone_ref" ).toggle( "medium", function() {
+      });
+    });
+  });
 </script>
-
 <div class="container">
-    <ol class="breadcrumb">
-        <li><a href="{{=URL('default','index')}}">Home</a></li>
-        <li><a href="{{=URL('manage_scenarios','view_scenarios')}}">Scenario overview</a></li>
-        <li class="active">Scenario {{=scenario[0].monitutor_scenarios.display_name}}</li>
-    </ol>
-    <div class="jumbotron">
-        <h2>Scenario - {{=scenario[0].monitutor_scenarios.display_name}}</h2>
-        <hr>
-        <h4>Description:</h4>
-        {{=scenario[0].monitutor_scenarios.description}}
-        <h4>Goal:</h4>
-        {{=scenario[0].monitutor_scenarios.goal}}
-    </div>
-    <div class="panel panel-default">
-        <div class="panel-heading">
-            <h3 class="panel-title">Milestones</h3>
-        </div>
-        {{for milestone in milestones:}}
-            <div class="list-group-item">
-                <a href="{{=URL('manage_scenarios','remove_milestone',
-                           args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                          scenario[0].monitutor_scenarios.scenario_id])}}">
-                    <i class="fa fa-minus" style="float: right;"></i>
-                </a>
-                {{if milestone.monitutor_milestone_scenario.hidden == 1:}}
-                    <a href="{{=URL('manage_scenarios','hide_milestone',
-                               args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                                     "0",
-                                     scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
-                    </a>
-                {{else:}}
-                    <a href="{{=URL('manage_scenarios','hide_milestone',
-                               args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                               "1",
-                               scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
-                    </a>
-                {{pass}}
-                {{if milestone.monitutor_milestone_scenario.sequence_nr == 0:}}
-                    <a href="{{=URL('manage_scenarios','lower_milestone',
-                               args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                               "0",
-                               scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
-                    </a>
-                {{else:}}
-                    <a href="{{=URL('manage_scenarios','lower_milestone',
-                               args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                               "1",
-                               scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="fa fa-arrow-up" style="float: right; margin-right: 10px;"></i>
-                    </a>
-                    <a href="{{=URL('manage_scenarios','lower_milestone',
-                             args=[milestone.monitutor_milestone_scenario.milestone_scenario_id,
-                             "0",
-                             scenario[0].monitutor_scenarios.scenario_id])}}">
-                        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
-                    </a>
-                {{pass}}
-                <i id="{{=milestone.monitutor_milestones.milestone_id}}-info"
-                    class='fa fa-info-circle' style="float: right; margin-right: 10px" ></i>
-                <a href="{{=URL('manage_scenarios','view_milestone', args=[milestone.monitutor_milestones.milestone_id,
-                           scenario[0].monitutor_scenarios.scenario_id])}}">
-                    {{=milestone.monitutor_milestones.display_name}}
-                </a>
-                <script type="text/javascript">
-                    $( "#{{=milestone.monitutor_milestones.milestone_id}}-info" ).click(function(){
-                        $( "#{{=milestone.monitutor_milestones.milestone_id}}-show" ).toggle( "medium", function() {});
-                        });
-                </script>
-            </div>
-            <div class="list-group-item list-group-item-warning" id="{{=milestone.monitutor_milestones.milestone_id}}-show" style="display: none">
-                <b>ID {{=milestone.monitutor_milestones.milestone_id}}</b><br>
-                <b>Description:</b><br>
-                {{=milestone.monitutor_milestones.description}}<br>
-                <b>Name:</b><br>
-                {{=milestone.monitutor_milestones.name}}
-                <table class="table table-striped">
-                    <br><br><b>Checks:</b><br>
-                    {{counter = 1}}
-                    {{for check in tutordb((tutordb.monitutor_check_milestone.check_id == tutordb.monitutor_checks.check_id) &
-                        (tutordb.monitutor_check_milestone.milestone_id == milestone.monitutor_milestones.milestone_id) &
-                        (tutordb.monitutor_checks.program_id == tutordb.monitutor_programs.program_id)).select(orderby=tutordb.monitutor_check_milestone.sequence_nr): }}
-                        <tr>
-                            <td>{{=counter}}.</td>
-                            <td>{{=check.monitutor_checks.display_name}}</td>
-                            <td>{{=check.monitutor_programs.display_name}}</td>
-                            <td>{{=check.monitutor_checks.params}}</td>
-                        </tr>
-                        {{counter += 1}}
-                    {{pass}}
-                </table>
-            </div>
-        {{pass}}
-    </div>
-    <div class="row">
-        <div class="col-md-2"></div>
-        <div class="col-md-8">
-            <div class="btn-group btn-group-justified" role="group" aria-label="Navigation">
-                <div id="new_milestone" class="btn-group" role="group">
-                    <div class="btn btn-default">
-                        Add new milestone
-                    </div>
-                </div>
-                <div id="new_milestone_ref" class="btn-group" role="group">
-                    <div class="btn btn-default">
-                        Add new milestone reference
-                        </div>
-                </div>
-            </div>
-        </div>
-    </div>
-    <br>
-    <br>
-    <div id="add_milestone" hidden="True">
-        {{=LOAD('manage_scenarios','add_milestone.load',ajax=True, args=scenario[0].monitutor_scenarios.scenario_id)}}
-    </div>
-    <div id="add_milestone_ref" hidden="True">
-        {{=LOAD('manage_scenarios','add_milestone_ref.load', ajax=True, args=scenario[0].monitutor_scenarios.scenario_id)}}
-    </div>
+  <ol class="breadcrumb">
+    <li><a href="{{=URL('default','index')}}">Home</a></li>
+    <li><a href="{{=URL('manage_scenarios','view_scenarios')}}">Scenario overview</a></li>
+    <li class="active">Scenario {{=scenario.name}}</li>
+  </ol>
+  <div class="jumbotron">
+    <h2>Scenario - {{=scenario.name}}</h2>
     <hr>
-    {{if data is not None:}}
-        <div class="row">
-            <div class="col-md-6">
-                <div class="panel panel-default">
-                    <div class="panel-heading">
-                        <h3 class="panel-title">
-                            Attached data
-                            <a href="{{=URL('manage_components','attach_data',
-                                       args=scenario[0].monitutor_scenarios.scenario_id)}}"
-                               style="float: right" >
-                                <i class='fa fa-plus' ></i>
-                            </a>
-                        </h3>
-                    </div>
-                    {{for row in data:}}
-                        <div class="list-group-item">
-                            <i id="{{=row.monitutor_data.data_id}}-info"
-                                class='fa fa-info-circle' style="float: right" ></i>
-                            {{=row.monitutor_data.display_name}}
-                        </div>
-                        <!-- Script to toggle the Edit Form! One for each entry-->
-                        <script type="text/javascript">
-                            $( "#{{=row.monitutor_data.data_id}}-info" ).click(function() {
-                                $( "#{{=row.monitutor_data.data_id}}-show" ).toggle( "medium", function(){});
-                                }
-                            );
-                        </script>
-                    {{pass}}
-                </div>
-            </div>
-        </div>
+    <h4>Description:</h4>
+    {{=scenario.description}}
+    <h4>Goal:</h4>
+    {{=scenario.goal}}
+  </div>
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title">Milestones</h3>
+    </div>
+    {{for milestone in milestones:}}
+    <div class="list-group-item">
+      <a href="{{=URL('manage_scenarios','remove_milestone',
+               args=[milestone.milestone_id,
+               scenario.scenario_id])}}">
+        <i class="fa fa-trash" style="float: right;"></i>
+      </a>
+      {{if milestone.hidden == 1:}}
+      <a href="{{=URL('manage_scenarios','hide_milestone',
+        args=[milestone.milestone_id, "0"])}}">
+        <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
+      </a>
+      {{else:}}
+      <a href="{{=URL('manage_scenarios','hide_milestone',
+        args=[milestone.milestone_id, "1"])}}">
+        <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
+      </a>
+      {{pass}}
+      {{if milestone.order == 0:}}
+      <a href="{{=URL('manage_scenarios','lower_milestone',
+      args=[milestone.milestone_id, "0"])}}">
+        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
+      </a>
+      {{else:}}
+      <a href="{{=URL('manage_scenarios','lower_milestone',
+      args=[milestone.milestone_id, "1"])}}">
+        <i class="fa fa-arrow-up" style="float: right; margin-right: 10px;"></i>
+      </a>
+      <a href="{{=URL('manage_scenarios','lower_milestone',
+      args=[milestone.milestone_id, "0"])}}">
+        <i class="fa fa-arrow-down" style="float: right; margin-right: 10px;"></i>
+      </a>
+      {{pass}}
+      <a href="{{=URL('manage_scenarios','view_milestone', args=[milestone.milestone_id])}}">
+        {{=milestone.name}}
+      </a>
+    </div>
     {{pass}}
+  </div>
+  <div class="row">
+    <div class="col-md-3"></div>
+    <div class="col-md-6">
+      <div class="btn-group btn-group-justified" role="group" aria-label="Navigation">
+        <div id="new_milestone" class="btn-group" role="group">
+          <div class="btn btn-default">
+            Add new milestone
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <br>
+  <br>
+  <div id="add_milestone" hidden="True">
+    {{=LOAD('manage_scenarios','add_milestone.load',ajax=True, args=scenario.scenario_id)}}
+  </div>
+  <hr>
+  {{if data is not None:}}
+  <div class="row">
+    <div class="col-md-6">
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <h3 class="panel-title">
+            Attached data
+            <a href="{{=URL('manage_components','attach_data',
+            args=scenario.scenario_id)}}"
+               style="float: right" >
+               <i class='fa fa-plus' ></i>
+            </a>
+          </h3>
+        </div>
         {{for row in data:}}
         <div class="list-group-item">
           <i id="{{=row.monitutor_data.data_id}}-info"
