@@ -84,7 +84,7 @@ db.define_table('monitutor_checks',
           requires=IS_IN_DB(db, db.monitutor_programs, '%(name)s')),
     Field('source_id', 'reference monitutor_systems', required=True,
           requires=IS_IN_DB(db, db.monitutor_systems, '%(name)s')),
-    Field('dest_id', 'reference monitutor_systems',
+    Field('dest_id', 'reference monitutor_systems', required=False, default=None,
           requires=IS_IN_DB(db, db.monitutor_systems, '%(name)s')),
     Field('milestone_id', 'reference monitutor_milestones', required=True,
           requires=IS_IN_DB(db, db.monitutor_milestones, '%(name)s')),
@@ -128,6 +128,17 @@ def __db_get_checks(scenario_id=None, milestone_id=None):
             orderby=db.monitutor_checks.order)
         return checks
     return None
+
+def __db_get_check(check_id):
+    check = db((db.monitutor_checks.check_id == check_id) &
+               (db.monitutor_checks.program_id ==
+                db.monitutor_programs.program_id) &
+               (db.monitutor_programs.interpreter_id ==
+                db.monitutor_interpreters.interpreter_id) &
+               (db.monitutor_checks.source_id ==
+                db.monitutor_systems.system_id)).select(
+                    cache=(cache.ram, 300), cacheable=True).first()
+    return check
 
 def __db_get_visible_checks(scenario_id=None, milestone_id=None):
     if scenario_id is not None:

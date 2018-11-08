@@ -55,18 +55,21 @@ def view_scenario():
 @auth.requires_membership('admin')
 def view_milestone():
     """Overview over a given milestone, displaying associated checks and milestone information."""
-    if len(request.args) > 1:
+    if len(request.args) == 1:
         milestone_id = request.args(0, cast=int)
-        scenario_id = request.args(1, cast=int)
     else:
         redirect(URL('manage_scenarios', 'view_scenarios'))
-    scenario = db.monitutor_scenarios[scenario_id]
     milestone = db.monitutor_milestones[milestone_id]
+    scenario = db.monitutor_scenarios[milestone.scenario_id]
     checks = __db_get_checks(milestone_id = milestone_id)
+    check_details = dict()
+    for check in checks:
+        check_details[check.check_id] = __db_get_check(check.check_id)
     return dict(milestone=milestone,
                 checks=checks,
-                scenarioid=scenario_id,
-                milestoneid=milestone_id,
+                check_details=check_details,
+                scenario_id=scenario.scenario_id,
+                milestone_id=milestone_id,
                 scenario=scenario)
 
 
@@ -81,6 +84,7 @@ def add_check():
     add_check_form = SQLFORM(db.monitutor_checks)
     add_check_form.vars.milestone_id = milestone_id
     add_check_form.vars.hidden = False
+    add_check_form.vars.order = 0
     if add_check_form.accepts(request, session):
         response.flash = "Form accepted. Added check "+form.vars.diplay_name+"."
     return dict(form=add_check_form)
@@ -100,7 +104,7 @@ def add_existing_check():
                         IS_NOT_IN_DB(db,"monitutor_checks.name")]),
         Field('check', 'reference monitutor_checks',
               requires=IS_IN_DB(db, db.monitutor_checks, '%(name)s')))
-    if check_form.validates(request, session):
+    if check_form.accepts(request, session):
         check = db.monitutor.checks[check_form.vars.check]
         db.monitutor_checks.insert(name=check_form.vars.name,
                                    milestone_id=milestone_id,
@@ -121,41 +125,11 @@ def edit_milestone_form():
     else:
         redirect(URL('default','index'))
         milestone_id = None
-    current_milestone = db.monitutor_milestones[milestone_id]
-    form = FORM(
-        DIV(
-            SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-            INPUT(_name="name",
-                  _class="form-control",
-                  requires=IS_NOT_EMPTY(),
-                  _value=current_milestone.name),
-            _class="input-group"), BR(),
-        DIV(
-            SPAN(XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-            INPUT(_name="display_name",
-                  _class="form-control",
-                  requires=IS_NOT_EMPTY(),
-                  _value=current_milestone.display_name),
-            _class="input-group"), BR(),
-        XML('<b>Description:</b>'), BR(),
-        DIV(
-            SPAN( XML(''),
-            _class="input-group-addon", _id="basic-addon"),
-            TEXTAREA(current_milestone.description,
-                     _name="description",
-                     _class="form-control"
-                     ),
-            _class="input-group"), BR(),
-        INPUT(_type='submit'),
-        _id="form"
-    )
-    if form.accepts(request, session):
-        response.flash = "form accepted"
-        db(db.monitutor_milestones.milestone_id == milestone_id).validate_and_update(name=form.vars.name,
-                                            display_name=form.vars.display_name,
-                                            description=form.vars.description)
-
-    return dict(addscenario_form=form)
+    milestone_form = SQLFORM(db.monitutor_milestones,
+                   db.monitutor_milestones(milestone_id))
+    if milestone_form.accepts(request, session):
+        response.flash = "Form accepted"
+    return dict(milestone_form=milestone_form)
 
 
 @auth.requires_membership('admin')

@@ -1,1 +1,12 @@
-{{=form}}
+{{=milestone_form.custom.begin}}
+<div class="input-group">
+  <span class="input-group-addon">Name</span>
+  <input class="form-control" type="text" name="name" value="{{=milestone_form.record["name"]}}"></input>
+</div>
+<br>
+<b>Description:</b>
+<textarea class="form-control" type="text" name="description">{{=milestone_form.record["description"]}}</textarea>
+<br>
+<br>
+{{=milestone_form.custom.submit}}
+{{=milestone_form.custom.end}}

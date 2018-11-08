@@ -1,40 +1,40 @@
 <script type="text/javascript">
-         $( "#new_interp" ).click(function() {$( "#add_interp" ).toggle( "medium", function() {
-            // Animation complete.
-          });
-        });
-        </script>
+  $( "#new_interp" ).click(function() {$( "#add_interp" ).toggle( "medium", function() {
+    // Animation complete.
+  });
+  });
+</script>
 <div class="row">
-    <div class="col-md-6">
-        {{=form}}
+  <div class="col-md-6">
+    {{=form}}
+  </div>
+  <div class="col-md-6">
+    <table class="table table-striped">
+      <tr>
+        <td>ID</td>
+        <td>Name</td>
+        <td>Path</td>
+      </tr>
+      {{for interpreter in interpreters:}}
+      <tr>
+        <td>{{=interpreter.interpreter_id}}</td>
+        <td>{{=interpreter.name}}</td>
+        <td>{{=interpreter.path}}</td>
+      </tr>
+      {{pass}}
+      <tr>
+        <td></td>
+        <td></td>
+        <td>
+          <button type="button" class="btn btn-default" id="new_interp">
+            <i class='fa fa-plus'></i>
+            <b>Add new Interpreter</b>
+          </button>
+        </td>
+      </tr>
+    </table>
+    <div id="add_interp" hidden="True">
+      {{=LOAD('manage_components','add_interp.load',ajax=True)}}
     </div>
-    <div class="col-md-6">
-        <table class="table table-striped">
-            <tr>
-                <td>ID</td>
-                <td>Name</td>
-                <td>Path</td>
-            </tr>
-            {{for interpreter in interpreters:}}
-                <tr>
-                    <td>{{=interpreter.interpreter_id}}</td>
-                    <td>{{=interpreter.display_name}}</td>
-                    <td>{{=interpreter.path}}</td>
-                </tr>
-           {{pass}}
-            <tr>
-                <td></td>
-                <td></td>
-                <td>
-                    <button type="button" class="btn btn-default" id="new_interp">
-                        <i class='fa fa-plus'></i>
-                        <b>Add new Interpreter</b>
-                    </button>
-                </td>
-            </tr>
-        </table>
-        <div id="add_interp" hidden="True">
-            {{=LOAD('manage_components','add_interp.load',ajax=True)}}
-        </div>
-    </div>
+  </div>
 </div>
