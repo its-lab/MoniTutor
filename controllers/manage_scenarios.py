@@ -86,7 +86,7 @@ def add_check():
     add_check_form.vars.hidden = False
     add_check_form.vars.order = 0
     if add_check_form.accepts(request, session):
-        response.flash = "Form accepted. Added check "+form.vars.diplay_name+"."
+        response.flash = "Form accepted. Added check"
     return dict(form=add_check_form)
 
 
