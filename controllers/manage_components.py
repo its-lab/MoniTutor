@@ -10,7 +10,6 @@ def add_data():
         redirect(URL())
     return dict(add_data_form=add_data_form)
 
-
 @auth.requires_membership('admin')
 def view_data():
     """Displays available data"""
@@ -138,13 +137,11 @@ def add_interp():
         redirect(URL())
     return dict(form2=form2)
 
-
 @auth.requires_membership('admin')
 def view_interp():
     """Displays all configured interpreters"""
     interpreters = db(db.monitutor_interpreters).select()
     return dict(interpreters=interpreters)
-
 
 @auth.requires_membership('admin')
 def view_systems():
@@ -158,7 +155,6 @@ def view_systems():
             for customvar in customvars:
                 var_list.append(customvar)
             system_customvars[str(system.id)] = var_list
-
     return dict(systems=systems, system_customvars=system_customvars)
 
 @auth.requires_membership('admin')
@@ -173,9 +169,6 @@ def view_system():
     system_customvars = db(db.monitutor_customvar_system.system_id == system_id).select()
 
     return dict(system=system, system_customvars=system_customvars)
-
-
-
 
 @auth.requires_membership("admin")
 def edit_system():
@@ -225,13 +218,11 @@ def edit_system():
 
     return dict(form=form)
 
-
 @auth.requires_membership("admin")
 def edit_customvar():
     """Returns a form to edit a customvar"""
     if len(request.args):
         customvar_id = request.args(0, cast=int)
-
     else:
         customvar_id = None
     customvar = db.monitutor_customvar_system[customvar_id]
@@ -267,14 +258,11 @@ def edit_customvar():
         redirect(URL(args=customvar_id))
     return dict(form=form)
 
-
-
 @auth.requires_membership('admin')
 def view_programs():
     """Displays all available programs"""
     programs = db(db.monitutor_programs).select(orderby=db.monitutor_programs.id)
     return dict(programs=programs)
-
 
 @auth.requires_membership('admin')
 def view_program():
@@ -304,7 +292,6 @@ def view_program():
                 code=form.vars.code
             )
         redirect(URL(args=[program_id]))
-
     return dict(program=program, form=form)
 
 
@@ -318,7 +305,6 @@ def add_program():
         redirect(URL())
     elif form.errors:
         session.flash = 'There was an error.'
-
     return dict(form=form, interpreters=interpreters)
 
 
