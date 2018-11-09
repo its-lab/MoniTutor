@@ -1,54 +1,45 @@
 <div class="row">
-    {{for system in systems:}}
-    <div class="col-md-12">
+  {{for system in systems:}}
+  <div class="col-md-12">
     <div class="panel panel-default">
-        <div class="panel-heading">
-            {{=system.display_name}}
-            <i id="edit-{{=system.system_id}}" class='fa fa-edit' style="float: right;"></i>
-        </div>
-        <div class="panel-body">
-            <i id="info-{{=system.system_id}}" class='fa fa-info-circle' style="float: right;"></i>
-            <p>{{=system.description}}</p>
-        </div>
-            <script type="text/javascript">
-             $( "#info-{{=system.system_id}}" ).click(function() {$( "#id-{{=system.system_id}}" ).toggle( "medium", function() {});});
-             $( "#edit-{{=system.system_id}}" ).click(function() {$( "#edit_id-{{=system.system_id}}" ).toggle( "medium", function() {});});
-            </script>
-
-
-        <ul class="list-group" id="id-{{=system.system_id}}" style="display: none">
-            <li class="list-group-item"><b>Name:</b> {{=system.name}}</li>
-            <li class="list-group-item"><b>Hostname:</b> {{=system.hostname}}</li>
-            <li class="list-group-item"><b>Ipv4 Address:</b> {{=system.ip4_address}}</li>
-            <li class="list-group-item"><b>Ipv6 Address:</b> {{=system.ip6_address}}</li>
-            {{if system_customvars.has_key(str(system.system_id)):}}
-                {{for var in system_customvars[str(system.system_id)]:}}
-                    <li class="list-group-item"><b>{{=var.display_name}}:</b> {{=var.name}} = {{=var.value}} </li>
-                {{pass}}
-            {{pass}}
-        </ul>
-
-        <ul class="list-group" id="edit_id-{{=system.system_id}}" style="display: none">
-            <li class="list-group-item">
-                {{=LOAD('manage_components','edit_system.load',ajax=True, args=system.system_id)}}
-
-            </li>
-            {{if system_customvars.has_key(str(system.system_id)):}}
-                <li class="list-group-item">
-                    {{for var in system_customvars[str(system.system_id)]:}}
-                        <p>{{=LOAD('manage_components','edit_customvar', ajax=True, args=var.id)}}</p>
-                    {{pass}}
-                </li>
-            {{pass}}
-
-            <li class="list-group-item">
-                <p><b>Add custom variable:</b></p>
-                <br>
-                {{=LOAD('manage_components','add_customvar', ajax=True, args=system.system_id)}}
-            </li>
-        </ul>
-        </div>
+      <div class="panel-heading">
+        {{=system.display_name}}
+        <i id="edit-{{=system.system_id}}" class='fa fa-edit' style="float: right;"></i>
+      </div>
+      <div class="panel-body">
+        <i id="info-{{=system.system_id}}" class='fa fa-info-circle' style="float: right;"></i>
+        <p>{{=system.description}}</p>
+      </div>
+      <script type="text/javascript">
+        $( "#info-{{=system.system_id}}" ).click(function() {$( "#id-{{=system.system_id}}" ).toggle( "medium", function() {});});
+        $( "#edit-{{=system.system_id}}" ).click(function() {$( "#edit_id-{{=system.system_id}}" ).toggle( "medium", function() {});});
+      </script>
+      <ul class="list-group" id="id-{{=system.system_id}}" style="display: none">
+        <li class="list-group-item"><b>Name:</b> {{=system.name}}</li>
+        {{if system_customvars.has_key(str(system.system_id)):}}
+        {{for var in system_customvars[str(system.system_id)]:}}
+        <li class="list-group-item"><b>{{=var.display_name}}:</b> {{=var.name}} = {{=var.value}} </li>
+        {{pass}}
+        {{pass}}
+      </ul>
+      <ul class="list-group" id="edit_id-{{=system.system_id}}" style="display: none">
+        <li class="list-group-item">
+          {{=LOAD('manage_components','edit_system.load',ajax=True, args=system.system_id)}}
+        </li>
+        {{if system_customvars.has_key(str(system.system_id)):}}
+        <li class="list-group-item">
+          {{for var in system_customvars[str(system.system_id)]:}}
+          <p>{{=LOAD('manage_components','edit_customvar', ajax=True, args=var.id)}}</p>
+          {{pass}}
+        </li>
+        {{pass}}
+        <li class="list-group-item">
+          <p><b>Add custom variable:</b></p>
+          <br>
+          {{=LOAD('manage_components','add_customvar', ajax=True, args=system.system_id)}}
+        </li>
+      </ul>
     </div>
-
-    {{pass}}
-    </div>
+  </div>
+  {{pass}}
+</div>
