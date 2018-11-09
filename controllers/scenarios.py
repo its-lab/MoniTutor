@@ -79,7 +79,6 @@ def progress():
                           scenario_id)).select(orderby=db.monitutor_milestone_scenario.sequence_nr)
     data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
                     (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
-
     checks = dict()
     for milestone in milestones:
         check_milestone = db((db.monitutor_check_milestone.milestone_id ==
