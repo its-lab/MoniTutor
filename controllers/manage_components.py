@@ -172,43 +172,9 @@ def edit_system():
         redirect(URL(''))
         system_id = None
     system = db.monitutor_systems[system_id]
-
-    form = FORM(
-        DIV(
-          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=system.name, _name="name", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
-        DIV(
-          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=system.display_name, _name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Hostname</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=system.hostname, _name="hostname", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Ipv4-Address</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=system.ip4_address, _name="ip4_address", _class="form-control", requires=IS_IPV4()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Ipv6-Address</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _value=system.ip6_address, _name="ip6_address", _class="form-control", requires=IS_IPV6()),  _class="input-group"),BR(),
-        XML('<b>Description:</b>'),BR(),
-        DIV(
-          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-          TEXTAREA(_value=system.description, _name="description", _form='form',  _class="form-control"), _class="input-group"),BR(),
-
-        INPUT( _type='submit'),
-
-        _id="form"
-    )
+    form = SQLFORM(db.monitutor_systems, system, deletable=True)
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        db(db.monitutor_systems.system_id == system_id).validate_and_update(name=form.vars.name,
-                                    display_name=form.vars.display_name,
-                                    hostname=form.vars.hostname,
-                                    ip4_address=form.vars.ip4_address,
-                                    ip6_address=form.vars.ip6_address,
-                                    description=form.vars.description)
-        redirect(URL(args=system_id))
-
-
     return dict(form=form)
 
 @auth.requires_membership("admin")
@@ -218,37 +184,10 @@ def edit_customvar():
         customvar_id = request.args(0, cast=int)
     else:
         customvar_id = None
-    customvar = db.monitutor_customvar_system[customvar_id]
-    form = FORM(
-        DIV(
-            DIV(
-                DIV(
-                    SPAN(XML('<b>Display name :</b>'), _class="input-group-addon", _id="basic-addon"),
-                    INPUT(_value=customvar.display_name, _name="display_name", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group"),
-                    _class="col-md-4"
-                ),
-            DIV(
-                DIV(
-                    SPAN(XML('<b>Var :</b>'), _class="input-group-addon", _id="basic-addon"),
-                    INPUT(_value=customvar.name, _name="name", _class="form-control", requires=IS_ALPHANUMERIC()),
-                    SPAN(XML('<b>=</b>'), _class="input-group-addon", _id="basic-addon"),
-                    INPUT(_value=customvar.value, _name="value", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group"),
-                    _class="col-md-6"
-                ),
-            DIV(
-                INPUT(_type='submit'),
-                _class="col-md-2"
-            ),
-            _class="row"
-        )
-    )
+    customvar = db.monitutor_customvars[customvar_id]
+    form = SQLFORM(db.monitutor_customvars, customvar, deletable=True)
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        db(db.monitutor_customvar_system.id ==
-                customvar_id).validate_and_update(name=form.vars.name,
-                                                  display_name=form.vars.display_name,
-                                                  value=form.vars.value)
-        redirect(URL(args=customvar_id))
     return dict(form=form)
 
 @auth.requires_membership('admin')
@@ -305,40 +244,9 @@ def add_program():
 def add_system():
     """Form to add a system to the system table"""
     systems = db(db.monitutor_systems).select()
-    form = FORM(
-        DIV(
-          SPAN( XML('<b>Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="name", _class="form-control", requires=IS_NOT_EMPTY()), _class="input-group" ),BR(),
-        DIV(
-          SPAN( XML('<b>Display Name</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="display_name", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Hostname</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="hostname", _class="form-control", requires=IS_NOT_EMPTY()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Ipv4-Address</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="ip4_address", _class="form-control", requires=IS_IPV4()),  _class="input-group"),BR(),
-        DIV(
-          SPAN( XML('<b>Ipv6-Address</b>'), _class="input-group-addon", _id="basic-addon"),
-          INPUT( _name="ip6_address", _class="form-control", requires=IS_IPV6()),  _class="input-group"),BR(),
-        XML('<b>Description:</b>'),BR(),
-        DIV(
-          SPAN( XML(''), _class="input-group-addon", _id="basic-addon"),
-          TEXTAREA(_name="description", _form='form',  _class="form-control"), _class="input-group"),BR(),
-        INPUT( _type='submit'),
-        _id="form"
-    )
-
+    form = SQLFORM(db.monitutor_systems)
     if form.accepts(request, session):
         response.flash = 'form accepted'
-        db.monitutor_systems.insert(name=form.vars.name,
-                                    display_name=form.vars.display_name,
-                                    hostname=form.vars.hostname,
-                                    ip4_address=form.vars.ip4_address,
-                                    ip6_address=form.vars.ip6_address,
-                                    description=form.vars.description)
-
-        redirect(URL())
     return dict(systems=systems, form=form)
 
 
