@@ -58,7 +58,7 @@
           <a href="{{=URL("default", "download", args=row.monitutor_data.data)}}">
             <i class="fa fa-lg fa-download" style="margin-right: 10px"></i>
           </a>
-          {{=row.monitutor_data.display_name}}
+          {{=row.monitutor_data.name}}
         </li>
       {{pass}}
       </ul>
@@ -72,32 +72,32 @@
       <span id="loadingState">Loading current host states...</span>
   </div>
   {{for milestone in scenario_info["milestones"]:}}
-  <div class="panel panel-default milestone" id="panel-{{=milestone.monitutor_milestones.name}}" style="display: none">
+  <div class="panel panel-default milestone" id="panel-{{=milestone.name}}" style="display: none">
     <div class="panel-heading">
-      {{=milestone.monitutor_milestones.display_name}}
+      {{=milestone.name}}
     </div>
-    {{if milestone.monitutor_milestones.description != "":}}
+    {{if milestone.description != "":}}
     <div class="panel-body">
-      {{=milestone.monitutor_milestones.description}}
+      {{=milestone.description}}
     </div>
     {{pass}}
     <ul class="list-group">
-      {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
-      <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.monitutor_checks.name}}">
+      {{for check in scenario_info["checks"][milestone.milestone_id]:}}
+      <li class="list-group-item list-group-item-info" id="list-group-item-{{=check.name}}">
       <div style="position: absolute; left: -25px; z-index: 99;">
             <i class="history-status-icon fa fa-lg fa-check-circle" style="display: none; color: green" data-toggle="tooltip" data-delay=1000></i>
       </div>
         <div class="row">
           <div class="col-md-9">
             <i class="current-status-icon fa fa-lg fa-question-circle "></i>
-            <span class="check-display-name" style="margin-left: 10px; margin-right: 10px">{{=check.monitutor_checks.display_name}}</span>-
+            <span class="check-display-name" style="margin-left: 10px; margin-right: 10px">{{=check.display_name}}</span>-
             <span class="check-output"></span>
           </div>
         <div class="col-md-3 text-right">
           <div class="btn-group">
           <button class="btn btn-default dropdown-toggle file-attachments"
                   type=button"
-                  id="info-check-{{=check.monitutor_checks.name}}"
+                  id="info-check-{{=check.name}}"
                   data-container="body"
                   data-toggle="dropdown"
                   aria-haspopup="true"
@@ -107,17 +107,17 @@
             <ul class="dropdown-menu file-attachment-container">
             </ul>
           </div>
-          {{if check.monitutor_checks.hint != "" and check.monitutor_checks.hint is not None:}}
+          {{if check.hint != "" and check.hint is not None:}}
           <button class="btn btn-default info-check"
-                  id="info-check-{{=check.monitutor_checks.name}}"
+                  id="info-check-{{=check.name}}"
                   data-container="body"
                   data-toggle="popover"
                   data-placement="left"
-                  data-content="{{=check.monitutor_checks.hint}}">
+                  data-content="{{=check.hint}}">
             <i class="fa fa-info"></i>
           </button>
           {{pass}}
-          <button class="btn btn-default refresh-check" id="refresh-check-{{=check.monitutor_checks.name}}"><i class="fa fa-refresh"></i></button>
+          <button class="btn btn-default refresh-check" id="refresh-check-{{=check.name}}"><i class="fa fa-refresh"></i></button>
         </div>
       </li>
       {{pass}}
@@ -360,8 +360,8 @@ $(document).ready(function(){
   {{pass}}
   $("#loadingState").text("Loading progress data...")
   {{for milestone in scenario_info["milestones"]:}}
-  {{for check in scenario_info["checks"][milestone.monitutor_milestones.milestone_id]:}}
-  allCheckNames.push("{{=check.monitutor_checks.name}}");
+  {{for check in scenario_info["checks"][milestone.milestone_id]:}}
+  allCheckNames.push("{{=check.name}}");
   {{pass}}
   {{pass}}
   getAllCheckStatus(allCheckNames);

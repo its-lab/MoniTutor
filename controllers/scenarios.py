@@ -56,44 +56,25 @@ def progress():
     rabbit_mq_port = app_conf.take("monitutor_env.rabbit_mq_websocket_port")
     rabbit_mq_config = {"address": rabbit_mq_address, "port": rabbit_mq_port}
     scenario = db.monitutor_scenarios[scenario_id]
-
-    hosts = db((scenario_id == db.monitutor_milestone_scenario.scenario_id) &
-                     (db.monitutor_milestone_scenario.milestone_id ==
-                         db.monitutor_milestones.milestone_id) &
-                     (db.monitutor_check_milestone.milestone_id ==
-                         db.monitutor_milestones.milestone_id) &
-                     (db.monitutor_check_milestone.check_id ==
-                         db.monitutor_checks.check_id) &
-                     (db.monitutor_systems.system_id ==
-                         db.monitutor_targets.system_id) &
-                     (db.monitutor_checks.check_id ==
-                         db.monitutor_targets.check_id)).select(
-                                 db.monitutor_systems.system_id,
-                                 db.monitutor_systems.display_name,
-                                 db.monitutor_systems.name,
-                                 distinct=True)
-
-    milestones = db((db.monitutor_milestones.milestone_id ==
-                          db.monitutor_milestone_scenario.milestone_id) &
-                         (db.monitutor_milestone_scenario.scenario_id ==
-                          scenario_id)).select(orderby=db.monitutor_milestone_scenario.sequence_nr)
+    hosts = db((scenario_id == db.monitutor_milestones.scenario_id) &
+               (db.monitutor_checks.milestone_id ==
+                db.monitutor_milestones.milestone_id) &
+               (db.monitutor_checks.source_id ==
+                db.monitutor_systems.system_id)).select(
+                    db.monitutor_systems.system_id,
+                    db.monitutor_systems.display_name,
+                    db.monitutor_systems.name,
+                    distinct=True)
+    milestones = db((db.monitutor_milestones.scenario_id == scenario_id)).select(
+                    orderby=db.monitutor_milestones.order)
     data = db((db.monitutor_data.data_id == db.monitutor_scenario_data.data_id) &
                     (db.monitutor_scenario_data.scenario_id == scenario_id)).select()
     checks = dict()
     for milestone in milestones:
-        check_milestone = db((db.monitutor_check_milestone.milestone_id ==
-                                  milestone.monitutor_milestones.milestone_id) &
-                                  (db.monitutor_check_milestone.check_id ==
-                                  db.monitutor_checks.check_id) &
-                                  (db.monitutor_systems.system_id ==
-                                   db.monitutor_targets.system_id) &
-                                  (db.monitutor_targets.type_id == 1) & # 1 = source
-                                  (db.monitutor_checks.check_id ==
-                                   db.monitutor_targets.check_id)).select(orderby=
-                                                                            db.monitutor_check_milestone.sequence_nr)
-        checks[milestone.monitutor_milestones.milestone_id] = check_milestone
+        checks[milestone.milestone_id] = __db_get_checks(
+            milestone_id=milestone.milestone_id)
     scenario_info = {"description": scenario.description,
-                     "display_name": scenario.display_name,
+                     "display_name": scenario.name,
                      "scenario_id": scenario_id,
                      "scenario_name": scenario.name,
                      "goal": scenario.goal,

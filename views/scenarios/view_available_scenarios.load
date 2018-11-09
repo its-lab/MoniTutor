@@ -1,4 +1,4 @@
-{{user = tutordb.auth_user[user_id]}}
+{{user = db.auth_user[user_id]}}
 <script>
 $(document).ready(function() {
   $(".toggle").on("click", {}, togglePassed);
@@ -35,7 +35,7 @@ $(document).ready(function() {
       {{if scenario.hidden:}}
       <i class="fa fa-eye-slash"></i>
       {{pass}}
-      {{=scenario.display_name}}
+      {{=scenario.name}}
     </div>
     <div class="panel-body"> {{=scenario.description}} <br><br>
       <a href="{{=URL('scenarios','progress.html',
