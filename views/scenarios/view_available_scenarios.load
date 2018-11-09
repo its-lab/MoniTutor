@@ -38,8 +38,6 @@ $(document).ready(function() {
       {{=scenario.display_name}}
     </div>
     <div class="panel-body"> {{=scenario.description}} <br><br>
-      <a href="{{=URL('scenarios','edit_systems',args=[scenario.scenario_id, user_id],
-      extension="html")}}" class='fa fa-cog' style="float: right; margin-right: 10px;" data-toggle="tooltip" data-placement="top" title="Customize your setup"></a>
       <a href="{{=URL('scenarios','progress.html',
       args=[scenario.scenario_id, user.username])}}" class="btn btn-default" role="button">
         Show progress</a>
