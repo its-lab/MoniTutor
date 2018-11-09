@@ -110,11 +110,6 @@ def view_components():
     data = db(db.monitutor_data).select()
     interpreter = db(db.monitutor_interpreters).select()
     programs = db(db.monitutor_programs).select(orderby=db.monitutor_programs.id)
-    unused_systems = db(db.monitutor_targets.target_id == None).select(
-        db.monitutor_systems.ALL,
-        db.monitutor_targets.ALL,
-        left=db.monitutor_targets.on(db.monitutor_targets.system_id == db.monitutor_systems.system_id)
-    )
     unused_programs = db(db.monitutor_checks.check_id == None).select(
         db.monitutor_programs.ALL,
         db.monitutor_checks.ALL,
@@ -124,8 +119,7 @@ def view_components():
     for file in data:
         if not path.isfile("./applications/MoniTutor/uploads/" + file.data):
             broken_files[file.id] = file
-
-    return dict(data=data, interpreter=interpreter, programs=programs, unused_systems=unused_systems, unused_programs=unused_programs, broken_files=broken_files)
+    return dict(data=data, interpreter=interpreter, programs=programs, unused_programs=unused_programs, broken_files=broken_files)
 
 
 @auth.requires_membership('admin')
@@ -149,7 +143,7 @@ def view_systems():
     systems = db(db.monitutor_systems).select()
     system_customvars = {}
     for system in systems:
-        customvars = db(db.monitutor_customvar_system.system_id == system.system_id).select()
+        customvars = db(db.monitutor_customvars.system_id == system.system_id).select()
         if len(customvars):
             var_list = []
             for customvar in customvars:
@@ -166,8 +160,7 @@ def view_system():
         redirect(URL('default','index'))
         system_id = None
     system = db.monitutor_systems[system_id]
-    system_customvars = db(db.monitutor_customvar_system.system_id == system_id).select()
-
+    system_customvars = db(db.monitutor_customvars.system_id == system_id).select()
     return dict(system=system, system_customvars=system_customvars)
 
 @auth.requires_membership("admin")
@@ -357,37 +350,14 @@ def add_customvar():
     else:
         redirect(URL('default', 'index'))
         system_id = None
-    customvar_form = FORM(
-        DIV(
-            SPAN(XML(B("Variable Display Name")), _class="input-group-addon"),
-            INPUT(_name="display_varname", _class="form-control", requires=IS_NOT_EMPTY()),
-            _class="input-group"),
-        BR(),
-        DIV(
-            SPAN(XML(B("Variable Name")), _class="input-group-addon"),
-            INPUT(_name="varname", _class="form-control", requires=IS_ALPHANUMERIC()),
-            _class="input-group"),
-        BR(),
-        DIV(
-            SPAN(XML(B("Value")), _class="input-group-addon"),
-            INPUT(_name="value", _class="form-control", requires=IS_NOT_EMPTY()),
-            _class="input-group"),
-        BR(),
-        INPUT(_type="hidden", _name="system_id", _value=system_id),
-        INPUT(_type="submit")
-    )
+    customvar_form = SQLFORM(db.monitutor_customvars)
+    customvar_form.vars.system_id = system_id
     if customvar_form.accepts(request, session):
         response.flash = 'form accepted'
-        db.monitutor_customvar_system.insert(name=customvar_form.vars.varname,
-                                    display_name=customvar_form.vars.display_varname,
-                                    value=customvar_form.vars.value,
-                                    system_id=customvar_form.vars.system_id)
-        redirect(URL(args=system_id))
     return dict(customvar_form=customvar_form)
 
 @auth.requires_membership('admin')
 def delete_system():
     system_id = request.vars.systemId
-    db(db.monitutor_targets.system_id == system_id).delete()
     db(db.monitutor_systems.system_id == system_id).delete()
     return json.dumps(dict(system_id=system_id))

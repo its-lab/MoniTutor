@@ -7,7 +7,7 @@
     {{for interpreter in interpreters:}}
         <tr>
             <td>{{=interpreter.interpreter_id}}</td>
-            <td>{{=interpreter.display_name}}</td>
+            <td>{{=interpreter.name}}</td>
             <td>{{=interpreter.path}}</td>
         </tr>
    {{pass}}

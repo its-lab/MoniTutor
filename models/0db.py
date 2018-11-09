@@ -106,7 +106,7 @@ db.define_table('scenario_user',
     Field('passed', type="boolean", required=False, default=False))
 
 db.define_table('monitutor_customvars',
-    Field('customvar_id', type="id", required=True),
+    Field('customvar_id', type="id"),
     Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type="string", required=True, requires=IS_ALPHANUMERIC()),
     Field('display_name', type="string", required=True),
