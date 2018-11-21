@@ -278,72 +278,6 @@ def edit_check():
         db(db.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
     return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
-
-@auth.requires_membership('admin')
-def add_target():
-    """Displays information and a form to alter a checks target references"""
-    if len(request.args):
-        check_id = request.args(0, cast=int)
-    else:
-        redirect(URL('default','index'))
-        check_id = None
-    targets = db((db.monitutor_checks.check_id == db.monitutor_targets.check_id) &
-                      (db.monitutor_targets.check_id == check_id) &
-                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
-                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id)).select()
-    check = db(db.monitutor_checks.check_id == check_id).select()
-    type_options = OPTION(" ")
-    types = db(db.monitutor_types).select()
-    for type in types:
-        type_options += OPTION(XML(type.display_name),
-                          _value=type.type_id)
-    sys_option = OPTION(" ")
-    syss = db(db.monitutor_systems).select()
-    for sys in syss:
-        sys_option += OPTION(XML(sys.display_name),
-                          _value=sys.system_id)
-    new_target = FORM(
-        DIV(
-            XML('<b>System:</b>'),
-            SELECT((sys_option), _name="system", _form="newtarget", _class="form-control", requires=IS_NOT_EMPTY()), _class="input_group"), BR(),
-        DIV(
-            XML('<b>Type:</b>'),
-            SELECT((type_options), _name="type", _form="newtarget", _class="form-control", requires=IS_NOT_EMPTY()), _class="input_group"), BR(),
-        INPUT(_type='submit'),
-        _id="newtarget"
-    )
-    if new_target.accepts(request, session):
-        validate_db = db((db.monitutor_targets.check_id == check_id) &
-                              (db.monitutor_targets.system_id == new_target.vars.system) &
-                              (db.monitutor_targets.type_id == new_target.vars.type)
-                              ).select()
-        if len(validate_db):
-            response.flash = "duplicate entry!"
-        else:
-            db.monitutor_targets.insert(
-                                    check_id=check_id,
-                                    system_id=new_target.vars.system,
-                                    type_id=new_target.vars.type,
-                                    )
-            response.flash = "Entry inserted!"
-            redirect(URL(args=check_id))
-    return dict(targets=targets, check=check, newtarget=new_target)
-
-
-@auth.requires_membership('admin')
-def view_target():
-    """Displays all information of a target"""
-    if len(request.args):
-        check_id = request.args(0, cast=int)
-    else:
-        check_id = None
-    targets = db((db.monitutor_checks.check_id == db.monitutor_targets.check_id) &
-                      (db.monitutor_targets.check_id == check_id) &
-                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
-                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id)).select()
-    return dict(targets=targets)
-
-
 @auth.requires_membership('admin')
 def view_attachment():
     """Displays all information of a target"""
@@ -376,14 +310,6 @@ def delete_attachment():
     attachment_id = request.vars.attachmentId
     db(db.monitutor_attachments.attachment_id == attachment_id).delete()
     return json.dumps(dict(attachment_id=attachment_id))
-
-@auth.requires_membership("admin")
-def delete_target():
-    """Removes a system from a check by deleting the target"""
-    target_id = request.vars.targetId
-    db(db.monitutor_targets.target_id == target_id).delete()
-    return json.dumps(dict(target_id=target_id))
-
 
 @auth.requires_membership("admin")
 def delete_scenario():
