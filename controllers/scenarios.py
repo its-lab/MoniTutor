@@ -200,34 +200,19 @@ def __get_variable_value(variable, check_id, username):
     attribute = None
     if len(system_type) is 2:
         attribute = ''.join(variable.split("."))[1:]
-    system = db((db.monitutor_targets.check_id == check_id) &
-                      (db.monitutor_targets.system_id == db.monitutor_systems.system_id) &
-                      (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
-                      (db.monitutor_types.name == system_type)
-                      ).select(db.monitutor_systems.ALL, cache=(cache.ram, 360), cacheable=True).first()
-    # check if the system was customized
-    user_system = db((system.system_id ==
-                           db.monitutor_user_system.system_id) &
-                          (username == db.auth_user.username) &
-                          (db.auth_user.id == db.monitutor_user_system.user_id)
-                         ).select(cache=(cache.ram, 360), cacheable=True)
-    if len(user_system):
-        user_system = user_system.first()
-        system.hostname = user_system.monitutor_user_system.hostname
-        system.ip4_address = user_system.monitutor_user_system.ip4_address
-        system.ip6_address = user_system.monitutor_user_system.ip6_address
+    check = db.monitutor_checks[check_id]
+    if system_type == "source":
+        system = db.monitutor_systems[check.source_id]
+    else:
+        system = db.monitutor_systems[check.dest_id]
     if attribute is None or attribute == "hostname":
         parameter = system.hostname
-    if attribute == "ipv4_address":
-        parameter = str(system.ip4_address)
-    elif attribute == "ipv6_address":
-        parameter = str(system.ip6_address)
     else:
         # in this case the attribute is a custom attribute
         custom_attributes = db((db.monitutor_customvar_system.name == attribute) &
-                                    (db.monitutor_customvar_system.system_id ==
-                                     system.system_id)
-                                    ).select(cache=(cache.ram, 360), cacheable=True)
+                               (db.monitutor_customvar_system.system_id ==
+                                system.system_id)
+                                ).select(cache=(cache.ram, 360), cacheable=True)
         if len(custom_attributes):
             parameter = custom_attributes.value
         else:
