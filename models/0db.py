@@ -129,7 +129,16 @@ def __db_get_checks(scenario_id=None, milestone_id=None):
         return checks
     return None
 
-def __db_get_check(check_id):
+def __db_get_attachments(check_id, reset_cache=False):
+    cache_time = 300
+    if reset_cache:
+        cache_time = -1
+    return db(db.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, cache_time))
+
+def __db_get_check(check_id, reset_cache=False):
+    cache_time = 300
+    if reset_cache:
+        cache_time = -1
     check = db((db.monitutor_checks.check_id == check_id) &
                (db.monitutor_checks.program_id ==
                 db.monitutor_programs.program_id) &
@@ -137,7 +146,7 @@ def __db_get_check(check_id):
                 db.monitutor_interpreters.interpreter_id) &
                (db.monitutor_checks.source_id ==
                 db.monitutor_systems.system_id)).select(
-                    cache=(cache.ram, 300), cacheable=True).first()
+                    cache=(cache.ram, cache_time), cacheable=True).first()
     return check
 
 def __db_get_visible_checks(scenario_id=None, milestone_id=None):

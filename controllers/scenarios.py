@@ -146,29 +146,15 @@ def put_check():
     scenario_name = request.vars.scenarioName
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
-    check_host_program = db((db.monitutor_checks.name == check_name) &
-        (db.monitutor_targets.check_id == db.monitutor_checks.check_id) &
-        (db.monitutor_targets.type_id == db.monitutor_types.type_id) &
-        (db.monitutor_types.name == "source") &
-        (db.monitutor_targets.system_id == db.monitutor_systems.system_id) &
-        (db.monitutor_checks.program_id == db.monitutor_programs.program_id ) &
-        (db.monitutor_programs.interpreter_id == db.monitutor_interpreters.interpreter_id)).select(
-            db.monitutor_checks.name,
-            db.monitutor_checks.params,
-            db.monitutor_checks.check_id,
-            db.monitutor_programs.name,
-            db.monitutor_interpreters.path,
-            db.monitutor_systems.name,
-            cache=(cache.ram, 360)).first()
-    check = db(db.monitutor_checks.check_id == check_host_program.monitutor_checks.check_id).select(
-            cache=(cache.ram, 3600)).first()
-    attachments = db(db.monitutor_attachments.check_id == check.check_id).select(cache=(cache.ram, 360))
-    check = { "name": check.name,
-              "program": check_host_program.monitutor_programs.name,
-              "params": __substitute_vars(check.params,
-                                          check.check_id,
+    check_id = db((db.monitutor_checks.name == check_name)).select(cache=(cache.ram, 3600)).first().check_id
+    check_program = __db_get_check(check_id)
+    attachments = __db_get_attachments(check_id)
+    check = { "name": check_program.monitutor_checks.name,
+              "program": check_program.monitutor_programs.name,
+              "params": __substitute_vars(check_program.monitutor_checks.params,
+                                          check_id,
                                           username),
-              "interpreter_path": check_host_program.monitutor_interpreters.path,
+              "interpreter_path": check_program.monitutor_interpreters.path,
               "scenario_name": scenario_name}
     if attachments:
         check["attachments"] = []
@@ -179,7 +165,7 @@ def put_check():
             if attachment.requires_status:
                 check_attachment["requires_status"] = attachment.requires_status
             check["attachments"].append(check_attachment)
-    topic = username+"."+check_host_program.monitutor_systems.name
+    topic = username+"."+check_program.monitutor_systems.name
     rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
     rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
     rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")

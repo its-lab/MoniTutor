@@ -271,11 +271,11 @@ def edit_check():
                    fields=["name", "display_name", "program_id","params", "hint", "source_id", "dest_id"])
     form.vars.milestone_id = milestone_id
     if form.accepts(request, session):
-        db(db.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
+        __db_get_check(check_id, reset_cache=True)
         response.flash = 'form accepted'
     if attachment_form.accepts(request, session):
         response.flash = 'form accepted'
-        db(db.monitutor_attachments.check_id == check_id).select(cache=(cache.ram, -1))
+        __db_get_attachments(check_id, reset_cache=True)
     return dict(form=form, attachment_form=attachment_form, checkid=check_id, milestone_id=milestone_id, scenario_id=scenario_id)
 
 @auth.requires_membership('admin')
@@ -302,13 +302,16 @@ def edit_attachment():
         fields=["name", "producer","filter", "requires_status"])
     if form.accepts(request, session):
         response.flash = 'form accepted'
+        __db_get_attachments(db.monitutor_attachments[attachment_id].check_id, reset_cache=True)
     return dict(form=form)
 
 @auth.requires_membership("admin")
 def delete_attachment():
     """Removes a system from a check by deleting the target"""
     attachment_id = request.vars.attachmentId
+    check_id = db.monitutor_attachments[attachment_id].check_id
     db(db.monitutor_attachments.attachment_id == attachment_id).delete()
+    __db_get_attachments(check_id, reset_cache=True)
     return json.dumps(dict(attachment_id=attachment_id))
 
 @auth.requires_membership("admin")
