@@ -254,18 +254,11 @@ def edit_check():
     """Displays forms to show and alter all information of a given check"""
     if len(request.args):
         check_id = request.args(0, cast=int)
-        if len(request.args) > 2:
-            scenario_id = request.args(1, cast=int)
-            milestone_id = request.args(2, cast=int)
-        else:
-            scenario_id = None
-            milestone_id = None
     else:
         redirect(URL('default','index'))
-        check_id = None
-        scenario_id = None
-        milestone_id = None
-
+    check = db.monitutor_checks[check_id]
+    milestone_id = check.milestone_id
+    scenario_id = db.monitutor_milestones[milestone_id].scenario_id
     attachment_form = SQLFORM(db.monitutor_attachments,
         showid=False,
         formstyle="divs",
@@ -275,7 +268,8 @@ def edit_check():
                    check_id,
                    showid=False,
                    formstyle="divs",
-                   fields=["name", "display_name", "program_id","params", "hint"])
+                   fields=["name", "display_name", "program_id","params", "hint", "source_id", "dest_id"])
+    form.vars.milestone_id = milestone_id
     if form.accepts(request, session):
         db(db.monitutor_checks.check_id == check_id).select(cache=(cache.ram, -1))
         response.flash = 'form accepted'
