@@ -18,7 +18,7 @@ def view_users():
     for user in users:
         last_action_row = db(db.auth_event.user_id == user.id).select(orderby=~db.auth_event.time_stamp).first()
         last_login_row = db((db.auth_event.user_id == user.id)&
-                                 (db.auth_event.description.contains("Logged-in"))).select(orderby=~tutordb.auth_event.time_stamp).first()
+                                 (db.auth_event.description.contains("Logged-in"))).select(orderby=~db.auth_event.time_stamp).first()
         if last_login_row is not None:
             last_login_row.time_stamp = str(datetime.datetime.now()-last_login_row.time_stamp).split('.',2)[0]
             last_action_row.time_stamp = str(datetime.datetime.now()-last_action_row.time_stamp).split('.',2)[0]
