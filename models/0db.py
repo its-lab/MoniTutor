@@ -164,3 +164,10 @@ def __db_get_visible_checks(scenario_id=None, milestone_id=None):
         return checks
     return None
 
+def __db_get_attributes(attribute_name, system_id, reset_cache=False):
+    cache_time = 300
+    if reset_cache:
+        cache_time = -1
+    return db((db.monitutor_customvars.name == attribute_name) &
+             (db.monitutor_customvars.system_id == system_id)
+             ).select(cache=(cache.ram, cache_time), cacheable=True)

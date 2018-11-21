@@ -198,26 +198,20 @@ def __substitute_vars(parameters, check_id, username):
 def __get_variable_value(variable, check_id, username):
     system_type = variable.split(".")[0].lower()[1:]
     attribute = None
-    if len(system_type) is 2:
-        attribute = ''.join(variable.split("."))[1:]
+    if len(variable.split('.')) is 2:
+        attribute = ''.join(variable.split(".")[1:])
     check = db.monitutor_checks[check_id]
     if system_type == "source":
         system = db.monitutor_systems[check.source_id]
-    else:
+    elif system_type == "dest":
         system = db.monitutor_systems[check.dest_id]
-    if attribute is None or attribute == "hostname":
-        parameter = system.hostname
     else:
-        # in this case the attribute is a custom attribute
-        custom_attributes = db((db.monitutor_customvar_system.name == attribute) &
-                               (db.monitutor_customvar_system.system_id ==
-                                system.system_id)
-                                ).select(cache=(cache.ram, 360), cacheable=True)
-        if len(custom_attributes):
-            parameter = custom_attributes.value
-        else:
-            # Fallback to hostname in case the attribute was not found
-            parameter = system.hostname
+        return variable
+    attributes = __db_get_attributes(attribute, system.system_id)
+    if len(attributes):
+        parameter = attributes.first().value
+    else:
+        parameter = variable
     return parameter
 
 def __generate_random_string(length):

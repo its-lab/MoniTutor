@@ -187,6 +187,7 @@ def edit_customvar():
     customvar = db.monitutor_customvars[customvar_id]
     form = SQLFORM(db.monitutor_customvars, customvar, deletable=True)
     if form.accepts(request, session):
+        __db_get_attributes(customvar.name, customvar.system_id, reset_cache=True)
         response.flash = 'form accepted'
     return dict(form=form)
 
@@ -262,6 +263,7 @@ def add_customvar():
     customvar_form.vars.system_id = system_id
     if customvar_form.accepts(request, session):
         response.flash = 'form accepted'
+        __db_get_attributes(customvar_form.vars.name, system_id, reset_cache=True)
     return dict(customvar_form=customvar_form)
 
 @auth.requires_membership('admin')
