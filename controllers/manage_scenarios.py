@@ -329,86 +329,84 @@ def get_scenario():
         scenario_id = 0
         redirect(URL("default","index"))
     scenario_table = db.monitutor_scenarios[scenario_id]
-    scenario = {}
+    programs = set()
+    systems = set()
+    export = {"programs": [], "scenarios": [], "systems": []}
+
+    scenario = dict()
     scenario["name"] = scenario_table.name
     scenario["uuid"] = scenario_table.uuid
-    scenario["display_name"] = scenario_table.display_name
+    if scenario_table.uuid == "":
+        scenario["uuid"] = str(uuid.uuid4())
     scenario["description"] = scenario_table.description
     scenario["goal"] = scenario_table.goal
     scenario["hidden"] = True
-    milestone_refs = []
-    milestone_ref_table = db(db.monitutor_milestone_scenario.scenario_id == scenario_id).select()
-    for milestone_ref_row in milestone_ref_table:
-        milestone_ref = dict()
-        milestone_ref["hidden"] = milestone_ref_row.hidden
-        milestone_ref["sequence_nr"] = milestone_ref_row.sequence_nr
-        milestone_ref["dependency"] = milestone_ref_row.dependency
-        milestone_row = db.monitutor_milestones[milestone_ref_row.milestone_id]
+    scenario["milestones"] = []
+    milestones_table = db(db.monitutor_milestones.scenario_id == scenario_id).select()
+    for milestone_row in milestones_table:
         milestone = dict()
+        milestone["hidden"] = milestone_row.hidden
+        milestone["order"] = milestone_row.order
         milestone["name"] = milestone_row.name
         milestone["uuid"] = milestone_row.uuid
-        milestone["display_name"] = milestone_row.display_name
         milestone["description"] = milestone_row.description
-        check_refs = []
-        check_ref_table = db(db.monitutor_check_milestone.milestone_id == milestone_ref_row.milestone_id).select()
-        for check_ref_row in check_ref_table:
-            check_ref = dict()
-            check_ref["flag_invis"] = check_ref_row.flag_invis
-            check_ref["sequence_nr"] = check_ref_row.sequence_nr
-            check_row = db.monitutor_checks[check_ref_row.check_id]
+        milestone["checks"] = []
+        checks_table = db(db.monitutor_checks.milestone_id == milestone_row.milestone_id).select()
+        for check_row in checks_table:
             check = dict()
+            check["hidden"] = check_row.hidden
+            check["order"] = check_row.order
             check["name"] = check_row.name
             check["uuid"] = check_row.uuid
             check["display_name"] = check_row.display_name
             check["params"] = check_row.params
             check["hint"] = check_row.hint
-            targets = []
-            target_table = db(db.monitutor_targets.check_id == check_row.check_id).select()
-            for target_row in target_table:
-                target = dict()
-                type_row = db.monitutor_types[target_row.type_id]
-                target["type"] = {"name": type_row.name, "display_name": type_row.display_name}
-                system = dict()
-                system_row = db.monitutor_systems[target_row.system_id]
-                system["name"] = system_row.name
-                system["uuid"] = system_row.uuid
-                system["display_name"] = system_row.display_name
-                system["hostname"] = system_row.hostname
-                system["description"] = system_row.description
-                customvars = []
-                customvar_table = db(db.monitutor_customvar_system.system_id == system_row.system_id).select()
-                for customvar_row in customvar_table:
-                    customvar = {
-                        "name": customvar_row.name,
-                        "uuid": customvar_row.uuid,
-                        "display_name": customvar_row.display_name,
-                        "value": customvar_row.value,
-                        }
-                    customvars.append(customvar)
-                system["customvars"] = customvars
-                target["system"] = system
-                targets.append(target)
-            check["targets"] = targets
-            program_row = db.monitutor_programs[check_row.program_id]
-            program = dict()
-            program["name"] = program_row.name
-            program["uuid"] = program_row.uuid
-            program["display_name"] = program_row.display_name
-            program["code"] = program_row.code
-            interpreter_row = db.monitutor_interpreters[program_row.interpreter_id]
-            program["interpreter"] = {
-                "name": interpreter_row.name,
-                "display_name": interpreter_row.display_name,
-                "path": interpreter_row.path
-                }
-            check["program"] = program
-            check_ref["check"] = check
-            check_refs.append(check_ref)
-        milestone["check_refs"] = check_refs
-        milestone_ref["milestone"] = milestone
-        milestone_refs.append(milestone_ref)
-    scenario["milestone_refs"] = milestone_refs
-    return json.dumps(scenario)
+            check["source"] = db.monitutor_systems[check_row.source_id].name
+            systems.add(check["source"])
+            check["dest"] = db.monitutor_systems[check_row.dest_id].name
+            systems.add(check["dest"])
+            check["program"] = db.monitutor_programs[check_row.program_id].name
+            programs.add(check["program"])
+            check["attachments"] = []
+            attachment_table = db(db.monitutor_attachments.check_id == check_row.check_id).select()
+            for attachment_row in attachment_table:
+                attachment = dict()
+                attachment["name"] = attachment_row.name
+                attachment["uuid"] = attachment_row.uuid
+                attachment["filter"] = attachment_row.filter
+                attachment["producer"] = attachment_row.producer
+                attachment["requires_status"] = attachment_row.requires_status
+                check["attachments"].append(attachment)
+            milestone["checks"].append(check)
+        scenario["milestones"].append(milestone)
+    export["scenarios"].append(scenario)
+    for system_name in systems:
+        system_row = db(db.monitutor_systems.name == system_name).select().first()
+        system = dict()
+        system["name"] = system_name
+        system["display_name"] = system_row.display_name
+        system["description"] = system_row.description
+        system["uuid"] = system_row.uuid
+        system["customvars"] = []
+        for customvar_row in db(db.monitutor_customvars.system_id == system_row.system_id).select():
+            customvar = dict()
+            customvar["name"] = customvar_row.name
+            customvar["uuid"] = customvar_row.uuid
+            customvar["display_name"] = customvar_row.display_name
+            customvar["value"] = customvar_row.value
+            system["customvars"].append(customvar)
+        export["systems"].append(system)
+    for program_name in programs:
+        program_row = db(db.monitutor_programs.name == program_name).select().first()
+        program = dict()
+        program["name"] = program_name
+        program["display_name"] = program_row.display_name
+        program["code"] = program_row.code
+        program["uuid"] = program_row.uuid
+        program["interpreter_path"] = db.monitutor_interpreters[program_row.interpreter_id].path
+        program["interpreter_name"] = db.monitutor_interpreters[program_row.interpreter_id].name
+        export["programs"].append(program)
+    return json.dumps(export)
 
 @auth.requires_membership("admin")
 def upload_scenario():
@@ -435,7 +433,7 @@ def upload_scenario():
                 existing_program.code = program["code"]
                 existing_program.interpreter_id = interpreter_id
                 existing_program.update_record()
-                program_ids[existing_program.name] = existing_program_id
+                program_ids[existing_program.name] = existing_program.program_id
             else:
                 program_id = db.monitutor_programs.insert(
                     name=program["name"],
