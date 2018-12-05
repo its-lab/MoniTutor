@@ -92,6 +92,7 @@ db.define_table('monitutor_checks',
 
 db.define_table('monitutor_attachments',
     Field('attachment_id', type='id'),
+    Field('uuid', length=64, default=lambda:str(uuid.uuid4())),
     Field('name', type='string', required=True),
     Field('producer', type='text', required=True),
     Field('filter', type='text'),
