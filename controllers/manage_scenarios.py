@@ -317,9 +317,6 @@ def delete_attachment():
 def delete_scenario():
     """Deletes a given Scenario and all its references"""
     scenario_id = request.vars.scenarioId
-    db(db.monitutor_milestone_scenario.scenario_id == scenario_id).delete()
-    db(db.monitutor_scenario_data.scenario_id == scenario_id).delete()
-    db(db.scenario_user.scenario_id == scenario_id).delete()
     db(db.monitutor_scenarios.scenario_id == scenario_id).delete()
     return json.dumps(dict(scenario_id=scenario_id))
 
