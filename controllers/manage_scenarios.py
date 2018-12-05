@@ -420,141 +420,151 @@ def upload_scenario():
                         _form="form2", requires=IS_NOT_EMPTY(error_message='Select a .json file')),
                   INPUT(_type="submit", _form="form2"), _id="form2")
     if form2.accepts(request, session):
-        scenario = json.loads(form2.vars.scenariofile.value)
-        existing_scenario = db(db.monitutor_scenarios.uuid == scenario["uuid"]).select()
-        if(len(existing_scenario)):
-            existing_scenario = existing_scenario.first()
-            existing_scenario.name = scenario["name"]
-            existing_scenario.display_name = scenario["display_name"]
-            existing_scenario.goal = scenario["goal"]
-            existing_scenario.description = scenario["description"]
-            existing_scenario.hidden = True
-            existing_scenario.update_record()
-            scenario_id = existing_scenario.scenario_id
-        else:
-            scenario_id = db.monitutor_scenarios.insert(name=scenario["name"],
-                                                      display_name=scenario["display_name"],
-                                                      goal=scenario["goal"],
-                                                      description=scenario["description"],
-                                                      uuid=scenario["uuid"],
-                                                      hidden=True)
-        for milestone_ref in scenario["milestone_refs"]:
-            milestone = milestone_ref["milestone"]
-            existing_milestone = db(db.monitutor_milestones.uuid == milestone["uuid"]).select()
-            if(len(existing_milestone)):
-                existing_milestone = existing_milestone.first()
-                existing_milestone.name = milestone["name"]
-                existing_milestone.description = milestone["description"]
-                existing_milestone.display_name = milestone["display_name"]
-                existing_milestone.update_record()
-                milestone_id = existing_milestone.milestone_id
+        data = json.loads(form2.vars.scenariofile.value)
+
+        program_ids = dict()
+        for program in data["programs"]:
+            interpreter = db(db.monitutor_interpreters.name == program["interpreter_name"]).select()
+            if len(interpreter):
+                interpreter_id = interpreter.first().interpreter_id
             else:
-                milestone_id = db.monitutor_milestones.insert(name=milestone["name"],
-                                                                   description = milestone["description"],
-                                                                   display_name = milestone["display_name"],
-                                                                   uuid = milestone["uuid"])
-            if len(db((db.monitutor_milestone_scenario.milestone_id == milestone_id)&
-                           (db.monitutor_milestone_scenario.scenario_id == scenario_id)).select()) < 1:
-                db.monitutor_milestone_scenario.insert(milestone_id=milestone_id,
-                                                            scenario_id=scenario_id,
-                                                            sequence_nr=milestone_ref["sequence_nr"],
-                                                            dependency=milestone_ref["dependency"],
-                                                            hidden=milestone_ref["hidden"])
-            for check_ref in milestone["check_refs"]:
-                check = check_ref["check"]
-                program = check["program"]
-                interpreter = program["interpreter"]
-                db.monitutor_interpreters.update_or_insert(name=interpreter["name"],
-                                               display_name=interpreter["display_name"],
-                                               path=interpreter["path"])
-                interpreter_id = db.monitutor_interpreters(name=interpreter["name"]).interpreter_id
-                existing_program = db(db.monitutor_programs.uuid == program["uuid"]).select()
-                if(len(existing_program)):
-                    existing_program = existing_program.first()
-                    existing_program.code = program["code"]
-                    existing_program.display_name = program["display_name"]
-                    existing_program.interpreter_id = interpreter_id
-                    existing_program.name = program["name"]
-                    existing_program.update_record()
-                    program_id = existing_program.program_id
+                interpreter_id = db.monitutor_interpreters.insert(
+                    name=program["interpreter_name"],
+                    path= program["interpreter_path"])
+            existing_program = db(db.monitutor_programs.name == program["name"]).select()
+            if(len(existing_program)):
+                existing_program = existing_program.first()
+                existing_program.name = program["name"]
+                existing_program.display_name = program["display_name"]
+                existing_program.code = program["code"]
+                existing_program.interpreter_id = interpreter_id
+                existing_program.update_record()
+                program_ids[existing_program.name] = existing_program_id
+            else:
+                program_id = db.monitutor_programs.insert(
+                    name=program["name"],
+                    display_name = program["display_name"],
+                    code = program["code"],
+                    interpreter_id = interpreter_id
+                    )
+                program_ids[program["name"]] = program_id
+
+        system_ids = dict()
+        for system in data["systems"]:
+            existing_system = db(db.monitutor_systems.name == system["name"]).select()
+            if(len(existing_system)):
+                existing_system = existing_system.first()
+                existing_system.display_name = system["display_name"]
+                existing_system.description = system["description"]
+                existing_system.update_record()
+                system_id = existing_system.system_id
+                system_ids[system["name"]] = system_id
+            else:
+                system_id = db.monitutor_systems.insert(
+                    name=system["name"],
+                    description = system["description"],
+                    display_name = system["display_name"]
+                    )
+                system_ids[system["name"]] = system_id
+
+            for customvar in system["customvars"]:
+                existing_customvars=db(db.monitutor_customvars.uuid==customvar["uuid"]).select()
+                if len(existing_customvars):
+                    existing_customvars = existing_customvars.first()
+                    existing_customvars.name = customvar["name"]
+                    existing_customvars.display_name = customvar["display_name"]
+                    existing_customvars.value = customvar["value"]
+                    existing_customvars.update_record()
                 else:
-                    program_id = db.monitutor_programs.insert(name = program["name"],
-                                                                   display_name = program["display_name"],
-                                                                   code = program["code"],
-                                                                   interpreter_id = interpreter_id,
-                                                                   uuid = program["uuid"])
-                existing_check = db(db.monitutor_checks.uuid == check["uuid"]).select()
-                if len(existing_check):
-                    existing_check = existing_check.first()
-                    existing_check.name = check["name"]
-                    existing_check.display_name = check["display_name"]
-                    existing_check.hint = check["hint"]
-                    existing_check.params = check["params"]
-                    existing_check.program_id = program_id
-                    existing_check.update_record()
-                    check_id = existing_check.check_id
+                    db.monitutor_customvars.insert(
+                        name = customvar["name"],
+                        display_name = customvar["display_name"],
+                        value = customvar["value"],
+                        system_id = system_id,
+                        uuid = customvar["uuid"])
+
+        for scenario in data["scenarios"]:
+            existing_scenario = db(db.monitutor_scenarios.uuid == scenario["uuid"]).select()
+            if(len(existing_scenario)):
+                existing_scenario = existing_scenario.first()
+                existing_scenario.name = scenario["name"]
+                existing_scenario.goal = scenario["goal"]
+                existing_scenario.description = scenario["description"]
+                existing_scenario.hidden = True
+                existing_scenario.update_record()
+                scenario_id = existing_scenario.scenario_id
+            else:
+                scenario_id = db.monitutor_scenarios.insert(name=scenario["name"],
+                    goal=scenario["goal"],
+                    description=scenario["description"],
+                    uuid=scenario["uuid"],
+                    hidden=True)
+            for milestone in scenario["milestones"]:
+                existing_milestone = db(db.monitutor_milestones.uuid == milestone["uuid"]).select()
+                if(len(existing_milestone)):
+                    existing_milestone = existing_milestone.first()
+                    existing_milestone.name = milestone["name"]
+                    existing_milestone.description = milestone["description"]
+                    existing_milestone.order = milestone["order"]
+                    existing_milestone.hidden = milestone["hidden"]
+                    existing_milestone.update_record()
+                    milestone_id = existing_milestone.milestone_id
                 else:
-                    check_id = db.monitutor_checks.insert(name = check["name"],
-                                                               display_name = check["display_name"],
-                                                               hint = check["hint"],
-                                                               params = check["params"],
-                                                               program_id = program_id,
-                                                               uuid = check["uuid"])
-                for target in check["targets"]:
-                    system = target["system"]
-                    type_var = target["type"]
-                    existing_system = db(db.monitutor_systems.uuid == system["uuid"]).select()
-                    if len(existing_system):
-                        existing_system = existing_system.first()
-                        existing_system.name = system["name"]
-                        existing_system.display_name = system["display_name"]
-                        existing_system.hostname = system["hostname"]
-                        existing_system.description = system["description"]
-                        existing_system.update_record()
-                        system_id = existing_system.system_id
+                    milestone_id = db.monitutor_milestones.insert(
+                        name=milestone["name"],
+                        description = milestone["description"],
+                        order = milestone["order"],
+                        hidden = milestone["hidden"],
+                        uuid = milestone["uuid"],
+                        scenario_id = scenario_id
+                        )
+                for check in milestone["checks"]:
+                    program_id = program_ids[check["program"]]
+                    source_id = system_ids[check["source"]]
+                    dest_id = system_ids[check["dest"]]
+                    existing_check = db(db.monitutor_checks.uuid == check["uuid"]).select()
+                    if len(existing_check):
+                        existing_check = existing_check.first()
+                        existing_check.name = check["name"]
+                        existing_check.display_name = check["display_name"]
+                        existing_check.hint = check["hint"]
+                        existing_check.hidden = check["hidden"]
+                        existing_check.order = check["order"]
+                        existing_check.params = check["params"]
+                        existing_check.program_id = program_id
+                        existing_check.source_id = source_id
+                        existing_check.dest_id = dest_id
+                        existing_check.update_record()
+                        check_id = existing_check.check_id
                     else:
-                        system_id = db.monitutor_systems.insert(name = system["name"],
-                                                                      display_name = system["display_name"],
-                                                                      hostname = system["hostname"],
-                                                                      description = system["description"],
-                                                                      uuid = system["uuid"])
-                    db.monitutor_types.update_or_insert(name=type_var["name"],
-                                                             display_name=type_var["display_name"])
-                    type_id = db(db.monitutor_types.name ==
-                            type_var["name"]).select().first().type_id
-                    if len(db((db.monitutor_targets.type_id == type_id) &
-                                   (db.monitutor_targets.check_id == check_id) &
-                                   (db.monitutor_targets.system_id == system_id)).select()) < 1:
-                        db.monitutor_targets.insert(type_id = type_id,
-                                                         system_id = system_id,
-                                                         check_id = check_id)
-                    for customvar in system["customvars"]:
-                        existing_customvars=db(db.monitutor_customvar_system.uuid==customvar["uuid"]).select()
-                        if len(existing_customvars):
-                            existing_customvars = existing_customvars.first()
-                            existing_customvars.name = customvar["name"]
-                            existing_customvars.display_name = customvar["display_name"]
-                            existing_customvars.value = customvar["value"]
-                            existing_customvars.system_id = system_id
-                            existing_customvars.update_record()
+                        check_id = db.monitutor_checks.insert(
+                            name = check["name"],
+                            display_name = check["display_name"],
+                            hint = check["hint"],
+                            params = check["params"],
+                            program_id = program_id,
+                            dest_id = dest_id,
+                            source_id = source_id,
+                            hidden = check["hidden"],
+                            order = check["order"],
+                            milestone_id = milestone_id,
+                            uuid = check["uuid"])
+                    for attachment in check["attachments"]:
+                        existing_attachment = db(db.monitutor_attachments.uuid == attachment["uuid"]).select()
+                        if len(existing_attachment):
+                            existing_attachment = existing_attachment.first()
+                            existing_attachment.name = attachment["name"]
+                            existing_attachment.producer = attachment["producer"]
+                            existing_attachment.filter = attachment["filter"]
+                            existing_attachment.requires_status = attachment["requires_status"]
                         else:
-                            db.monitutor_customvar_system.insert(name = customvar["name"],
-                                                                      display_name = customvar["display_name"],
-                                                                      value = customvar["value"],
-                                                                      system_id = system_id,
-                                                                      uuid = customvar["uuid"])
-                    if len(db((db.monitutor_targets.system_id == system_id)&
-                           (db.monitutor_targets.check_id == check_id)&
-                           (db.monitutor_targets.type_id ==
-                               type_id)).select())<1:
-                        db.monitutor_targets.insert(system_id = system_id,
-                                                         check_id = check_id,
-                                                         type_id = type_id)
-                if len(db((db.monitutor_check_milestone.milestone_id == milestone_id) &
-                               (db.monitutor_check_milestone.check_id == check_id)).select()) < 1:
-                    db.monitutor_check_milestone.insert(check_id = check_id,
-                                                             milestone_id = milestone_id,
-                                                             flag_invis = check_ref["flag_invis"],
-                                                             sequence_nr = check_ref["sequence_nr"])
+                             db.monitutor_attachments.insert(
+                                name = attachment["name"],
+                                producer = attachment["producer"],
+                                filter = attachment["filter"],
+                                requires_status = attachment["requires_status"],
+                                uuid = attachment["uuid"],
+                                check_id = check_id)
+
         redirect(URL('manage_scenarios',"view_scenarios"))
     return dict(form2=form2)
