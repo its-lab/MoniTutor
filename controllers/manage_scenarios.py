@@ -5,7 +5,6 @@ def view_scenarios():
     """Displays all Scenarios and global scenario information"""
     scenarios = db(db.monitutor_scenarios).select()
     new_scenario_form = SQLFORM(db.monitutor_scenarios)
-    new_scenario_form.vars.hidden = True
     if new_scenario_form.accepts(request, session):
         session.flash = 'Record inserted.'
         redirect(URL("manage_scenarios", "view_scenarios"))
@@ -83,10 +82,10 @@ def add_check():
         milestone_id = None
     add_check_form = SQLFORM(db.monitutor_checks)
     add_check_form.vars.milestone_id = milestone_id
-    add_check_form.vars.hidden = False
-    add_check_form.vars.order = 0
     if add_check_form.accepts(request, session):
         response.flash = "Form accepted. Added check"
+    add_check_form.vars.order = 0
+    add_check_form.vars.uuid = str(uuid.uuid4())
     return dict(form=add_check_form)
 
 
@@ -244,8 +243,8 @@ def add_milestone():
     new_milestone_form = SQLFORM(db.monitutor_milestones)
     if new_milestone_form.accepts(request, session):
         session.flash = 'Milestone inserted.'
-    new_milestone_form.vars.hidden = False
     new_milestone_form.vars.order = 0
+    new_milestone_form.vars.uuid = str(uuid.uuid4())
     new_milestone_form.vars.scenario_id = scenario_id
     return dict(new_milestone_form=new_milestone_form)
 

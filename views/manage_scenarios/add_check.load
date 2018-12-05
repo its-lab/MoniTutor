@@ -31,7 +31,6 @@ Source: {{=form.custom.widget["source_id"]}} Destination: {{=form.custom.widget[
 <br>
 <br>
 <input value="{{=form.vars.milestone_id}}" type="hidden" name="milestone_id" />
-<input value="{{=form.vars.hidden}}" type="hidden" name="hidden" />
 <input value="{{=form.vars.uuid}}" type="hidden" name="uuid" />
 {{=form.custom.submit}}
 {{=form.custom.end}}
