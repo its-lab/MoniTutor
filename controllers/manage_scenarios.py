@@ -144,11 +144,10 @@ def lower_check():
 @auth.requires_membership('admin')
 def remove_milestone():
     """Removes the reference between a given scenario and a milestone"""
-    milestone_scenario_id = request.args(0, cast=int)
-    scenario_id = request.args(1, cast=int)
-    del db.monitutor_milestone_scenario[milestone_scenario_id]
-    if scenario_id:
-        redirect(URL('manage_scenarios', 'view_scenario.html', args=[scenario_id]))
+    milestone_id = request.args(0, cast=int)
+    scenario_id = db.monitutor_milestones[milestone_id].scenario_id
+    del db.monitutor_milestones[milestone_id]
+    redirect(URL('manage_scenarios', 'view_scenario.html', args=[scenario_id]))
 
 
 @auth.requires_membership('admin')

@@ -36,8 +36,7 @@
     {{for milestone in milestones:}}
     <div class="list-group-item">
       <a href="{{=URL('manage_scenarios','remove_milestone',
-               args=[milestone.milestone_id,
-               scenario.scenario_id])}}">
+               args=[milestone.milestone_id])}}">
         <i class="fa fa-trash" style="float: right;"></i>
       </a>
       {{if milestone.hidden == 1:}}
