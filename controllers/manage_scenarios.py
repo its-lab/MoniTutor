@@ -104,13 +104,10 @@ def edit_milestone_form():
 @auth.requires_membership('admin')
 def remove_check():
     """Deletes the reference between the check and the milestone"""
-    milestone_id = request.args(0, cast=int)
-    check_milestone_id = request.args(1, cast=int)
-    scenario_id = request.args(2, cast=int)
-    del db.monitutor_check_milestone[check_milestone_id]
-
-    if scenario_id:
-        redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
+    check_id = request.args(0, cast=int)
+    milestone_id = db.monitutor_checks[check_id].milestone_id
+    del db.monitutor_checks[check_id]
+    redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id]))
 
 @auth.requires_membership('admin')
 def hide_check():

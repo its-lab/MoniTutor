@@ -60,9 +60,8 @@
       {{for check in checks:}}
       {{details = check_details[check.check_id]}}
       <div class="list-group-item">
-        <a href="{{=URL('manage_scenarios','remove_check',
-        args=[check.check_id])}}">
-          <i class="fa fa-minus" style="float: right;"></i>
+        <a href="{{=URL('manage_scenarios','remove_check',args=[check.check_id])}}">
+          <i class="fa fa-trash" style="float: right;"></i>
         </a>
         {{if check.hidden == 1:}}
         <a href="{{=URL('manage_scenarios','hide_check',
