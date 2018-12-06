@@ -71,7 +71,6 @@ def view_milestone():
                 milestone_id=milestone_id,
                 scenario=scenario)
 
-
 @auth.requires_membership('admin')
 def add_check():
     """Adds a check to a given milestone"""
@@ -88,34 +87,6 @@ def add_check():
     add_check_form.vars.uuid = str(uuid.uuid4())
     return dict(form=add_check_form)
 
-
-@auth.requires_membership('admin')
-def add_existing_check():
-    """Allows associating an existing check to a new milestone."""
-    if len(request.args):
-        milestone_id = request.args(0, cast=int)
-    else:
-        redirect(URL('default','index'))
-    check_form = SQLFORM.factory(
-        Field('name',
-              type='string',
-              requires=[IS_ALPHANUMERIC(),
-                        IS_NOT_IN_DB(db,"monitutor_checks.name")]),
-        Field('check', 'reference monitutor_checks',
-              requires=IS_IN_DB(db, db.monitutor_checks, '%(name)s')))
-    if check_form.accepts(request, session):
-        check = db.monitutor.checks[check_form.vars.check]
-        db.monitutor_checks.insert(name=check_form.vars.name,
-                                   milestone_id=milestone_id,
-                                   display_name=check.display_name,
-                                   params=check.params,
-                                   program_id=check.program_id,
-                                   source_id=check.source_id,
-                                   dest_id=check.dest_id,
-                                   hint=check.hint)
-    return dict(form=check_form)
-
-
 @auth.requires_membership('admin')
 def edit_milestone_form():
     """Displays a form to edit a given milestone"""
@@ -130,7 +101,6 @@ def edit_milestone_form():
         response.flash = "Form accepted"
     return dict(milestone_form=milestone_form)
 
-
 @auth.requires_membership('admin')
 def remove_check():
     """Deletes the reference between the check and the milestone"""
@@ -141,7 +111,6 @@ def remove_check():
 
     if scenario_id:
         redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
-
 
 @auth.requires_membership('admin')
 def hide_check():
@@ -195,7 +164,6 @@ def hide_milestone():
         redirect(URL('manage_scenarios', 'view_scenario.html',
                      args=[db.monitutor_milestones[milestone_id].scenario_id]))
 
-
 @auth.requires_membership('admin')
 def lower_milestone():
     """Lowers the milestone milestone prio to change order"""
@@ -212,7 +180,6 @@ def lower_milestone():
     if scenario_id:
         redirect(URL('manage_scenario', 'view_scenario.html', args=[scenario_id]))
 
-
 @auth.requires_membership('admin')
 def delete_milestone():
     milestone_id = request.vars.milestoneId
@@ -222,7 +189,6 @@ def delete_milestone():
     milestone.delete()
     return json.dumps({milestone_id: True})
 
-
 @auth.requires_membership('admin')
 def delete_check():
     check_id = request.vars.checkId
@@ -231,7 +197,6 @@ def delete_check():
     targets.delete()
     check.delete()
     return json.dumps({check_id: True})
-
 
 @auth.requires_membership('admin')
 def add_milestone():
@@ -559,6 +524,5 @@ def upload_scenario():
                                 requires_status = attachment["requires_status"],
                                 uuid = attachment["uuid"],
                                 check_id = check_id)
-
         redirect(URL('manage_scenarios',"view_scenarios"))
     return dict(form2=form2)
