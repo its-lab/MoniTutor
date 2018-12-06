@@ -91,7 +91,7 @@
         {{pass}}
         <a href="{{=URL('manage_scenarios','edit_check',
         args=[check.check_id])}}">
-          {{=check.display_name}}
+          {{=check.order}}. {{=check.display_name}}
           {{if check.params is not "":}}
           - {{=check.params}}
           {{pass}}
