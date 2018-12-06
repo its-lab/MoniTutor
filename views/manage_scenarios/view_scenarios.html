@@ -120,12 +120,12 @@
         <button type="button" class="btn btn-default" id="{{=scenario.scenario_id}}" style="margin-right: 0px;">
           <i class="fa fa-edit"></i> Edit
         </button>
-        <a href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}" download="{{=scenario.name}}.json">
-          <button type="button" class="btn btn-default"
-             style="margin-right: 0px;">
-          <i class="fa fa-download export-scenario"></i> Export
-          </button>
-        </a>
+        <button type="button" class="btn btn-default"
+                style="margin-right: 0px;">
+          <a href="{{=URL('manage_scenarios', 'get_scenario', args=scenario.scenario_id)}}" download="{{=scenario.name}}.json">
+            <i class="fa fa-download export-scenario"></i> Export
+          </a>
+        </button>
         {{if scenario.hidden is True:}}
         <button type="button" class="btn btn-default showScenarioButton" id="{{=scenario.scenario_id}}-show" style="margin-right: 0px;">
           <i class="fa fa-eye-slash"></i> Show

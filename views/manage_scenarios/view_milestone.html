@@ -66,12 +66,12 @@
         {{if check.hidden == 1:}}
         <a href="{{=URL('manage_scenarios','hide_check',
         args=[check.check_id, "0"])}}">
-          <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
+          <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
         </a>
         {{else:}}
         <a href="{{=URL('manage_scenarios','hide_check',
         args=[check.check_id, "1"])}}">
-          <i class="fa fa-eye-slash" style="float: right; margin-right: 10px;"></i>
+          <i class="fa fa-eye" style="float: right; margin-right: 10px;"></i>
         </a>
         {{pass}}
         {{if check.order == 0:}}
