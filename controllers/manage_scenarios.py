@@ -112,15 +112,11 @@ def remove_check():
 @auth.requires_membership('admin')
 def hide_check():
     """Hides a check so it is only visible to administrators"""
-    milestone_id = request.args(0, cast=int)
-    check_milestone_id = request.args(1, cast=int)
-    invis = request.args(2, cast=int)
-    scenario_id = request.args(3, cast=int)
-    db.monitutor_check_milestone[check_milestone_id] = dict(flag_invis=invis)
-
-    if scenario_id:
-        redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id, scenario_id]))
-
+    check_id = request.args(0, cast=int)
+    invis = request.args(1, cast=int)
+    db.monitutor_checks[check_id] = dict(hidden=invis)
+    milestone_id = db.monitutor_checks[check_id].milestone_id
+    redirect(URL('manage_scenarios', 'view_milestone.html', args=[milestone_id]))
 
 @auth.requires_membership('admin')
 def lower_check():
@@ -156,9 +152,8 @@ def hide_milestone():
     milestone_id = request.args(0, cast=int)
     hidden = request.args(1, cast=int)
     db.monitutor_milestones[milestone_id] = dict(hidden=hidden)
-    if scenario_id:
-        redirect(URL('manage_scenarios', 'view_scenario.html',
-                     args=[db.monitutor_milestones[milestone_id].scenario_id]))
+    scenario_id  = db.monitutor_milestones[milestone_id].scenario_id
+    redirect(URL('manage_scenarios', 'view_scenario.html', args=[scenario_id]))
 
 @auth.requires_membership('admin')
 def lower_milestone():
@@ -166,7 +161,6 @@ def lower_milestone():
     milestone_id = request.args(0, cast=int)
     lower = request.args(1, cast=int)
     scenario_id = db.monitutor_milestones[milestone_id].scenario_id
-
     milestone = db.monitutor_milestones[milestone_id]
     order = milestone.order
     if lower == 1:
