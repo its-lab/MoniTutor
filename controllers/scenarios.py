@@ -146,6 +146,9 @@ def put_check():
     scenario_name = request.vars.scenarioName
     if not auth.has_membership("admin") or username is None:
         username = session.auth.user.username
+    check_row = db((db.monitutor_checks.name == check_name)).select(cache=(cache.ram, 3600)).first()
+    check_id = check_row.check_id
+    source_id = check_row.source_id
     check_id = db((db.monitutor_checks.name == check_name)).select(cache=(cache.ram, 3600)).first().check_id
     check_program = __db_get_check(check_id)
     attachments = __db_get_attachments(check_id)
@@ -165,25 +168,8 @@ def put_check():
             if attachment.requires_status:
                 check_attachment["requires_status"] = attachment.requires_status
             check["attachments"].append(check_attachment)
-    topic = username+"."+check_program.monitutor_systems.name
-    rabbit_mq_host = app_conf.take("monitutor_env.rabbit_mq_host")
-    rabbit_mq_user = app_conf.take("monitutor_env.rabbit_mq_user")
-    rabbit_mq_password = app_conf.take("monitutor_env.rabbit_mq_password")
-    task_exchange = app_conf.take("monitutor_env.rabbit_mq_task_exchange")
-    credentials = pika.credentials.PlainCredentials(rabbit_mq_user, rabbit_mq_password)
-    connection = pika.BlockingConnection(
-        pika.ConnectionParameters(
-            host=rabbit_mq_host,
-            credentials=credentials))
-    channel = connection.channel()
-    channel.exchange_declare(exchange=task_exchange, exchange_type="topic")
-    channel.queue_declare(queue=topic, durable=True)
-    channel.queue_bind(queue=topic, exchange=task_exchange, routing_key=topic)
-    channel.basic_publish(
-        exchange=task_exchange,
-        routing_key=topic,
-        body=json.dumps(check))
-    connection.close()
+    topic = username+"."+db.monitutor_systems[source_id].name
+    __rabbit_mq_publish_task(topic, check)
     return json.dumps(dict(status="OK"))
 
 def __substitute_vars(parameters, check_id, username):
